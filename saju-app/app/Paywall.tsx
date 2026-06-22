@@ -6,7 +6,8 @@ import Script from 'next/script';
 const KEY = 'saju_premium_v1';
 const CUSTOMER_KEY = 'saju_customer_key';
 const RETURN_KEY = 'saju_pay_return';
-const PRICE = 9900;
+const PRICE = 5900;        // 런칭 할인가 (서버 app/api/payment/confirm 의 PRODUCT_AMOUNT 와 반드시 동일하게 유지)
+const LIST_PRICE = 9900;   // 정가 (줄 긋기 표시용)
 
 // 사장님 전용 잠금해제 코드 — 이 코드를 ?owner= 로 붙여 들어오면 결제 없이 자동 해제됩니다.
 // 바꾸고 싶으면 아래 문자열만 원하는 값으로 수정하면 돼요.
@@ -99,7 +100,12 @@ export default function Paywall(
           <button className="pay-x" onClick={onClose} aria-label="닫기">✕</button>
           <div className="pay-badge">🔓 프리미엄 잠금 해제</div>
           <div className="pay-title">AI 심층 풀이 + 정밀 리포트</div>
-          <div className="pay-price"><b>₩9,900</b><span>1회 결제 · 평생 이용</span></div>
+          <div className="pay-price">
+            <span className="pay-orig">₩{LIST_PRICE.toLocaleString()}</span>
+            <b>₩{PRICE.toLocaleString()}</b>
+            <span className="pay-save">런칭 할인 {Math.round((1 - PRICE / LIST_PRICE) * 100)}%</span>
+          </div>
+          <p className="pay-sub">1회 결제 · 평생 이용</p>
           <ul className="pay-list">
             <li>🔮 AI 심층 풀이 — 선배 톤 10단계, 무제한 재생성</li>
             <li>💬 AI 1:1 사주 상담 — 무제한 질문</li>

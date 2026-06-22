@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import PwaSetup from './PwaSetup';
+import Footer from './Footer';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const TITLE = '命理 · 사주, 나를 꿰뚫다';
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
+        <Footer />
         <PwaSetup />
       </body>
     </html>

@@ -488,7 +488,7 @@ export default function Home() {
             </ul>
             {premium
               ? <div className="prem-unlocked">✓ 프리미엄 잠금이 해제되어 모든 기능을 이용 중이에요.</div>
-              : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · ₩9,900</button>}
+              : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · <s style={{ opacity: .6, fontWeight: 400 }}>₩9,900</s> ₩5,900</button>}
             <button className="btn guidebook-btn" onClick={() => { if (premium) window.print(); else setPayOpen(true); }}>
               📕 인생 가이드북 PDF로 저장{!premium && ' 🔒'}
             </button>

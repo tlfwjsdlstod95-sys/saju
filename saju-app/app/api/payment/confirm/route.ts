@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 // 우리 상품 가격(원). 클라이언트가 보낸 금액을 신뢰하지 않고 서버에서 검증한다.
-const PRODUCT_AMOUNT = 9900;
+const PRODUCT_AMOUNT = 5900; // Paywall.tsx 의 PRICE 와 반드시 동일하게 유지
 
 export async function POST(req: Request) {
   const secretKey = process.env.TOSS_SECRET_KEY;
