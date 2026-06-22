@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: Partial<BirthInput>;
+  let body: Partial<BirthInput> & { tier?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: '잘못된 요청' }, { status: 400 }); }
   if (!body.year || !body.month || !body.day) {
     return NextResponse.json({ error: '생년월일은 필수입니다.' }, { status: 400 });
@@ -33,7 +33,12 @@ export async function POST(req: Request) {
   const saju = computeSaju(input);
   const nowYear = new Date().getFullYear();
   const age = nowYear - input.year;
-  const model = process.env.SAJU_MODEL || 'claude-sonnet-4-6';
+  // 티어별 모델: 무료=Haiku(저비용·빠름), 프리미엄=Sonnet(심층). 환경변수로 오버라이드 가능.
+  const tier = body.tier === 'premium' ? 'premium' : 'free';
+  const model = tier === 'premium'
+    ? (process.env.SAJU_MODEL || 'claude-sonnet-4-6')
+    : (process.env.SAJU_MODEL_FREE || 'claude-haiku-4-5-20251001');
+  const maxTokens = tier === 'premium' ? 3000 : 2600;
 
   let upstream: Response;
   try {
@@ -46,7 +51,7 @@ export async function POST(req: Request) {
     },
     body: JSON.stringify({
       model,
-      max_tokens: 3000,
+      max_tokens: maxTokens,
       temperature: 0.85,
       stream: true,
       system: buildSystem(),
