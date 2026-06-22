@@ -74,6 +74,7 @@ export interface SajuResult {
   ohaeng: OhaengCount;
   dayMasterStrength: number; // 0~1 (신강/신약 지표)
   ilju: { name: string; description: string };
+  gyeokYong: import('./gyeokyong').GyeokYong; // 격국·용신·조후
   sipsinSummary: Record<string, number>; // 십신별 개수
   archetype: import('./archetype').Archetype;
   advanced: import('./advanced').AdvancedMyeongsik;

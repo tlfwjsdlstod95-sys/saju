@@ -15,6 +15,7 @@ import {
 import { computeLuck } from './luck';
 import { generateArchetype } from './archetype';
 import { computeAdvanced } from './advanced';
+import { computeGyeokYong } from './gyeokyong';
 import { interpret } from './interpret';
 import type { BirthInput, Pillar, SajuResult } from './types';
 
@@ -157,6 +158,7 @@ export function computeSaju(input: BirthInput): SajuResult {
 
   // --- 10) 명식 고도화 + 선배 톤 풀이 ---
   const advanced = computeAdvanced(pillars, dayGan, dayIndex);
+  const gyeokYong = computeGyeokYong(pillars, dayGan, strength);
   const age = nowYear - year;
   const thisYear = luck.sewoon[0];
   const curDaewoon = [...luck.daewoon].reverse().find((d) => age >= d.age) ?? luck.daewoon[0];
@@ -168,6 +170,10 @@ export function computeSaju(input: BirthInput): SajuResult {
     thisYearSipsin: thisYear?.ganSipsin ?? '비견',
     thisYearScore: thisYear?.score ?? 0,
     daewoonScore: curDaewoon?.score ?? 0,
+    dayUnseong: advanced.unseong.day,
+    curDaewoon: { gan: curDaewoon.gan, ji: curDaewoon.ji, ganKor: curDaewoon.ganKor, jiKor: curDaewoon.jiKor, sipsin: curDaewoon.ganSipsin },
+    thisYearGanji: { gan: thisYear.gan, ji: thisYear.ji, ganKor: thisYear.ganKor, jiKor: thisYear.jiKor, sipsin: thisYear.ganSipsin },
+    gyeokYong,
   });
 
   return {
@@ -185,6 +191,7 @@ export function computeSaju(input: BirthInput): SajuResult {
     ohaeng,
     dayMasterStrength: Math.round(strength * 100) / 100,
     ilju: persona,
+    gyeokYong,
     sipsinSummary,
     archetype,
     advanced,

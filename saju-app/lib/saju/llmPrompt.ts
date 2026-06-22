@@ -1,6 +1,33 @@
 // LLM 심층 풀이 프롬프트 빌더
 // 원칙: 연산(명식·오행·신살)은 결정론 엔진이 끝냈다. LLM은 '해석과 문장'만 쓴다.
 import type { SajuResult } from './types';
+import { iljuCharacter, sipsinPatterns } from './ilju';
+import { edgeKeywordSet, luckInteractions } from './dynamics';
+
+// 명식의 '구조 사실'(일주 캐릭터 + 십신 패턴 + 엣지 키워드세트)을 한 덩어리로 — AI가 일간 원형으로 회귀하지 않게 박아준다.
+function structureFacts(r: SajuResult): string {
+  const iju = iljuCharacter(r.pillars.day.gan, r.pillars.day.ji);
+  const pats = sipsinPatterns(r.sipsinSummary);
+  const patStr = pats.length ? pats.slice(0, 3).map((p) => `${p.name}`).join(' / ') : '뚜렷한 편중 없는 균형 구조';
+  const edge = edgeKeywordSet(r.pillars.month.jiSipsin, r.advanced.unseong.day, r.advanced.sinsal);
+  const gy = r.gyeokYong;
+  return `- 일주 캐릭터: ${iju.name} '${iju.tag}' — ${iju.trait}
+- 격국(타고난 그릇): ${gy.gyeokguk.name} (${gy.gyeokguk.via}) — ${gy.gyeokguk.desc}
+- 용신(약이 되는 핵심 기운): ${gy.yongsin.primary}(五行) · 방식 ${gy.yongsin.method} · 희신 ${gy.yongsin.huisin} · 기신 ${gy.yongsin.gisin}. ${gy.yongsin.desc}
+- 조후(계절 기운): ${gy.johu.climate}${gy.johu.need ? ` → ${gy.johu.need} 필요` : ''}. ${gy.johu.desc}
+- 구조 패턴(이 사람만의 결, 반드시 반영): ${patStr}` +
+    (edge ? `\n- 엣지 키워드세트(월지십신+십이운성+신살): ${edge}` : '');
+}
+
+// 원국+대운+세운 동적 형충회합 — 시기별로 변하는 역동적 해석의 근거
+function luckDynamicsFacts(r: SajuResult, age: number): string {
+  const thisY = r.luck.sewoon[0];
+  const dw = [...r.luck.daewoon].reverse().find((d) => age >= d.age) ?? r.luck.daewoon[0];
+  const t = (x: any) => ({ gan: x.gan, ji: x.ji, ganKor: x.ganKor, jiKor: x.jiKor, sipsin: x.ganSipsin });
+  const dyn = luckInteractions(r.pillars, t(dw), t(thisY));
+  const lines = [...dyn.sewoon, ...dyn.daewoon];
+  return lines.length ? `\n[원국·대운·세운 동적 작용 — 이미 계산된 사실, 이 흐름을 풀이에 녹일 것]\n${lines.map((l) => `- ${l}`).join('\n')}` : '';
+}
 
 export function buildSystem(): string {
   return `당신은 수십 년 내공의 사주 명리학자입니다. 단, 말하는 방식이 다릅니다.
@@ -12,6 +39,8 @@ export function buildSystem(): string {
 - "~할 수도 있어요" 같은 애매한 표현 금지. "당신은 ~한 사람입니다"처럼 단정해서 말합니다.
 - 한자 용어(편인, 관살, 식상 등)를 쓰면 반드시 바로 옆에 쉬운 말로 풀어줍니다. 예: "관살혼잡(이것저것 책임이 많아 분산되는 구조)".
 - 읽다가 "어, 이거 완전 내 얘기네" 싶은 구체적인 순간을 만듭니다. 뻔한 운세 말투 금지.
+- [중요] 같은 일간 오행이라도 사람마다 다르게 풉니다. 절대 '목 일간은 ~하다' 식의 5가지 오행 일반론으로 뭉뚱그리지 마세요. 사용자 메시지에 주어진 '일주 캐릭터'·'격국'·'구조 패턴'을 해석의 중심축으로 삼아, 이 사람만의 결이 드러나게 씁니다.
+- '격국'은 그 사람의 타고난 그릇·방향이니 진로·강점 해석의 뼈대로 쓰고, '용신'은 약이 되는 기운이니 조언·개운(어떤 시기·환경·사람·색·방위가 길한지) 부분에서 구체적으로 활용합니다. 한자 격국명은 쉬운 말로 풀어주세요(예: 식신격 = 재능을 꾸준히 결실로 만드는 그릇).
 - 부정적인 내용도 반드시 "그러니까 이렇게 해"로 끝맺습니다. 겁주고 끝내지 않습니다.
 - 좋은 말만 하지 않습니다. 빛과 그늘을 둘 다 솔직하게.
 
@@ -88,6 +117,7 @@ ${P(r.pillars.year, '년주(年)')}
 - 신강/신약: ${strengthLabel} (수치 ${Math.round(r.dayMasterStrength * 100)}/100)
 - 오행 분포: ${ohStr}
 - 십신 요약: ${Object.entries(r.sipsinSummary).map(([k, v]) => `${k}${v}`).join(', ')}
+${structureFacts(r)}
 - 십이운성: 시 ${r.advanced.unseong.hour ?? '미상'} / 일 ${r.advanced.unseong.day} / 월 ${r.advanced.unseong.month} / 년 ${r.advanced.unseong.year}
 - 공망: ${r.advanced.gongmang.branches.join(', ')}
 - 신살: ${sinsal}
@@ -95,6 +125,7 @@ ${P(r.pillars.year, '년주(年)')}
 [운의 흐름]
 - 현재 대운(10년 단위, ${dw.age}세~): ${dw.ganKor}${dw.jiKor} (길흉지수 ${dw.score}/100)
 - 올해 세운(${nowYear}년): ${thisY.ganKor}${thisY.jiKor}, 일간 기준 ${thisY.ganSipsin} 운, 길흉지수 ${thisY.score}/100
+${luckDynamicsFacts(r, age)}
 
 위 명식을 근거로, 시스템 지침의 '선배 톤'과 출력 형식에 맞춰 ${nm === '(이름 미입력)' ? '이 사람' : nm + '님'}의 사주를 풀어주세요.
 [나이대 지침] 이 사람은 만 ${age}세입니다. ${age >= 55 ? "'연애' 섹션은 새 연애가 아니라 배우자·자녀·가족 인연과 말년 인덕으로, '돈/진로' 섹션은 취업·몸값이 아니라 재물 지키기·노후·건강 자산으로 풀어주세요." : age >= 38 ? "'연애'는 배우자·가정의 안정으로, '돈/진로'는 커리어 정점·자산 관리·신중한 결정으로 풀어주세요." : '20·30대에 맞게 연애·취업·자기계발 관점으로 풀어주세요.'} 나이에 맞지 않는 단정(예: 미혼/취업준비 가정)은 피하세요.
@@ -176,6 +207,7 @@ ${P(r.pillars.hour, '시주')} | ${P(r.pillars.day, '일주(본인)')} | ${P(r.p
 일간(나): ${r.dayMaster.ganKor}(${r.dayMaster.ohaeng}) · 신강신약: ${strengthLabel} (${Math.round(r.dayMasterStrength * 100)}/100)
 오행분포: ${ohStr}
 십신: ${Object.entries(r.sipsinSummary).map(([k, v]) => `${k}${v}`).join(' ')}
+${structureFacts(r)}
 공망: ${r.advanced.gongmang.branches.join(',')} · 신살: ${sinsal}
 현재 대운(${dw.age}세~): ${dw.ganKor}${dw.jiKor}(길흉 ${dw.score}/100) · 올해 세운(${nowYear}): ${thisY.ganKor}${thisY.jiKor} ${thisY.ganSipsin}운(길흉 ${thisY.score}/100)
 ${r.pillars.hour ? '' : '※ 출생시간 미상이므로 시주는 언급하지 말고 일간 중심으로 답하세요.'}

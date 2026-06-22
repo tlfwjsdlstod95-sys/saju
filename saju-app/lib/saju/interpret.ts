@@ -2,6 +2,8 @@
 import { GAN_OHAENG, type Ohaeng } from './constants';
 import type { OhaengCount, Pillar } from './types';
 import type { Sinsal } from './advanced';
+import { iljuCharacter, sipsinPatterns } from './ilju';
+import { edgeKeywordSet, luckInteractions } from './dynamics';
 
 export interface Interpretation {
   key: string;
@@ -31,6 +33,10 @@ interface IParams {
   thisYearSipsin: string;   // 올해 천간 십신
   thisYearScore: number;    // 올해 길흉 점수
   daewoonScore: number;     // 현재 대운 점수
+  dayUnseong: string;       // 일지 십이운성 (엣지 키워드 세트용)
+  curDaewoon: { gan: number; ji: number; ganKor: string; jiKor: string; sipsin: string }; // 현재 대운 간지
+  thisYearGanji: { gan: number; ji: number; ganKor: string; jiKor: string; sipsin: string }; // 올해 세운 간지
+  gyeokYong: import('./gyeokyong').GyeokYong; // 격국·용신·조후
 }
 
 const pick = <T,>(arr: T[], seed: number): T => arr[((seed % arr.length) + arr.length) % arr.length];
@@ -55,6 +61,15 @@ export function interpret(p: IParams): Reading {
   const has = (n: string) => !!p.sinsal.find((x) => x.name === n);
   const dom = (Object.entries(G).sort((a, b) => b[1] - a[1])[0]?.[0]) as keyof typeof G;
 
+  // 일주(60갑자) 캐릭터 + 십신 구조패턴 — 같은 오행이라도 사람마다 갈리게 하는 핵심 축
+  const iju = iljuCharacter(p.dayGan, p.dayPillar.ji);
+  const patterns = sipsinPatterns(p.sipsinSummary);
+  const topPat = patterns[0];
+  const pat2 = patterns[1];
+  // 엣지 키워드 세트(신살+운성+월지십신) + 대운·세운 동적 형충회합
+  const edge = edgeKeywordSet(p.pillars.month.jiSipsin, p.dayUnseong, p.sinsal);
+  const dyn = luckInteractions(p.pillars, p.curDaewoon, p.thisYearGanji);
+
   // 일간 오행별 본질 키워드
   const coreOf: Record<Ohaeng, { tag: string; light: string; shadow: string; thing: string }> = {
     목: { tag: '위로 자라는 나무', light: '명분과 성장을 좇고, 사람을 키우고 일을 벌이는 데 진심', shadow: '한번 꽂히면 융통성이 없고, 인정 못 받으면 속으로 무너지는', thing: '새로 시작하고 키우는 일' },
@@ -78,11 +93,14 @@ export function interpret(p: IParams): Reading {
     key: 'essence', icon: '☯', label: '당신이라는 사람',
     title: pick([`겉과 속이 다른 사람, 그게 당신입니다`, `${nm}, 당신을 한마디로 정의하면`, `당신은 생각보다 복잡한 사람입니다`], seed),
     body:
-      `당신은 일간이 ${p.dayPillar.ganKor}(${dayO}), ${c.tag} 같은 사람입니다. ${c.light} 기질을 타고났어요. ` +
-      `${strong ? '기운이 단단하게 뭉쳐 있어서(신강), 남이 뭐라든 내 길을 가는 힘이 셉니다. 추진력은 누구보다 좋은데, 그만큼 고집도 셉니다. '
-        : weak ? '기운이 부드럽게 퍼져 있어서(신약), 혼자 밀어붙이기보다 사람과 환경을 타고 올라가는 타입입니다. 좋은 판을 만나면 확 큽니다. '
-        : '기운의 강약이 묘하게 균형 잡혀 있어서, 상황 봐가며 셌다 약했다 조절하는 눈치가 있습니다. '}` +
+      `당신은 ${iju.name}, '${iju.tag}' 같은 사람입니다. ${iju.trait} ` +
+      `같은 ${dayO}(${p.dayPillar.ganKor}) 일간이라도 당신은 이 결이 분명해서, 뭉뚱그려 '${dayO} 사람'으로 묶이지 않아요. ` +
+      `${strong ? '게다가 기운이 단단하게 뭉쳐 있어서(신강), 남이 뭐라든 내 길을 가는 힘이 셉니다. 추진력은 누구보다 좋은데, 그만큼 고집도 셉니다. '
+        : weak ? '게다가 기운이 부드럽게 퍼져 있어서(신약), 혼자 밀어붙이기보다 사람과 환경을 타고 올라가는 타입입니다. 좋은 판을 만나면 확 큽니다. '
+        : '게다가 기운의 강약이 묘하게 균형 잡혀 있어서, 상황 봐가며 셌다 약했다 조절하는 눈치가 있습니다. '}` +
+      `\n\n타고난 그릇으로 보면 ${p.gyeokYong.gyeokguk.name}입니다. ${p.gyeokYong.gyeokguk.desc} ` +
       `\n\n빛만 보면 ${c.light} 사람이에요. 근데 그늘도 분명합니다. ${nm}은 ${c.shadow} 면이 있어요. ` +
+      `${topPat ? `구조로 보면 ${topPat.name} 명식이라, ${topPat.insight} ` : ''}` +
       `${has('도화살') ? '사람을 끌어당기는 매력이 있는데, 그만큼 구설에 오르기도 쉽고요. ' : ''}` +
       `이 두 개가 같이 굴러갑니다. 강점이 과해지면 그게 그대로 약점이 돼요. 그걸 알고 사는 사람과 모르고 사는 사람은 10년 뒤가 다릅니다.`,
   });
@@ -100,6 +118,8 @@ export function interpret(p: IParams): Reading {
     title: pick([`이 상황에서 당신은 무조건 이깁니다`, `당신이 진짜 빛나는 자리`, `남들은 못 하는 당신만의 한 방`], seed + 1),
     body:
       `${nm}의 진짜 무기는 ${c.thing}에 있습니다. ${weaponBy[dom]} ` +
+      `${pat2 ? `여기에 ${pat2.name} 구조가 더해져요. ${pat2.insight} ` : ''}` +
+      `${edge ? `\n\n조금 더 깊이 들어가면 — ${edge}` : ''}` +
       `${has('천을귀인') ? '\n\n게다가 결정적인 순간에 누군가 손 내밀어 주는 복(천을귀인)이 있어요. 혼자 다 짊어지지 말고, 도와주겠다는 사람 손을 잡으세요. 그게 당신 사주의 치트키입니다.' : has('문창귀인') ? '\n\n머리 회전이 빠르고 문서·시험 운(문창귀인)이 좋습니다. 자격증·전문 타이틀 하나가 당신 인생을 바꿉니다.' : '\n\n추상적인 칭찬이 아닙니다. 당신이 이걸 살릴 수 있는 자리에 있느냐 없느냐로 결과가 갈립니다.'}`,
   });
 
@@ -137,7 +157,8 @@ export function interpret(p: IParams): Reading {
       `\n\n상반기는 ${yearGood ? '시동을 거는 시기입니다. 미뤄둔 일, 망설이던 결정을 이때 시작하세요. ' : '조심스럽게 정비하는 시기예요. 큰 결정은 잠시 미루고 준비에 집중하세요. '}` +
       `하반기는 ${yearGood ? '결과가 보이기 시작합니다. 상반기에 뿌린 게 있다면 거두는 흐름이에요. ' : '서서히 풀립니다. 답답했던 일들이 가닥을 잡으니 끝까지 버티세요. '}` +
       `${p.thisYearSipsin.includes('재') ? '특히 돈·계약 건은 올해 흐름이 괜찮으니 기회를 보세요. ' : p.thisYearSipsin.includes('관') ? '시험·취업·승진 같은 공식적인 도전에 유리한 기운이라, 미루지 마세요. ' : p.thisYearSipsin.includes('상관') || p.thisYearSipsin.includes('식') ? '새로운 시도와 표현에 좋은 해라, 하고 싶던 거 시작하기 딱입니다. ' : ''}` +
-      `조심할 건 ${p.thisYearScore < 0 ? '욕심과 충동입니다. 한 방을 노리다 크게 잃을 수 있어요.' : '방심입니다. 잘 풀린다고 풀어지면 막판에 새어 나갑니다.'}`,
+      `조심할 건 ${p.thisYearScore < 0 ? '욕심과 충동입니다. 한 방을 노리다 크게 잃을 수 있어요.' : '방심입니다. 잘 풀린다고 풀어지면 막판에 새어 나갑니다.'}` +
+      `${dyn.sewoon.length ? `\n\n[올해 운의 작용] ${dyn.sewoon.join(' ')}` : ''}`,
   });
 
   // ⑤ 연애 / 인연 (나이대 맞춤)
@@ -232,7 +253,9 @@ export function interpret(p: IParams): Reading {
       `${p.age < 30 ? `${p.age}살, 지금 당신은 ` : `지금 당신은 `}` +
       `${sowing ? `씨앗을 심는 시기입니다. 당장 화려한 결과가 안 보여서 조급할 수 있어요. 근데 지금 뿌리를 깊게 내려야 나중에 크게 자랍니다. 비교하지 마세요. 당신의 때는 따로 옵니다. ` : `결과가 보이기 시작하는 시기입니다. 그동안 쌓아온 게 있다면 지금부터 거두는 흐름이에요. 자신감을 가지고 밀어붙여도 됩니다. `}` +
       `\n\n${ageBand === 'young' ? '지금은 인생의 방향을 정하는 구간이에요. 빨리 가는 게 아니라 맞는 방향으로 가는 게 중요합니다. 남들 속도에 휘둘리지 마세요. ' : ageBand === 'mid' ? '지금은 벌여둔 것 중 진짜를 골라 집중하고, 다음 인생의 기반을 다질 때입니다. ' : '지금은 거두고 정리하며, 다음 세대와 나눌 것을 가다듬는 때입니다. 조급함을 내려놓을수록 평안과 인덕이 따라옵니다. '}` +
-      `당신 사주는 ${weak ? '대기만성형입니다. 늦게 피지만 길게 갑니다.' : '한 번 타면 크게 가는 사주예요. 그 타이밍을 놓치지 마세요.'}`,
+      `당신 사주는 ${weak ? '대기만성형입니다. 늦게 피지만 길게 갑니다.' : '한 번 타면 크게 가는 사주예요. 그 타이밍을 놓치지 마세요.'}` +
+      `\n\n[당신에게 약이 되는 기운] ${p.gyeokYong.yongsin.desc}` +
+      `${dyn.daewoon.length ? `\n\n[지금 대운의 작용] ${dyn.daewoon.join(' ')}` : ''}`,
   });
 
   // ⑩ 마지막으로
