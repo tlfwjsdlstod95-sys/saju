@@ -168,8 +168,9 @@ export default function Home() {
   const [payOpen, setPayOpen] = useState(false);
   const [pendingAi, setPendingAi] = useState(false);
 
-  function onAiClick() { if (premium) askAI(); else { setPendingAi(true); setPayOpen(true); } }
-  function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askAI(); } }
+  // 무료는 결과와 함께 AI 풀이가 자동 생성됨. 이 버튼은 '프리미엄 심층(Sonnet) 재생성'.
+  function onAiClick() { if (premium) askAI('premium'); else { setPendingAi(true); setPayOpen(true); } }
+  function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askAI('premium'); } }
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -188,6 +189,10 @@ export default function Home() {
     sex: form.sex,
   });
 
+  // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
+  const chartKey = (b: any, tier: string) =>
+    `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}:${tier}`;
+
   async function runAnalysis(bodyObj: any) {
     setError(''); setResult(null); setAi(null); setAiErr('');
     setLoading(true);
@@ -199,6 +204,8 @@ export default function Home() {
       const elapsed = Date.now() - started;
       if (elapsed < 2000) await sleep(2000 - elapsed); // 정밀 분석 연출 최소 노출
       setResult(data);
+      // 무료 포함 모든 사용자에게 AI 풀이 자동 생성 (캐시 히트면 즉시, 실패하면 규칙 풀이로 폴백)
+      askAI('free', bodyObj);
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
@@ -256,13 +263,23 @@ export default function Home() {
 
   function deleteProfile(id: string) { setProfiles(removeProfile(id)); }
 
-  async function askAI() {
+  async function askAI(tier: 'free' | 'premium' = 'free', bodyObj?: any) {
+    const base = bodyObj ?? reqBody();
+    const key = chartKey(base, tier);
+    // 캐시 확인 — 같은 명식 같은 티어면 재호출 없이 즉시 표시
+    try {
+      const cached = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.sections?.length) { setAi(parsed); setAiErr(''); setAiLoading(false); setAiStreaming(false); return; }
+      }
+    } catch {}
     setAiErr(''); setAiLoading(true); setAiStreaming(true);
     setAi({ lead: '', sections: [] });
     try {
       const res = await fetch('/api/reading', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reqBody()),
+        body: JSON.stringify({ ...base, tier }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -279,7 +296,9 @@ export default function Home() {
         acc += dec.decode(value, { stream: true });
         setAi(parseReadingStream(acc));
       }
-      setAi(parseReadingStream(acc));
+      const final = parseReadingStream(acc);
+      setAi(final);
+      try { if (final.sections.length) localStorage.setItem(key, JSON.stringify(final)); } catch {}
     } catch (e: any) { setAiErr(e.message); setAi(null); }
     finally { setAiLoading(false); setAiStreaming(false); }
   }
@@ -423,8 +442,8 @@ export default function Home() {
 
             {!ai && (
               <div className="ai-cta">
-                <div className="ai-cta-txt"><b>🔮 AI 심층 풀이 {!premium && <span className="lock-tag">프리미엄</span>}</b><span>같은 명식을 AI가 한 번 더, 당신만을 위한 문장으로 다시 씁니다. (소름 주의)</span></div>
-                <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '명식을 깊이 읽는 중…' : premium ? 'AI로 다시 풀기 →' : '🔒 잠금 해제하고 AI로 풀기'}</button>
+                <div className="ai-cta-txt"><b>✨ AI 풀이</b><span>{aiErr ? 'AI 풀이 생성에 실패했어요. 잠시 후 다시 시도해 주세요. (지금은 기본 풀이를 보여드려요)' : '당신 명식만을 위해 AI가 새로 써주는 풀이로 볼 수 있어요.'}</span></div>
+                <button className="btn ai-btn" onClick={() => askAI('free')} disabled={aiLoading}>{aiLoading ? '명식을 읽는 중…' : 'AI 풀이로 보기 →'}</button>
                 {aiErr && <div className="warn" style={{ marginTop: 12 }}>{aiErr}</div>}
               </div>
             )}
@@ -481,13 +500,16 @@ export default function Home() {
             <h2>{premium ? '✓ 정밀 리포트 (이용 중)' : '🔒 정밀 리포트 (프리미엄)'}</h2>
             <p className="meta" style={{ marginBottom: 14 }}>무료 풀이로 큰 흐름을 봤다면, 인생의 디테일은 정밀 리포트에서 확인하세요.</p>
             <ul className="prem-list">
-              <li>🔮 AI 심층 풀이 — 선배 톤 10단계, 무제한 재생성</li>
+              <li>🔮 프리미엄 심층 AI 풀이 — 더 길고 깊게, 무제한 재생성</li>
               <li>📈 평생 대운 80년 상세 — 시기별 재물·직업·건강 변곡점</li>
               <li>🗓️ {new Date().getFullYear()}~{new Date().getFullYear() + 1} 신년운세 — 월별 길흉 캘린더</li>
               <li>🍀 나만의 개운법 · 결혼·이직·이사 택일</li>
             </ul>
             {premium
-              ? <div className="prem-unlocked">✓ 프리미엄 잠금이 해제되어 모든 기능을 이용 중이에요.</div>
+              ? <>
+                  <div className="prem-unlocked">✓ 프리미엄 잠금이 해제되어 모든 기능을 이용 중이에요.</div>
+                  <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '심층 풀이 생성 중…' : '✨ 프리미엄 심층 풀이로 다시 풀기'}</button>
+                </>
               : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · <s style={{ opacity: .6, fontWeight: 400 }}>₩9,900</s> ₩5,900</button>}
             <button className="btn guidebook-btn" onClick={() => { if (premium) window.print(); else setPayOpen(true); }}>
               📕 인생 가이드북 PDF로 저장{!premium && ' 🔒'}
