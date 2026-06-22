@@ -39,10 +39,10 @@ function PersonForm({ p, set, idx, profiles, onPick }: { p: P; set: (k: string, 
       )}
       <div className="form-grid">
         <div><label>이름(선택)</label><input value={p.name} placeholder={idx === 0 ? '나' : '상대'} onChange={(e) => set('name', e.target.value)} /></div>
-        <div><label>연도(양력)</label><input type="number" placeholder="1995" value={p.year} onChange={(e) => set('year', e.target.value)} /></div>
-        <div><label>월</label><input type="number" placeholder="8" value={p.month} onChange={(e) => set('month', e.target.value)} /></div>
-        <div><label>일</label><input type="number" placeholder="15" value={p.day} onChange={(e) => set('day', e.target.value)} /></div>
-        <div><label>시 (0~23)</label><input type="number" placeholder="14" value={p.hour} disabled={p.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
+        <div><label>연도(양력)</label><input type="number" value={p.year} onChange={(e) => set('year', e.target.value)} /></div>
+        <div><label>월</label><input type="number" value={p.month} onChange={(e) => set('month', e.target.value)} /></div>
+        <div><label>일</label><input type="number" value={p.day} onChange={(e) => set('day', e.target.value)} /></div>
+        <div><label>시 (0~23)</label><input type="number" value={p.hour} disabled={p.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
         <div><label>출생도시</label>
           <select value={p.city} onChange={(e) => set('city', e.target.value)}>
             {Object.keys(CITIES).map((c) => <option key={c} value={c}>{c}</option>)}
