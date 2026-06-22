@@ -119,7 +119,7 @@ export function sipsinPatterns(s: Record<string, number>): SipsinPattern[] {
   if (g.재성 >= 3) out.push({ key: 'jae_over', name: '재성과다(일·돈 욕심이 큼)', insight: '돈과 일의 욕심이 커 늘 바쁩니다. 벌리기보다 지키고 마무리하는 힘을 길러야 진짜 부가 남습니다.' });
   if (g.관성 >= 3) out.push({ key: 'gwan_over', name: '관성과다(책임·압박이 과중)', insight: '책임과 남의 시선을 너무 짊어집니다. 다 잘하려다 자기를 잃으니 내려놓는 연습이 필요합니다.' });
   if (g.인성 >= 3) out.push({ key: 'in_over', name: '인성과다(생각·받는 게 많음)', insight: '머리와 생각이 많아 결정을 자꾸 미룹니다. 완벽한 준비보다 어설픈 시작이 당신을 살립니다.' });
-  if (g.비겁 >= 3) out.push({ key: 'bi_over', name: '비겁과다(자기 주장·경쟁심 강함)', insight: '주관과 경쟁심이 강해 내 판을 벌일 때 폭발합니다. 단 돈이 새는 구멍이 많으니 동업·보증을 조심하세요.' });
+  if (g.비겁 >= 3) out.push({ key: 'bi_over', name: '비겁과다(자기 주장·경쟁심 강함)', insight: '주관과 자존심이 또렷해 남에게 휘둘리지 않습니다. 단 고집으로 사람을 잃기 쉽고 돈이 새는 구멍이 많으니, 동업·보증과 욱하는 결정을 조심하세요.' });
 
   // 부재(0개) — 없는 게 곧 특징
   if (g.관성 === 0) out.push({ key: 'no_gwan', name: '무관성(통제·조직을 안 받음)', insight: '규칙과 조직에 묶이는 걸 못 견딥니다. 시키는 일보다 내 이름 걸고 하는 일에서 빛납니다.' });
