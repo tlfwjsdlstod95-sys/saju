@@ -27,18 +27,22 @@ const OHAENG_COLOR: Record<string, string> = {
 const CITY_GROUPS: { region: string; cities: Record<string, number> }[] = [
   { region: '서울·경기·인천', cities: {
     '서울': 126.978, '인천': 126.705, '수원': 127.029, '성남': 127.138, '용인': 127.178,
-    '고양': 126.832, '부천': 126.766, '안양': 126.957, '평택': 127.113, '의정부': 127.045, '파주': 126.780,
+    '고양': 126.832, '부천': 126.766, '안양': 126.957, '평택': 127.113, '의정부': 127.045,
+    '파주': 126.780, '김포': 126.716, '안산': 126.832, '시흥': 126.803, '남양주': 127.216, '이천': 127.442,
   } },
-  { region: '강원', cities: { '춘천': 127.734, '원주': 127.920, '강릉': 128.896, '속초': 128.591, '동해': 129.114, '태백': 128.986 } },
+  { region: '강원', cities: { '춘천': 127.734, '원주': 127.920, '강릉': 128.896, '속초': 128.591, '동해': 129.114, '태백': 128.986, '삼척': 129.165, '홍천': 127.889, '횡성': 127.985, '영월': 128.462 } },
   { region: '충청·대전·세종', cities: {
     '대전': 127.385, '세종': 127.289, '천안': 127.114, '청주': 127.489, '충주': 127.926, '아산': 127.004, '서산': 126.450,
+    '제천': 128.191, '공주': 127.119, '논산': 127.099, '당진': 126.646, '보령': 126.613,
   } },
   { region: '경상·부산·대구·울산', cities: {
     '부산': 129.075, '대구': 128.601, '울산': 129.311, '창원': 128.681, '김해': 128.889, '진주': 128.107,
     '포항': 129.365, '경주': 129.225, '안동': 128.727, '구미': 128.344, '통영': 128.433,
+    '거제': 128.621, '양산': 129.037, '경산': 128.741, '상주': 128.159, '문경': 128.187,
   } },
   { region: '전라·광주', cities: {
     '광주': 126.851, '전주': 127.148, '목포': 126.392, '여수': 127.662, '순천': 127.487, '군산': 126.737, '익산': 126.957, '남원': 127.390,
+    '정읍': 126.856, '나주': 126.711, '광양': 127.696, '김제': 126.881,
   } },
   { region: '제주', cities: { '제주': 126.531, '서귀포': 126.560 } },
 ];
@@ -306,7 +310,7 @@ export default function Home() {
 
       <div className="card">
         <h2>생년월일시 입력</h2>
-        <div style={{ marginBottom: 14 }}><label>이름 (선택 · 풀이에 반영)</label><input placeholder="예: 승혁" value={form.name} onChange={(e) => set('name', e.target.value)} /></div>
+        <div style={{ marginBottom: 14 }}><label>이름 (선택 · 풀이에 반영)</label><input placeholder="예: 홍길동" value={form.name} onChange={(e) => set('name', e.target.value)} /></div>
         <div className="cal-toggle">
           <button type="button" className={form.calType === 'solar' ? 'on' : ''} onClick={() => set('calType', 'solar')}>양력</button>
           <button type="button" className={form.calType === 'lunar' ? 'on' : ''} onClick={() => set('calType', 'lunar')}>음력</button>
@@ -320,7 +324,7 @@ export default function Home() {
           <div><label>일</label><input type="number" placeholder="15" value={form.day} onChange={(e) => set('day', e.target.value)} /></div>
           <div><label>시 (0~23)</label><input type="number" placeholder="23" value={form.hour} disabled={form.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
           <div><label>분</label><input type="number" placeholder="40" value={form.minute} disabled={form.unknownTime} onChange={(e) => set('minute', e.target.value)} /></div>
-          <div><label>출생도시</label>
+          <div><label>출생도시 <span className="hint">· 목록에 없으면 가장 가까운 도시를 선택</span></label>
             <select value={form.city} onChange={(e) => set('city', e.target.value)}>
               {CITY_GROUPS.map((g) => (
                 <optgroup label={g.region} key={g.region}>
