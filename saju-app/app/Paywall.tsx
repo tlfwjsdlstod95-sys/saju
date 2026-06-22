@@ -8,10 +8,26 @@ const CUSTOMER_KEY = 'saju_customer_key';
 const RETURN_KEY = 'saju_pay_return';
 const PRICE = 9900;
 
+// 사장님 전용 잠금해제 코드 — 이 코드를 ?owner= 로 붙여 들어오면 결제 없이 자동 해제됩니다.
+// 바꾸고 싶으면 아래 문자열만 원하는 값으로 수정하면 돼요.
+const OWNER_CODE = 'myeongri-master-2026';
+
 /** 프리미엄 잠금 상태 (localStorage 영속) */
 export function usePremium(): [boolean, () => void] {
   const [premium, setPremium] = useState(false);
-  useEffect(() => { try { setPremium(localStorage.getItem(KEY) === '1'); } catch {} }, []);
+  useEffect(() => {
+    try {
+      // 비밀 주소(?owner=코드)로 접속하면 자동 잠금해제 후 주소창에서 코드 제거
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('owner') === OWNER_CODE) {
+        localStorage.setItem(KEY, '1');
+        params.delete('owner');
+        const q = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (q ? '?' + q : ''));
+      }
+      setPremium(localStorage.getItem(KEY) === '1');
+    } catch {}
+  }, []);
   const unlock = () => { try { localStorage.setItem(KEY, '1'); } catch {} setPremium(true); };
   return [premium, unlock];
 }
