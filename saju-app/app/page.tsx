@@ -310,7 +310,7 @@ export default function Home() {
 
       <div className="card">
         <h2>생년월일시 입력</h2>
-        <div style={{ marginBottom: 14 }}><label>이름 (선택 · 풀이에 반영)</label><input placeholder="예: 홍길동" value={form.name} onChange={(e) => set('name', e.target.value)} /></div>
+        <div style={{ marginBottom: 14 }}><label>이름 (선택 · 풀이에 반영)</label><input value={form.name} onChange={(e) => set('name', e.target.value)} /></div>
         <div className="cal-toggle">
           <button type="button" className={form.calType === 'solar' ? 'on' : ''} onClick={() => set('calType', 'solar')}>양력</button>
           <button type="button" className={form.calType === 'lunar' ? 'on' : ''} onClick={() => set('calType', 'lunar')}>음력</button>
@@ -319,11 +319,11 @@ export default function Home() {
           )}
         </div>
         <div className="form-grid">
-          <div><label>연도({form.calType === 'lunar' ? '음력' : '양력'})</label><input type="number" placeholder="1995" value={form.year} onChange={(e) => set('year', e.target.value)} /></div>
-          <div><label>월</label><input type="number" placeholder="8" value={form.month} onChange={(e) => set('month', e.target.value)} /></div>
-          <div><label>일</label><input type="number" placeholder="15" value={form.day} onChange={(e) => set('day', e.target.value)} /></div>
-          <div><label>시 (0~23)</label><input type="number" placeholder="23" value={form.hour} disabled={form.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
-          <div><label>분</label><input type="number" placeholder="40" value={form.minute} disabled={form.unknownTime} onChange={(e) => set('minute', e.target.value)} /></div>
+          <div><label>연도({form.calType === 'lunar' ? '음력' : '양력'})</label><input type="number" value={form.year} onChange={(e) => set('year', e.target.value)} /></div>
+          <div><label>월</label><input type="number" value={form.month} onChange={(e) => set('month', e.target.value)} /></div>
+          <div><label>일</label><input type="number" value={form.day} onChange={(e) => set('day', e.target.value)} /></div>
+          <div><label>시 (0~23)</label><input type="number" value={form.hour} disabled={form.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
+          <div><label>분</label><input type="number" value={form.minute} disabled={form.unknownTime} onChange={(e) => set('minute', e.target.value)} /></div>
           <div><label>출생도시 <span className="hint">· 목록에 없으면 가장 가까운 도시를 선택</span></label>
             <select value={form.city} onChange={(e) => set('city', e.target.value)}>
               {CITY_GROUPS.map((g) => (
@@ -518,6 +518,17 @@ export default function Home() {
             <h2>일간 강약 (신강·신약)</h2>
             <div className="gauge"><div style={{ width: `${result.dayMasterStrength * 100}%` }} /></div>
             <div className="gauge-row"><span>신약 (관계·환경 활용형)</span><span>{Math.round(result.dayMasterStrength * 100)}%</span><span>신강 (주관·추진형)</span></div>
+          </div>
+
+          <div className="card">
+            <h2>격국 · 용신 (格局 · 用神)</h2>
+            <div className="chips">
+              <div className="chip">그릇 <b>{result.gyeokYong.gyeokguk.name}</b></div>
+              <div className="chip">용신 <b>{result.gyeokYong.yongsin.primary}(五行)</b></div>
+              <div className="chip">조후 <b>{result.gyeokYong.johu.climate}</b></div>
+            </div>
+            <p style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.gyeokguk.desc}</p>
+            <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.yongsin.desc}</p>
           </div>
 
           <div className="card">
