@@ -22,7 +22,7 @@ function parse(b: any): BirthInput {
 }
 
 export async function POST(req: Request) {
-  const blocked = guardAI(req, 'gunghap');
+  const blocked = await guardAI(req, 'gunghap');
   if (blocked) return blocked;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
