@@ -6,7 +6,7 @@ import type { BirthInput } from '@/lib/saju/types';
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
-  const blocked = guardCompute(req, 'saju');
+  const blocked = await guardCompute(req, 'saju');
   if (blocked) return blocked;
 
   try {
