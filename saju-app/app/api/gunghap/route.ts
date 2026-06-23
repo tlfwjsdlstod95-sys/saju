@@ -1,21 +1,27 @@
 import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
 import { computeCompatibility } from '@/lib/saju/compatibility';
+import { guardCompute, clampInt } from '@/lib/apiGuard';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
 
 function parse(b: any): BirthInput {
   return {
-    year: Number(b.year), month: Number(b.month), day: Number(b.day),
-    hour: b.unknownTime ? null : (b.hour ?? null),
-    minute: Number(b.minute ?? 0),
+    year: clampInt(b.year, 1900, 2200, 2000),
+    month: clampInt(b.month, 1, 12, 1),
+    day: clampInt(b.day, 1, 31, 1),
+    hour: b.unknownTime ? null : (b.hour == null ? null : clampInt(b.hour, 0, 23, 0)),
+    minute: clampInt(b.minute ?? 0, 0, 59, 0),
     longitude: b.longitude ? Number(b.longitude) : undefined,
     sex: b.sex, unknownTime: !!b.unknownTime,
   };
 }
 
 export async function POST(req: Request) {
+  const blocked = guardCompute(req, 'gunghap');
+  if (blocked) return blocked;
+
   try {
     const { a, b } = await req.json();
     if (!a?.year || !b?.year) {
