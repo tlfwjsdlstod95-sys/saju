@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
 import { computeCompatibility } from '@/lib/saju/compatibility';
 import { buildGunghapSystem, buildGunghapUser } from '@/lib/saju/llmPrompt';
+import { guardAI, clampInt } from '@/lib/apiGuard';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -9,9 +10,11 @@ export const maxDuration = 60;
 
 function parse(b: any): BirthInput {
   return {
-    year: Number(b.year), month: Number(b.month), day: Number(b.day),
-    hour: b.unknownTime ? null : (b.hour ?? null) as number | null,
-    minute: Number(b.minute ?? 0),
+    year: clampInt(b.year, 1900, 2200, 2000),
+    month: clampInt(b.month, 1, 12, 1),
+    day: clampInt(b.day, 1, 31, 1),
+    hour: b.unknownTime ? null : (b.hour == null ? null : clampInt(b.hour, 0, 23, 0)),
+    minute: clampInt(b.minute ?? 0, 0, 59, 0),
     longitude: b.longitude ? Number(b.longitude) : undefined,
     sex: b.sex, unknownTime: !!b.unknownTime,
     name: b.name ? String(b.name).slice(0, 20) : undefined,
@@ -19,6 +22,9 @@ function parse(b: any): BirthInput {
 }
 
 export async function POST(req: Request) {
+  const blocked = guardAI(req, 'gunghap');
+  if (blocked) return blocked;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'AI 궁합 풀이는 API 키 설정이 필요합니다. .env.local 에 ANTHROPIC_API_KEY 를 넣어주세요.', needsKey: true }, { status: 503 });
