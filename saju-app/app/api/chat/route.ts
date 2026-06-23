@@ -10,7 +10,7 @@ export const maxDuration = 60;
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
 
 export async function POST(req: Request) {
-  const blocked = guardAI(req, 'chat');
+  const blocked = await guardAI(req, 'chat');
   if (blocked) return blocked;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
