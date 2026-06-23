@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
 import { buildChatSystem } from '@/lib/saju/llmPrompt';
+import { guardAI, clampInt } from '@/lib/apiGuard';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -9,6 +10,9 @@ export const maxDuration = 60;
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
 
 export async function POST(req: Request) {
+  const blocked = guardAI(req, 'chat');
+  if (blocked) return blocked;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -34,9 +38,11 @@ export async function POST(req: Request) {
   }
 
   const input: BirthInput = {
-    year: Number(body.year), month: Number(body.month), day: Number(body.day),
-    hour: body.unknownTime ? null : (body.hour ?? null) as number | null,
-    minute: Number(body.minute ?? 0),
+    year: clampInt(body.year, 1900, 2200, 2000),
+    month: clampInt(body.month, 1, 12, 1),
+    day: clampInt(body.day, 1, 31, 1),
+    hour: body.unknownTime ? null : (body.hour == null ? null : clampInt(body.hour, 0, 23, 0)),
+    minute: clampInt(body.minute ?? 0, 0, 59, 0),
     longitude: body.longitude ? Number(body.longitude) : undefined,
     sex: body.sex, unknownTime: !!body.unknownTime,
     name: body.name ? String(body.name).slice(0, 20) : undefined,
