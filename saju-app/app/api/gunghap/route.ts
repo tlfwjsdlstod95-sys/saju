@@ -19,7 +19,7 @@ function parse(b: any): BirthInput {
 }
 
 export async function POST(req: Request) {
-  const blocked = guardCompute(req, 'gunghap');
+  const blocked = await guardCompute(req, 'gunghap');
   if (blocked) return blocked;
 
   try {
