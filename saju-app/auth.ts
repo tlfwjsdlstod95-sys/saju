@@ -21,14 +21,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.uid = `${account.provider}:${account.providerAccountId}`;
         token.provider = account.provider;
         // 유저 레코드 upsert (있으면 last_seen 갱신)
-        const sb = supabaseAdmin();
-        if (sb) {
-          const email = (profile as any)?.email ?? token.email ?? null;
-          const name = (profile as any)?.name ?? token.name ?? null;
-          await sb.from('saju_users').upsert(
-            { id: token.uid as string, email, name, provider: account.provider, last_seen: new Date().toISOString() },
-            { onConflict: 'id' },
-          );
+        // ⚠️ 클라우드 저장(Supabase) 실패가 로그인 자체를 막지 않도록 격리.
+        //    여기서 throw되면 Auth.js가 "Configuration" 서버 에러를 띄움.
+        try {
+          const sb = supabaseAdmin();
+          if (sb) {
+            const email = (profile as any)?.email ?? token.email ?? null;
+            const name = (profile as any)?.name ?? token.name ?? null;
+            await sb.from('saju_users').upsert(
+              { id: token.uid as string, email, name, provider: account.provider, last_seen: new Date().toISOString() },
+              { onConflict: 'id' },
+            );
+          }
+        } catch (e) {
+          // 클라우드 저장만 실패 — 로그인은 계속 진행 (익명/로컬 동작 유지)
+          console.error('[auth] saju_users upsert 실패(로그인은 계속):', e);
         }
       }
       return token;
