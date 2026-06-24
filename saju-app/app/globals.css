@@ -29,7 +29,7 @@ body::before {
     radial-gradient(circle at 12% 88%, rgba(120,80,180,0.12) 0%, transparent 45%);
 }
 
-.wrap { max-width: 760px; margin: 0 auto; padding: 52px 20px 90px; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 52px 20px 48px; }
 
 .hero { text-align: center; margin-bottom: 36px; }
 .hero-kr { font-family: var(--serif); font-size: 30px; color: var(--gold); letter-spacing: 12px; opacity: .85; margin-bottom: 12px; padding-left: 12px; }
@@ -529,7 +529,7 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 
 /* ── 모바일 반응형 보강 (≤560px) ── */
 @media (max-width: 560px) {
-  .wrap { padding: 34px 14px 80px; }
+  .wrap { padding: 34px 14px 44px; }
   .card { padding: 20px 15px; }
   .card h2 { font-size: 19px; padding-left: 12px; margin-bottom: 14px; }
   .hero { }
@@ -561,7 +561,7 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 }
 
 /* ===== 사이트 푸터 ===== */
-.site-footer { max-width: 760px; margin: 0 auto; padding: 32px 20px 56px; border-top: 1px solid var(--border); text-align: center; }
+.site-footer { max-width: 760px; margin: 0 auto; padding: 24px 20px 56px; border-top: 1px solid var(--border); text-align: center; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-bottom: 16px; }
 .footer-links a { color: var(--text-dim); font-size: 13px; text-decoration: none; }
 .footer-links a:hover { color: var(--gold); text-decoration: underline; }
