@@ -8,7 +8,26 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 const providers = [];
 if (process.env.AUTH_KAKAO_ID) providers.push(Kakao);
-if (process.env.AUTH_NAVER_ID) providers.push(Naver);
+if (process.env.AUTH_NAVER_ID)
+  providers.push(
+    Naver({
+      clientId: process.env.AUTH_NAVER_ID,
+      clientSecret: process.env.AUTH_NAVER_SECRET,
+      // ⚠️ 네이버 토큰 응답의 expires_in이 "문자열"이라 Auth.js v5(oauth4webapi)가
+      //    "must be a positive number"로 콜백을 거부함 → 숫자로 보정해 통과시킴.
+      token: {
+        url: 'https://nid.naver.com/oauth2.0/token',
+        async conform(response: Response) {
+          const data = await response.clone().json().catch(() => null);
+          if (data && typeof data.expires_in === 'string') {
+            data.expires_in = Number(data.expires_in);
+            return Response.json(data);
+          }
+          return response;
+        },
+      },
+    }),
+  );
 if (process.env.AUTH_GOOGLE_ID) providers.push(Google);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
