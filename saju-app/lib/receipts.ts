@@ -1,5 +1,7 @@
-// 결제 영수증 / 이용 내역 — localStorage 기반 (서버 없음)
+// 결제 영수증 / 이용 내역 — localStorage 기반 (+ 로그인 시 클라우드 미러링)
 'use client';
+
+import { cloudAddReceipt } from './cloud';
 
 const KEY = 'saju_receipts_v1';
 
@@ -30,7 +32,9 @@ function write(list: Receipt[]) {
 export function addReceipt(r: Omit<Receipt, 'savedAt'>): Receipt[] {
   const list = listReceipts();
   if (list.some((x) => x.orderId === r.orderId)) return list;
-  list.push({ ...r, savedAt: Date.now() });
+  const full = { ...r, savedAt: Date.now() };
+  list.push(full);
   write(list);
+  void cloudAddReceipt(full); // 로그인 상태면 서버에도 저장
   return listReceipts();
 }

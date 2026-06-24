@@ -1,5 +1,7 @@
-// 내 사주 보관함 — localStorage 기반 다중 프로필 저장
+// 내 사주 보관함 — localStorage 기반 다중 프로필 저장 (+ 로그인 시 클라우드 미러링)
 'use client';
+
+import { cloudSaveProfile, cloudDeleteProfile } from './cloud';
 
 const KEY = 'saju_profiles_v1';
 
@@ -35,10 +37,12 @@ export function saveProfile(p: Omit<Profile, 'id' | 'savedAt'>): Profile[] {
   const profile: Profile = { ...p, id: idx >= 0 ? list[idx].id : `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, savedAt: Date.now() };
   if (idx >= 0) list[idx] = profile; else list.push(profile);
   write(list);
+  void cloudSaveProfile(profile); // 로그인 상태면 서버에도 저장 (아니면 401 무시)
   return listProfiles();
 }
 
 export function removeProfile(id: string): Profile[] {
   write(listProfiles().filter((p) => p.id !== id));
+  void cloudDeleteProfile(id); // 로그인 상태면 서버에서도 삭제
   return listProfiles();
 }
