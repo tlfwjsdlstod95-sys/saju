@@ -589,6 +589,16 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .account-btn.primary:hover { filter: brightness(1.08); }
 .account-name { font-size: 13px; color: #cbd5e1; }
 .account-hint { font-size: 11px; color: #8a8499; }
+.account-inline { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--border); }
+.login-providers { display: flex; flex-direction: column; gap: 9px; width: 100%; max-width: 320px; margin: 0 auto 4px; }
+.login-btn { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; font-size: 15px; font-weight: 700; padding: 13px 16px; border-radius: 10px; border: none; cursor: pointer; transition: filter .15s ease; }
+.login-btn:hover { filter: brightness(0.96); }
+.login-btn .login-ic { display: inline-flex; align-items: center; justify-content: center; width: 18px; font-weight: 800; }
+.login-btn.kakao { background: #FEE500; color: #1a1600; }
+.login-btn.naver { background: #03C75A; color: #fff; }
+.login-btn.naver .login-ic { color: #fff; }
+.login-btn.google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; }
+.login-btn.google .login-ic { color: #4285F4; }
 
 /* ── 헤아림 브랜드 워드마크 (첫 화면 히어로) ── */
 .brand-name { font-family: 'Nanum Myeongjo', serif; font-size: 22px; font-weight: 800; letter-spacing: 0.18em; color: #e6c878; margin-bottom: 10px; }

@@ -17,6 +17,7 @@ import NamingCard from './NamingCard';
 import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium } from './Paywall';
+import AccountButton from './AccountButton';
 import { listProfiles, saveProfile, removeProfile, type Profile } from '@/lib/profiles';
 
 const OHAENG_COLOR: Record<string, string> = {
@@ -607,6 +608,10 @@ export default function Home() {
           <GuidebookPrint result={result} ai={ai} />
         </>
       )}
+
+      <div className="account-inline">
+        <AccountButton />
+      </div>
 
       <div className="foot">
         만세력 엔진: VSOP87 천문 알고리즘 기반 절기·균시차 자체 연산 · 절기 시각 KASI 공표값 1분 이내 일치 · 일주 60갑자 국제표준 보정<br />

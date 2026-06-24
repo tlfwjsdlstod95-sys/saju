@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import { BIZ } from './biz';
-import AccountButton from './AccountButton';
 
 export default function Footer() {
   return (
     <footer className="site-footer">
-      <AccountButton />
       <nav className="footer-links">
         <Link href="/terms">이용약관</Link>
         <span aria-hidden>·</span>
