@@ -8,6 +8,7 @@ import type { CompatResult } from '@/lib/saju/compatibility';
 import { parseReadingStream, GUNGHAP_KEYS, GUNGHAP_ICONS, GUNGHAP_LABELS } from '@/lib/saju/readingMeta';
 import GunghapCard from '../GunghapCard';
 import Paywall, { usePremium } from '../Paywall';
+import AccountButton from '../AccountButton';
 
 const OHAENG_COLOR: Record<string, string> = {
   목: '#22c55e', 화: '#ef4444', 토: '#eab308', 금: '#e2e8f0', 수: '#3b82f6',
@@ -90,7 +91,12 @@ export default function Gunghap() {
   const [payOpen, setPayOpen] = useState(false);
   const [pendingAi, setPendingAi] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  useEffect(() => { setProfiles(listProfiles()); }, []);
+  useEffect(() => {
+    setProfiles(listProfiles());
+    const onSync = () => setProfiles(listProfiles());
+    window.addEventListener('saju:synced', onSync);
+    return () => window.removeEventListener('saju:synced', onSync);
+  }, []);
 
   function onGunghapAiClick() { if (premium) askGunghapAI(); else { setPendingAi(true); setPayOpen(true); } }
   function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askGunghapAI(); } }
@@ -228,6 +234,10 @@ export default function Gunghap() {
           <button className="btn ghost-btn" onClick={() => { setRes(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>다른 궁합 보기</button>
         </>
       )}
+
+      <div className="account-inline">
+        <AccountButton />
+      </div>
 
       <div className="foot">결과는 명리학적 상성 참고용이며, 실제 관계는 두 사람의 노력으로 만들어집니다.</div>
       <Paywall open={payOpen} onClose={() => setPayOpen(false)} onUnlock={handleUnlock} />
