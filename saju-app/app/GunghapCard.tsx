@@ -51,7 +51,7 @@ function drawCard(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#64748b'; ctx.font = '700 28px "Noto Sans KR", sans-serif';
   try { (ctx as any).letterSpacing = '6px'; } catch {}
-  ctx.fillText('命理 · 사주 궁합', W / 2, 122);
+  ctx.fillText('헤아림 · 사주 궁합', W / 2, 122);
   try { (ctx as any).letterSpacing = '0px'; } catch {}
 
   // 두 사람 심볼
@@ -107,7 +107,7 @@ function drawCard(
   ctx.fillStyle = '#fff'; ctx.font = '700 38px "Noto Sans KR", sans-serif';
   ctx.fillText('너희 궁합도 확인해봐 →', W / 2, H - 104);
   ctx.fillStyle = '#e6c878'; ctx.font = '500 27px "Noto Sans KR", sans-serif';
-  ctx.fillText('命理 · 사주, 나를 꿰뚫다', W / 2, H - 60);
+  ctx.fillText('헤아림 · 정밀 만세력 사주', W / 2, H - 60);
 }
 
 export default function GunghapCard(

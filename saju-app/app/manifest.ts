@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '命理 · 사주, 나를 꿰뚫다',
-    short_name: '사주 명리',
-    description: '천문 데이터로 본 정통 만세력. 나를 가장 정확하게 읽어주는 선배 같은 사주 풀이.',
+    name: '헤아림 · 정밀 만세력 사주',
+    short_name: '헤아림 사주',
+    description: '천문 데이터로 헤아리는 나. 야자시·균시차까지 보정한 정밀 만세력 사주 풀이.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0c0a16',

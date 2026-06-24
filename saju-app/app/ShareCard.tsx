@@ -93,7 +93,7 @@ function draw(canvas: HTMLCanvasElement, r: SajuResult) {
   ctx.fillStyle = '#ffffff'; ctx.font = '700 40px "Noto Sans KR", sans-serif';
   ctx.fillText('내 일간 물상은? 🔮', W / 2, H - 116);
   ctx.fillStyle = '#e6c878'; ctx.font = '500 28px "Noto Sans KR", sans-serif';
-  ctx.fillText('命理 · 사주, 나를 꿰뚫다', W / 2, H - 66);
+  ctx.fillText('헤아림 · 정밀 만세력 사주', W / 2, H - 66);
 }
 
 export default function ShareCard({ result }: { result: SajuResult }) {

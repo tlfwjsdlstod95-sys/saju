@@ -96,7 +96,7 @@ function draw(canvas: HTMLCanvasElement, name: string, lead: string, secs: Sec[]
   ctx.fillStyle = '#ffffff'; ctx.font = '700 38px "Noto Sans KR", sans-serif';
   ctx.fillText('내 사주, 선배가 이렇게 풀어줬다 →', W / 2, H - 108);
   ctx.fillStyle = '#e6c878'; ctx.font = '500 28px "Noto Sans KR", sans-serif';
-  ctx.fillText('命理 · 사주, 나를 꿰뚫다', W / 2, H - 62);
+  ctx.fillText('헤아림 · 정밀 만세력 사주', W / 2, H - 62);
 }
 
 export default function ReadingCard(
@@ -126,7 +126,7 @@ export default function ReadingCard(
     save();
   }
   async function copyText() {
-    try { await navigator.clipboard.writeText(`${lead}\n\n— 命理 · 사주, 나를 꿰뚫다\n#사주 #정통사주 #사주풀이`); flash('한 줄 정의를 복사했어요'); }
+    try { await navigator.clipboard.writeText(`${lead}\n\n— 헤아림 · 정밀 만세력 사주\n#사주 #사주풀이 #헤아림`); flash('한 줄 정의를 복사했어요'); }
     catch { flash('복사 실패'); }
   }
 

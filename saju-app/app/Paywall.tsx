@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
+import { cloudGetEntitlement } from '@/lib/cloud';
 
 const KEY = 'saju_premium_v1';
 const CUSTOMER_KEY = 'saju_customer_key';
@@ -11,7 +12,7 @@ const LIST_PRICE = 9900;   // 정가 (줄 긋기 표시용)
 
 // 사장님 전용 잠금해제 코드 — 이 코드를 ?owner= 로 붙여 들어오면 결제 없이 자동 해제됩니다.
 // 바꾸고 싶으면 아래 문자열만 원하는 값으로 수정하면 돼요.
-const OWNER_CODE = 'myeongri-master-2026';
+const OWNER_CODE = 'heaarim-ed31bc854ab540aa-2026';
 
 /** 프리미엄 잠금 상태 (localStorage 영속) */
 export function usePremium(): [boolean, () => void] {
@@ -28,6 +29,14 @@ export function usePremium(): [boolean, () => void] {
       }
       setPremium(localStorage.getItem(KEY) === '1');
     } catch {}
+    // 로그인 상태면 서버 이용권을 진짜 권한으로 확인 (로컬 우회 보정)
+    cloudGetEntitlement().then((ent) => {
+      if (ent === true) { try { localStorage.setItem(KEY, '1'); } catch {} setPremium(true); }
+    }).catch(() => {});
+    // 다른 기기/로그인 동기화 직후 갱신
+    const onSync = () => { try { if (localStorage.getItem(KEY) === '1') setPremium(true); } catch {} };
+    window.addEventListener('saju:synced', onSync);
+    return () => window.removeEventListener('saju:synced', onSync);
   }, []);
   const unlock = () => { try { localStorage.setItem(KEY, '1'); } catch {} setPremium(true); };
   return [premium, unlock];

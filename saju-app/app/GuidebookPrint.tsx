@@ -40,7 +40,7 @@ export default function GuidebookPrint({ result, ai }: { result: SajuResult; ai:
     <div className="guidebook-print">
       {/* 표지 */}
       <section className="gb-cover">
-        <div className="gb-cover-mark">命理 · 人生 가이드북</div>
+        <div className="gb-cover-mark">헤아림 · 人生 가이드북</div>
         <div className="gb-cover-motif">{r.archetype.symbol}</div>
         <h1 className="gb-cover-title">{name}님의 사주 인생 가이드북</h1>
         <p className="gb-cover-sub">{r.archetype.motif.name} · 일주 {r.pillars.day.ganKor}{r.pillars.day.jiKor}({r.pillars.day.ganHanja}{r.pillars.day.jiHanja})</p>

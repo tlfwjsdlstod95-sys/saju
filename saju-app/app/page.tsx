@@ -176,7 +176,12 @@ export default function Home() {
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [notice, setNotice] = useState('');
-  useEffect(() => { setProfiles(listProfiles()); }, []);
+  useEffect(() => {
+    setProfiles(listProfiles());
+    const onSync = () => setProfiles(listProfiles()); // 로그인·다른기기 동기화 후 갱신
+    window.addEventListener('saju:synced', onSync);
+    return () => window.removeEventListener('saju:synced', onSync);
+  }, []);
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(''), 2000); };
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
@@ -310,9 +315,10 @@ export default function Home() {
   return (
     <main className="wrap">
       <div className="hero">
+        <div className="brand-name">헤아림</div>
         <div className="hero-kr">命理</div>
         <h1>사주, <span>나를 꿰뚫다</span></h1>
-        <p>천문 데이터로 본 정통 만세력 · 나를 가장 정확하게 읽어주는 사주 풀이</p>
+        <p>천문 데이터로 헤아리는 나 · 정밀 만세력 사주 풀이</p>
       </div>
 
       <div className="trust">
