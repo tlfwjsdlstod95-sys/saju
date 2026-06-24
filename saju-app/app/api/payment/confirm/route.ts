@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { auth as getSession } from '@/auth';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 
@@ -49,7 +51,30 @@ export async function POST(req: Request) {
     );
   }
 
-  // 승인 성공 — 핵심 정보만 반환 (실서비스라면 여기서 DB에 결제/이용권 기록)
+  const isTest = secretKey.startsWith('test_');
+
+  // 승인 성공 — 로그인 유저면 서버에 이용권/영수증을 기록한다.
+  // (이게 "진짜" 권한이라 localStorage 우회로 매출이 새지 않음)
+  try {
+    const session = await getSession();
+    const uid = (session as any)?.uid ?? null;
+    const sb = supabaseAdmin();
+    if (uid && sb) {
+      await sb.from('saju_entitlements').upsert(
+        { user_id: uid, premium: true, source: 'toss', last_order_id: data.orderId, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' },
+      );
+      await sb.from('saju_receipts').upsert(
+        {
+          order_id: data.orderId, user_id: uid,
+          order_name: data.orderName, amount: data.totalAmount,
+          method: data.method, approved_at: data.approvedAt, is_test: isTest,
+        },
+        { onConflict: 'order_id' },
+      );
+    }
+  } catch { /* 기록 실패해도 승인 자체는 성공으로 응답 */ }
+
   return NextResponse.json({
     ok: true,
     orderId: data.orderId,
@@ -57,6 +82,6 @@ export async function POST(req: Request) {
     amount: data.totalAmount,
     method: data.method,
     approvedAt: data.approvedAt,
-    isTest: secretKey.startsWith('test_'),
+    isTest,
   });
 }
