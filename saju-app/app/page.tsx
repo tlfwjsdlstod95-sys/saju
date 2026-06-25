@@ -369,21 +369,29 @@ export default function Home() {
         {error && <div className="warn error">{error}</div>}
       </div>
 
-      {profiles.length > 0 && (
-        <div className="card">
-          <h2>내 사주 보관함</h2>
-          <div className="meta" style={{ marginBottom: 14 }}>저장한 사주를 눌러 바로 다시 보고, <a href="/gunghap" style={{ color: 'var(--gold)' }}>궁합</a>에도 쓸 수 있어요.</div>
-          <div className="shelf">
-            {profiles.map((p) => (
-              <div className="shelf-chip" key={p.id} onClick={() => loadProfile(p)}>
-                <span className="shelf-emoji">{p.summary?.emoji ?? '🔮'}</span>
-                <span className="shelf-info"><b>{p.name}</b><small>{p.year}.{p.month}.{p.day} · {p.summary?.ilju ?? ''}</small></span>
-                <button className="shelf-x" onClick={(e) => { e.stopPropagation(); deleteProfile(p.id); }} aria-label="삭제">✕</button>
-              </div>
-            ))}
+      <div className="card shelf-card">
+        <h2>📁 내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
+        {profiles.length > 0 ? (
+          <>
+            <div className="meta" style={{ marginBottom: 14 }}>저장한 사주를 눌러 바로 다시 보고, <a href="/gunghap" style={{ color: 'var(--gold)' }}>궁합</a>에도 쓸 수 있어요.</div>
+            <div className="shelf">
+              {profiles.map((p) => (
+                <div className="shelf-chip" key={p.id} onClick={() => loadProfile(p)}>
+                  <span className="shelf-emoji">{p.summary?.emoji ?? '🔮'}</span>
+                  <span className="shelf-info"><b>{p.name}</b><small>{p.year}.{p.month}.{p.day} · {p.summary?.ilju ?? ''}</small></span>
+                  <button className="shelf-x" onClick={(e) => { e.stopPropagation(); deleteProfile(p.id); }} aria-label="삭제">✕</button>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="shelf-empty">
+            <div className="shelf-empty-ic">🗂️</div>
+            <p className="shelf-empty-t">아직 저장된 사주가 없어요</p>
+            <p className="shelf-empty-s">위에서 사주를 분석한 뒤 <b>‘💾 이 사주 보관함에 저장’</b>을 누르면 여기에 모여요.<br/>로그인하면 다른 기기에서도 보관함이 그대로 유지돼요.</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {result && (
         <>
