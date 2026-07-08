@@ -7,6 +7,7 @@ import { parseReadingStream } from '@/lib/saju/readingMeta';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
 import { computeHapchung } from '@/lib/saju/hapchung';
 import ShareCard from './ShareCard';
+import TalismanCard from './TalismanCard';
 import ReadingCard from './ReadingCard';
 import DailyFortune from './DailyFortune';
 import YearlyFortune from './YearlyFortune';
@@ -581,6 +582,8 @@ export default function Home() {
           <GaeunCard result={result} premium={premium} onLocked={() => setPayOpen(true)} />
 
           <ShareCard result={result} />
+
+          <TalismanCard result={result} />
 
           <Link href="/gunghap" className="gunghap-cta">
             💞 친구·연인과 사주 궁합 확인하기 →
