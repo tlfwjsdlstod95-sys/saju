@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
-import { buildChatSystem } from '@/lib/saju/llmPrompt';
+import { buildChatSystem, normalizeTone } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
 import type { BirthInput } from '@/lib/saju/types';
 
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: Partial<BirthInput> & { messages?: ChatMsg[] };
+  let body: Partial<BirthInput> & { messages?: ChatMsg[]; tone?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: '잘못된 요청' }, { status: 400 }); }
   if (!body.year || !body.month || !body.day) {
     return NextResponse.json({ error: '생년월일은 필수입니다.' }, { status: 400 });
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       max_tokens: 1200,
       temperature: 0.85,
       stream: true,
-      system: buildChatSystem(saju, age, nowYear),
+      system: buildChatSystem(saju, age, nowYear, normalizeTone(body.tone)),
       messages,
     }),
   });
