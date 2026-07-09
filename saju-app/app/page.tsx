@@ -169,6 +169,8 @@ export default function Home() {
   const [premium, unlock] = usePremium();
   const [payOpen, setPayOpen] = useState(false);
   const [pendingAi, setPendingAi] = useState(false);
+  // 풀이 톤(문체) — default 선배 톤 / blunt 팩폭 / warm 따뜻한 상담
+  const [tone, setTone] = useState<'default' | 'blunt' | 'warm'>('default');
 
   // 무료는 결과와 함께 AI 풀이가 자동 생성됨. 이 버튼은 '프리미엄 심층(Sonnet) 재생성'.
   function onAiClick() { if (premium) askAI('premium'); else { setPendingAi(true); setPayOpen(true); } }
@@ -187,6 +189,7 @@ export default function Home() {
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(''), 2000); };
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
+    tone, // 풀이·상담 말투 (api/saju 등에선 무시됨)
     name: form.name,
     year: override?.year ?? +form.year, month: override?.month ?? +form.month, day: override?.day ?? +form.day,
     hour: form.unknownTime ? null : (form.hour === '' ? null : +form.hour),
@@ -197,8 +200,8 @@ export default function Home() {
   });
 
   // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
-  const chartKey = (b: any, tier: string) =>
-    `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}:${tier}`;
+  const chartKey = (b: any, tier: string, tn: string) =>
+    `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}:${tier}:${tn}`;
 
   async function runAnalysis(bodyObj: any) {
     setError(''); setResult(null); setAi(null); setAiErr('');
@@ -270,9 +273,10 @@ export default function Home() {
 
   function deleteProfile(id: string) { setProfiles(removeProfile(id)); }
 
-  async function askAI(tier: 'free' | 'premium' = 'free', bodyObj?: any) {
+  async function askAI(tier: 'free' | 'premium' = 'free', bodyObj?: any, toneArg?: 'default' | 'blunt' | 'warm') {
+    const tn = toneArg ?? tone;
     const base = bodyObj ?? reqBody();
-    const key = chartKey(base, tier);
+    const key = chartKey(base, tier, tn);
     // 캐시 확인 — 같은 명식 같은 티어면 재호출 없이 즉시 표시
     try {
       const cached = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
@@ -286,7 +290,7 @@ export default function Home() {
     try {
       const res = await fetch('/api/reading', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...base, tier }),
+        body: JSON.stringify({ ...base, tier, tone: tn }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -454,7 +458,21 @@ export default function Home() {
 
           <div className="card reading">
             <h2>사주 풀이</h2>
-            <div className="meta" style={{ marginBottom: 18 }}>{result.input.name ? `${result.input.name}님` : '당신'}을 꿰뚫어 보는 선배의 시선으로, 따뜻하지만 솔직하게 풀었습니다.</div>
+            <div className="meta" style={{ marginBottom: 12 }}>{result.input.name ? `${result.input.name}님` : '당신'}을 꿰뚫어 보는 선배의 시선으로, 따뜻하지만 솔직하게 풀었습니다.</div>
+
+            {/* 풀이 톤 선택 — 같은 명식, 다른 말투 (톤별 캐시) */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>말투</span>
+              {([['default', '🎓 선배 톤'], ['blunt', '🔥 팩폭'], ['warm', '🍵 따뜻하게']] as const).map(([k, label]) => (
+                <button
+                  key={k}
+                  className="mini-btn"
+                  style={tone === k ? { background: 'var(--gold)', color: '#14101f', borderColor: 'transparent', fontWeight: 700 } : undefined}
+                  disabled={aiLoading || aiStreaming}
+                  onClick={() => { if (tone === k) return; setTone(k); askAI('free', undefined, k); }}
+                >{label}</button>
+              ))}
+            </div>
 
             {!ai && (
               <div className="ai-cta">
