@@ -29,7 +29,36 @@ function luckDynamicsFacts(r: SajuResult, age: number): string {
   return lines.length ? `\n[원국·대운·세운 동적 작용 — 이미 계산된 사실, 이 흐름을 풀이에 녹일 것]\n${lines.map((l) => `- ${l}`).join('\n')}` : '';
 }
 
-export function buildSystem(): string {
+// ── 풀이 톤(문체) — 사용자가 선택. default=선배 톤(기존), blunt=팩폭, warm=따뜻한 상담 ──
+export type ReadingTone = 'default' | 'blunt' | 'warm';
+
+export function normalizeTone(t: unknown): ReadingTone {
+  return t === 'blunt' || t === 'warm' ? t : 'default';
+}
+
+function toneDirective(tone: ReadingTone): string {
+  if (tone === 'blunt') {
+    return `
+
+[톤 오버라이드 — 팩폭 모드 (사용자가 직접 선택함, 위 톤 지침보다 우선)]
+- 쿠션어·에두르기·과한 위로 금지. 결점과 리스크를 정면으로, 구체적으로 짚습니다. '뼈 때리는 선배' 모드입니다.
+- 문장은 짧게 끊어 치세요. 감탄사·이모지 없이. "솔직히 말할게요" 같은 예고도 없이 바로 본론.
+- 단, 인신공격·저주·조롱이 아니라 '사실 → 그대로 두면 치르는 대가 → 처방'의 구조입니다. 각 섹션 끝의 "그러니 이렇게 해"는 유지하되 더 짧고 단호하게.
+- 장점 섹션도 담백하게. 칭찬을 부풀리지 말고 "이건 확실히 무기다" 수준으로.`;
+  }
+  if (tone === 'warm') {
+    return `
+
+[톤 오버라이드 — 따뜻한 상담 모드 (사용자가 직접 선택함, 위 톤 지침보다 우선)]
+- 공감 먼저, 진단은 그 다음. 다그치지 않고 곁에 앉아 말해주는 상담사의 어조로.
+- 단점·리스크도 빼놓지 않되 '지금까지 애썼다 → 왜 그랬는지(명식 근거) → 이렇게 하면 풀린다'의 순서로 감쌉니다.
+- 단정은 유지하되 어휘를 부드럽게. 겁주는 표현 대신 안심시키면서 정확하게.
+- 과장된 긍정·근거 없는 희망 금지. 위로는 사실에 뿌리내릴 때만.`;
+  }
+  return '';
+}
+
+export function buildSystem(tone: ReadingTone = 'default'): string {
   return `당신은 수십 년 내공의 사주 명리학자입니다. 단, 말하는 방식이 다릅니다.
 점집 할머니가 아니라 — 나를 꿰뚫어 보는 '선배'처럼 말합니다.
 따뜻하지만 직설적으로. 틀린 말은 없지만 듣기엔 따끔하게. 읽고 나면 이상하게 위로되는 그 느낌으로.
@@ -86,7 +115,7 @@ export function buildSystem(): string {
   money 4~5문장(어떻게 돈 버는 사람인지·어떤 일에서 빛나는지·지금 나이에 집중할 것) / health 3~4문장(체질·무너지는 패턴·회복법·스트레스 시 몸 반응) /
   people 3~4문장(내 편이 되는 사람·조심할 관계·귀인은 어떤 형태로 오는지) / bigpicture 3~4문장(지금이 씨앗 심는 때인지 수확하는 때인지) /
   last 3~4문장(짧게, 독하게, 근데 따뜻하게 등 두드리듯 시작 — 그리고 [반드시] 마지막은 사용자의 '지금 현실 고민'을 콕 집어 묻는 질문 한 줄로 끝냅니다. 명식에서 올해 가장 강하게 들어오는 기운(예: 재성·관성·역마 등)에 맞춰, 그 사람이 실제로 고민할 법한 영역을 짚어 물으세요. 예: "올해 문서·계약운이 강하게 들어오는데, 혹시 요즘 이직이나 이사·계약 같은 거 실제로 마음에 두고 있는 거 있어요? 있으면 아래 상담에서 그 부분만 더 깊이 짚어줄게요." 일반적인 질문 말고, 이 명식에 근거한 구체적 질문으로).
-- 전체 합쳐 1,500자 이상. 섹션마다 이야기가 흐르듯 이어지게.`;
+- 전체 합쳐 1,500자 이상. 섹션마다 이야기가 흐르듯 이어지게.${toneDirective(tone)}`;
 }
 
 export function buildUser(r: SajuResult, age: number, nowYear: number): string {
@@ -170,7 +199,7 @@ export function buildYearlyUser(r: SajuResult, y: YearlyFortune, age: number): s
 
 // ── AI 1:1 상담 챗 ──
 // 명식은 결정론 엔진이 끝낸 사실. LLM은 사용자의 질문에 '선배 톤'으로 답만 한다.
-export function buildChatSystem(r: SajuResult, age: number, nowYear: number): string {
+export function buildChatSystem(r: SajuResult, age: number, nowYear: number, tone: ReadingTone = 'default'): string {
   const nm = r.input.name || '이분';
   const P = (p: any, pos: string) =>
     p ? `${pos} ${p.ganKor}${p.jiKor}(${p.ganHanja}${p.jiHanja}) 천간 ${p.ganOhaeng}/${p.ganSipsin || '일간 본인'}, 지지 ${p.jiOhaeng}/${p.jiSipsin}`
@@ -213,7 +242,7 @@ ${structureFacts(r)}
 현재 대운(${dw.age}세~): ${dw.ganKor}${dw.jiKor}(길흉 ${dw.score}/100) · 올해 세운(${nowYear}): ${thisY.ganKor}${thisY.jiKor} ${thisY.ganSipsin}운(길흉 ${thisY.score}/100)
 ${r.pillars.hour ? '' : '※ 출생시간 미상이므로 시주는 언급하지 말고 일간 중심으로 답하세요.'}
 
-이 명식을 근거로, ${nm === '이분' ? '상대' : nm + '님'}의 질문에 선배 톤으로 답하세요.`;
+이 명식을 근거로, ${nm === '이분' ? '상대' : nm + '님'}의 질문에 선배 톤으로 답하세요.${toneDirective(tone)}`;
 }
 
 // ── 궁합 AI 풀이 ──
