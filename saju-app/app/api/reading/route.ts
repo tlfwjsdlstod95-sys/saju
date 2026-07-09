@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
-import { buildSystem, buildUser } from '@/lib/saju/llmPrompt';
+import { buildSystem, buildUser, normalizeTone } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
 import type { BirthInput } from '@/lib/saju/types';
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: Partial<BirthInput> & { tier?: string };
+  let body: Partial<BirthInput> & { tier?: string; tone?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: '잘못된 요청' }, { status: 400 }); }
   if (!body.year || !body.month || !body.day) {
     return NextResponse.json({ error: '생년월일은 필수입니다.' }, { status: 400 });
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       max_tokens: maxTokens,
       temperature: 0.85,
       stream: true,
-      system: buildSystem(),
+      system: buildSystem(normalizeTone(body.tone)),
       messages: [{ role: 'user', content: buildUser(saju, age, nowYear) }],
     }),
   });
