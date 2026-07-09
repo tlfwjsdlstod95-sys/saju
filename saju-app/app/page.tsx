@@ -324,7 +324,7 @@ export default function Home() {
         <div className="brand-name">헤아림</div>
         <div className="hero-kr">命理</div>
         <h1>사주, <span>나를 꿰뚫다</span></h1>
-        <p>천문 데이터로 헤아리는 나 · 정밀 만세력 사주 풀이</p>
+        <p>틀린 사주로 인생을 정할 순 없으니까 — 천문 데이터로 계산한 진짜 명식 위에서, 인생의 결정을 돕습니다</p>
       </div>
 
       <div className="trust">
@@ -532,7 +532,7 @@ export default function Home() {
 
           <div className="card premium">
             <h2>{premium ? '✓ 정밀 리포트 (이용 중)' : '🔒 정밀 리포트 (프리미엄)'}</h2>
-            <p className="meta" style={{ marginBottom: 14 }}>무료 풀이로 큰 흐름을 봤다면, 인생의 디테일은 정밀 리포트에서 확인하세요.</p>
+            <p className="meta" style={{ marginBottom: 14 }}>이직·이사·계약·연애 — 진짜 결정을 앞뒀다면, 정밀 리포트에서 '언제, 어느 방향으로'까지 확인하세요.</p>
             <ul className="prem-list">
               <li>🔮 프리미엄 심층 AI 풀이 — 더 길고 깊게, 무제한 재생성</li>
               <li>📈 평생 대운 80년 상세 — 시기별 재물·직업·건강 변곡점</li>

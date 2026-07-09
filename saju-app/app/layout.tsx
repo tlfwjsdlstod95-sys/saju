@@ -7,7 +7,7 @@ import AccountSync from './AccountSync';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const TITLE = '헤아림 · 정밀 만세력 사주';
-const DESC = '천문 데이터로 헤아리는 나. 야자시·균시차까지 보정한 정밀 만세력 사주 풀이.';
+const DESC = '틀린 사주로 인생을 정할 순 없으니까. 야자시·균시차까지 보정한 정밀 만세력 위에서, 이직·이사·계약의 시기와 방향을 짚어주는 AI 사주 가이드.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
