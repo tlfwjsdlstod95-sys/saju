@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       max_tokens: 900,
       temperature: 0.8,
       stream: true,
-      system: buildYearlySystem(),
+      system: [{ type: 'text', text: buildYearlySystem(), cache_control: { type: 'ephemeral' } }], // 프롬프트 캐싱
       messages: [{ role: 'user', content: buildYearlyUser(saju, yearly, age) }],
     }),
   });
