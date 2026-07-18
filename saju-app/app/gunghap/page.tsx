@@ -98,7 +98,25 @@ export default function Gunghap() {
     return () => window.removeEventListener('saju:synced', onSync);
   }, []);
 
-  function onGunghapAiClick() { if (premium) askGunghapAI(); else { setPendingAi(true); setPayOpen(true); } }
+  // 초대 특전: ?invite=1 로 유입 + 미사용이면 AI 궁합 심층 풀이 1회 무료 (바이럴 루프 인센티브)
+  const [inviteFree, setInviteFree] = useState(false);
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('invite') && !localStorage.getItem('saju_gh_invite_used_v1')) setInviteFree(true);
+    } catch {}
+  }, []);
+
+  function onGunghapAiClick() {
+    if (premium) { askGunghapAI(); return; }
+    if (inviteFree) {
+      try { localStorage.setItem('saju_gh_invite_used_v1', '1'); } catch {}
+      setInviteFree(false);
+      askGunghapAI();
+      return;
+    }
+    setPendingAi(true); setPayOpen(true);
+  }
   function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askGunghapAI(); } }
 
   const body = (p: P) => ({
@@ -171,8 +189,8 @@ export default function Gunghap() {
             <h2>AI 궁합 풀이</h2>
             {!ai && (
               <div className="ai-cta">
-                <div className="ai-cta-txt"><b>💞 AI 궁합 심층 풀이 {!premium && <span className="lock-tag">프리미엄</span>}</b><span>두 사람의 명식을 AI가 연애 고수 선배처럼 풀어드려요. (소름 주의)</span></div>
-                <button className="btn ai-btn" onClick={onGunghapAiClick} disabled={aiStreaming}>{premium ? 'AI로 궁합 풀기 →' : '🔒 잠금 해제하고 AI로 풀기'}</button>
+                <div className="ai-cta-txt"><b>💞 AI 궁합 심층 풀이 {!premium && (inviteFree ? <span className="lock-tag">🎁 초대 특전 1회 무료</span> : <span className="lock-tag">프리미엄</span>)}</b><span>{inviteFree && !premium ? '친구 초대로 오셨네요! AI 심층 궁합 풀이 1회가 무료예요.' : '두 사람의 명식을 AI가 연애 고수 선배처럼 풀어드려요. (소름 주의)'}</span></div>
+                <button className="btn ai-btn" onClick={onGunghapAiClick} disabled={aiStreaming}>{premium ? 'AI로 궁합 풀기 →' : inviteFree ? '🎁 무료로 AI 궁합 풀기 →' : '🔒 잠금 해제하고 AI로 풀기'}</button>
                 {aiErr && <div className="warn" style={{ marginTop: 12 }}>{aiErr}</div>}
               </div>
             )}
