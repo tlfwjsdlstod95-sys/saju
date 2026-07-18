@@ -88,7 +88,7 @@ export interface Yongsin {
   johu: Ohaeng | null; // 조후용신
   huisin: Ohaeng;      // 희신(용신을 생하는 오행)
   gisin: Ohaeng;       // 기신(용신을 극하는 오행)
-  method: '조후우선' | '억부';
+  method: '조후우선' | '억부' | '종격';
   desc: string;
 }
 
@@ -101,8 +101,30 @@ function gwanOhaeng(dayO: Ohaeng): Ohaeng {
   return (Object.keys(GEUK) as Ohaeng[]).find((x) => GEUK[x] === dayO)!;
 }
 
-export function computeYongsin(dayGan: number, strength: number, monthJi: number): Yongsin {
+export function computeYongsin(dayGan: number, strength: number, monthJi: number, counts?: Partial<Record<Ohaeng, number>>): Yongsin {
   const dayO = GAN_OHAENG[dayGan];
+
+  // ── 종격(從格) — 명식이 극단적으로 기울면 억부 대신 '대세를 따르는' 용신 (엣지 케이스 방어) ──
+  if (strength >= 0.88) {
+    // 종왕격(전왕): 일간 세력이 판을 지배 → 왕한 기운을 따름
+    const huisin = inseongOhaeng(dayO), gisin = gwanOhaeng(dayO);
+    return { primary: dayO, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+      desc: `명식이 일간 쪽으로 극단적으로 기울어, 일반 억부가 아니라 대세를 따르는 종왕격(從旺格)으로 봅니다. 왕한 ${dayO} 기운을 거스르지 말고 올라타는 것이 길 — ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
+  }
+  if (strength <= 0.12 && counts) {
+    // 종세: 일간이 기댈 곳 없이 약하고 특정 세력이 지배 → 식상(종아)/재성(종재)/관성(종살)을 따름
+    const cand: [Ohaeng, string][] = [
+      [SAENG[dayO], '종아격(從兒格)'], [GEUK[dayO], '종재격(從財格)'], [gwanOhaeng(dayO), '종살격(從殺格)'],
+    ];
+    cand.sort((a, b) => (counts[b[0]] ?? 0) - (counts[a[0]] ?? 0));
+    const [primary, gname] = cand[0];
+    if ((counts[primary] ?? 0) >= 3) {
+      const huisin = inseongOhaeng(primary), gisin = gwanOhaeng(primary);
+      return { primary, eokbu: inseongOhaeng(dayO), johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+        desc: `일간이 기댈 곳 없이 약하고 ${primary} 세력이 판을 지배해, 일반 억부가 아니라 대세를 따르는 ${gname}으로 봅니다. 억지로 나를 세우기보다 ${primary}의 흐름에 올라타는 것이 길 — ${primary}·${huisin} 기운이 약이고, 흐름을 거스르는 ${gisin} 기운은 주의합니다.` };
+    }
+  }
+
   // 억부용신: 신약→인성(생조), 신강→식상(설기), 중화→재성(균형)
   const eokbu: Ohaeng =
     strength <= 0.38 ? inseongOhaeng(dayO)
@@ -140,9 +162,17 @@ export function computeGyeokYong(
   dayGan: number,
   strength: number,
 ): GyeokYong {
+  // 오행 분포(천간·지지 8자) — 종격 판정용
+  const counts: Partial<Record<Ohaeng, number>> = {};
+  for (const p of [pillars.year, pillars.month, pillars.day, pillars.hour]) {
+    if (!p) continue;
+    const g = p.ganOhaeng as Ohaeng, j = p.jiOhaeng as Ohaeng;
+    counts[g] = (counts[g] ?? 0) + 1;
+    counts[j] = (counts[j] ?? 0) + 1;
+  }
   return {
     gyeokguk: computeGyeokguk(pillars, dayGan),
-    yongsin: computeYongsin(dayGan, strength, pillars.month.ji),
+    yongsin: computeYongsin(dayGan, strength, pillars.month.ji, counts),
     johu: computeJohu(dayGan, pillars.month.ji),
   };
 }

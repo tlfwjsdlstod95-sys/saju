@@ -95,16 +95,24 @@ export function computeSaju(input: BirthInput): SajuResult {
 
   // --- 3) 일주(日柱): 진태양시 달력일 기준 60갑자 ---
   const jdnDay = gregorianToJDN(ast.year, ast.month, ast.day);
-  const dayIndex = ((jdnDay + 49) % 60 + 60) % 60; // 0=갑자, 2000-01-01=무오 기준 보정
-  const dayGan = dayIndex % 10;
-  const dayJi = dayIndex % 12;
+  let dayIndex = ((jdnDay + 49) % 60 + 60) % 60; // 0=갑자, 2000-01-01=무오 기준 보정
 
-  // 야자시/조자시 판정
+  // 야자시/조자시 판정 + 자시 학파 옵션
+  // yaja(기본) = 야자시 인정: 23시대 출생은 당일 일주 유지 (현행)
+  // jeongja = 정자시(자시일변): 23시부터 다음날 일주로 넘김
+  const jasiMode: 'yaja' | 'jeongja' = input.jasiMode === 'jeongja' ? 'jeongja' : 'yaja';
   let jasiType: SajuResult['corrected']['jasiType'] = hour === null ? null : '일반';
   if (hour !== null) {
-    if (ast.hour === 23) jasiType = '야자시';
-    else if (ast.hour === 0) jasiType = '조자시';
+    if (ast.hour === 23) {
+      jasiType = '야자시';
+      if (jasiMode === 'jeongja') {
+        dayIndex = (dayIndex + 1) % 60;
+        warnings.push('정자시(자시일변) 학파 적용: 23시대 출생이라 일주를 다음날로 넘겨 계산했습니다. (기본 설정은 야자시 인정)');
+      }
+    } else if (ast.hour === 0) jasiType = '조자시';
   }
+  const dayGan = dayIndex % 10;
+  const dayJi = dayIndex % 12;
 
   // --- 4) 년주(年柱): 입춘 기준 ---
   const sajuYear = getSajuYear(birthKSTjd, year);
@@ -185,6 +193,7 @@ export function computeSaju(input: BirthInput): SajuResult {
       summerTimeApplied: summer,
       apparentSolarDateTime: `${ast.year}-${String(ast.month).padStart(2, '0')}-${String(ast.day).padStart(2, '0')} ${String(ast.hour).padStart(2, '0')}:${String(ast.minute).padStart(2, '0')}`,
       jasiType,
+      jasiMode,
     },
     pillars,
     dayMaster: { gan: dayGan, ganKor: CHEONGAN[dayGan], ohaeng: GAN_OHAENG[dayGan] },

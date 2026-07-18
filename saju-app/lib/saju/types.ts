@@ -14,6 +14,7 @@ export interface BirthInput {
   sex?: 'M' | 'F';
   unknownTime?: boolean; // 시간 모름
   name?: string;         // 이름(선택) — 풀이 문구에 반영
+  jasiMode?: 'yaja' | 'jeongja'; // 자시 학파: yaja(기본)=야자시 인정(23시대 일주 유지) / jeongja=정자시(23시부터 다음날 일주)
 }
 
 export interface Pillar {
@@ -63,6 +64,7 @@ export interface SajuResult {
     summerTimeApplied: boolean;
     apparentSolarDateTime: string; // ISO (진태양시)
     jasiType: '일반' | '야자시' | '조자시' | null;
+    jasiMode?: 'yaja' | 'jeongja'; // 적용된 자시 학파
   };
   pillars: {
     year: Pillar;
