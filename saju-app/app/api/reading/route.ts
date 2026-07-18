@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     minute: clampInt(body.minute ?? 0, 0, 59, 0),
     longitude: body.longitude ? Number(body.longitude) : undefined,
     sex: body.sex, unknownTime: !!body.unknownTime,
+    jasiMode: body.jasiMode === 'jeongja' ? 'jeongja' : undefined,
     name: body.name ? String(body.name).slice(0, 20) : undefined,
   };
 
