@@ -158,6 +158,7 @@ export default function Home() {
     name: '', year: '', month: '', day: '', hour: '', minute: '0',
     city: '서울', unknownTime: false, sex: 'M' as 'M' | 'F',
     calType: 'solar' as 'solar' | 'lunar', isLeapMonth: false,
+    jasiMode: 'yaja' as 'yaja' | 'jeongja', // 자시 학파 (23시대 출생 시에만 노출)
   });
   const [result, setResult] = useState<SajuResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -190,6 +191,7 @@ export default function Home() {
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
     tone, // 풀이·상담 말투 (api/saju 등에선 무시됨)
+    jasiMode: form.jasiMode,
     name: form.name,
     year: override?.year ?? +form.year, month: override?.month ?? +form.month, day: override?.day ?? +form.day,
     hour: form.unknownTime ? null : (form.hour === '' ? null : +form.hour),
@@ -201,7 +203,7 @@ export default function Home() {
 
   // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
   const chartKey = (b: any, tier: string, tn: string) =>
-    `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}:${tier}:${tn}`;
+    `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}-${b.jasiMode || 'yaja'}:${tier}:${tn}`;
 
   async function runAnalysis(bodyObj: any) {
     setError(''); setResult(null); setAi(null); setAiErr('');
@@ -267,12 +269,21 @@ export default function Home() {
   }
 
   function loadProfile(p: Profile) {
-    setForm({ name: p.name, year: String(p.year), month: String(p.month), day: String(p.day), hour: p.hour === null ? '' : String(p.hour), minute: String(p.minute), city: p.city, unknownTime: p.unknownTime, sex: p.sex, calType: 'solar', isLeapMonth: false });
+    setForm({ name: p.name, year: String(p.year), month: String(p.month), day: String(p.day), hour: p.hour === null ? '' : String(p.hour), minute: String(p.minute), city: p.city, unknownTime: p.unknownTime, sex: p.sex, calType: 'solar', isLeapMonth: false, jasiMode: 'yaja' });
     runAnalysis({ name: p.name, year: p.year, month: p.month, day: p.day, hour: p.unknownTime ? null : p.hour, minute: p.minute, unknownTime: p.unknownTime, longitude: CITIES[p.city] ?? 126.978, sex: p.sex });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function deleteProfile(id: string) { setProfiles(removeProfile(id)); }
+
+  // 궁합 초대 문구 복사 — CAC 0원 바이럴 루프
+  async function copyInviteLink() {
+    const who = result?.archetype?.motif?.name;
+    try {
+      await navigator.clipboard.writeText(`나 사주 봤는데 완전 소름이야${who ? ` (나 "${who}"래ㅋㅋ)` : ''}. 우리 궁합도 볼래? 👉 ${window.location.origin}/gunghap`);
+      flash('초대 문구를 복사했어요 — 붙여넣어 보내세요!');
+    } catch { flash('복사 실패'); }
+  }
 
   async function askAI(tier: 'free' | 'premium' = 'free', bodyObj?: any, toneArg?: 'default' | 'blunt' | 'warm') {
     const tn = toneArg ?? tone;
@@ -373,6 +384,15 @@ export default function Home() {
           <label className="chk"><input type="radio" name="sex" checked={form.sex === 'M'} onChange={() => set('sex', 'M')} /> 남</label>
           <label className="chk"><input type="radio" name="sex" checked={form.sex === 'F'} onChange={() => set('sex', 'F')} /> 여</label>
         </div>
+        {!form.unknownTime && form.hour === '23' && (
+          <div className="row" style={{ marginTop: 10, alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>자시(子時) 학파</span>
+            <select value={form.jasiMode} onChange={(e) => set('jasiMode', e.target.value)}>
+              <option value="yaja">야자시 인정 — 당일 일주 (기본·통용)</option>
+              <option value="jeongja">정자시 — 23시부터 다음날 일주</option>
+            </select>
+          </div>
+        )}
         <button className="btn" onClick={submit} disabled={loading}>{loading ? '천문 데이터 분석 중…' : '내 사주 분석하기 →'}</button>
         {error && <div className="warn error">{error}</div>}
       </div>
@@ -407,6 +427,16 @@ export default function Home() {
             <div className="lead-mark">✦ {result.input.name ? `${result.input.name}님 사주` : '당신의 사주'}{ai && <span className="ai-badge">✨ AI 심층 풀이</span>}</div>
             <p className="lead-quote">{ai && ai.lead ? ai.lead : result.readingLead}{aiStreaming && ai && !ai.lead && <span className="caret" />}</p>
             <button className="save-btn" onClick={saveCurrent}>💾 이 사주 보관함에 저장</button>
+          </div>
+
+          {/* 바이럴 루프: 궁합은 상대를 데려와야 완성 — 결과 직후 최상단 배치 */}
+          <div className="card" style={{ textAlign: 'center' }}>
+            <h2>💞 이 사주, 그 사람이랑은?</h2>
+            <div className="meta" style={{ marginBottom: 14 }}>사주는 혼자 보지만 궁합은 둘이 봐야 완성돼요. 초대 문구를 보내서 서로의 명식으로 확인해 보세요. 궁합 점수는 무료!</div>
+            <div className="share-actions" style={{ justifyContent: 'center' }}>
+              <Link href="/gunghap" className="btn share-btn" style={{ textDecoration: 'none' }}>💞 우리 궁합 보러 가기</Link>
+              <button className="btn share-btn ghost" onClick={copyInviteLink}>🔗 초대 문구 복사</button>
+            </div>
           </div>
 
           <DailyFortune result={result} />

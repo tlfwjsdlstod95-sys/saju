@@ -84,16 +84,21 @@ function draw(canvas: HTMLCanvasElement, r: SajuResult) {
   });
   y += 70;
 
-  // 작은 사주 한 줄 (정확함 시그널, 과하지 않게)
+  // 희소성 라인 — 진짜 숫자만 (60갑자 중 하나 = 약 1.7%)
   ctx.textAlign = 'center';
+  ctx.fillStyle = '#e6c878'; ctx.font = '700 28px "Noto Sans KR", sans-serif';
+  ctx.fillText(`60일주 중 단 하나, '${r.pillars.day.ganKor}${r.pillars.day.jiKor}일주' — 약 1.7%의 구조`, W / 2, y);
+  y += 42;
+
+  // 작은 사주 한 줄 (정확함 시그널, 과하지 않게)
   ctx.fillStyle = '#8a82a6'; ctx.font = '400 26px "Noto Sans KR", sans-serif';
-  ctx.fillText(`기운 ${r.dayMaster.ohaeng}(${OHAENG_HANJA[r.dayMaster.ohaeng]}) · ${strong ? '신강' : r.dayMasterStrength <= 0.38 ? '신약' : '중화'} · 일주 ${r.pillars.day.ganKor}${r.pillars.day.jiKor}`, W / 2, y);
+  ctx.fillText(`기운 ${r.dayMaster.ohaeng}(${OHAENG_HANJA[r.dayMaster.ohaeng]}) · ${strong ? '신강' : r.dayMasterStrength <= 0.38 ? '신약' : '중화'}`, W / 2, y);
 
   // 푸터
   ctx.fillStyle = '#ffffff'; ctx.font = '700 40px "Noto Sans KR", sans-serif';
   ctx.fillText('내 일간 물상은? 🔮', W / 2, H - 116);
   ctx.fillStyle = '#e6c878'; ctx.font = '500 28px "Noto Sans KR", sans-serif';
-  ctx.fillText('헤아림 · 정밀 만세력 사주', W / 2, H - 66);
+  ctx.fillText('命理 · 사주, 나를 꿰뚫다', W / 2, H - 66);
 }
 
 export default function ShareCard({ result }: { result: SajuResult }) {
