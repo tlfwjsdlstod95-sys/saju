@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model, max_tokens: 2600, temperature: 0.85, stream: true,
-        system: buildGunghapSystem(),
+        system: [{ type: 'text', text: buildGunghapSystem(), cache_control: { type: 'ephemeral' } }], // 프롬프트 캐싱
         messages: [{ role: 'user', content: buildGunghapUser(sajuA, sajuB, compat) }],
       }),
     });
