@@ -42,6 +42,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'AI 심층 풀이는 프리미엄 전용입니다. 기본 풀이를 이용해 주세요.' }, { status: 402 });
   }
 
+  // ── 명식 단위 서버 캐시 (Upstash Redis REST) ──
+  // 같은 명식+톤이면 기기·유저가 달라도 캐시 반환(원가 0). 환경변수 없으면 자동 비활성.
+  const tone = normalizeTone(body.tone);
+  const kvUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const kvTok = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const cacheKey = `reading:v1:${input.year}-${input.month}-${input.day}-${input.hour}-${input.minute}-${input.sex ?? ''}-${Math.round((input.longitude ?? 126.978) * 100)}-${input.jasiMode ?? 'yaja'}-${(input.name ?? '').trim()}:${tone}`;
+  if (kvUrl && kvTok) {
+    try {
+      const g = await fetch(`${kvUrl}/get/${encodeURIComponent(cacheKey)}`, {
+        headers: { Authorization: `Bearer ${kvTok}` }, cache: 'no-store',
+      });
+      if (g.ok) {
+        const j = await g.json();
+        if (typeof j?.result === 'string' && j.result.length > 200) {
+          return new Response(j.result, {
+            headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-cache', 'x-saju-cache': 'hit' },
+          });
+        }
+      }
+    } catch { /* 캐시 실패는 무시하고 정상 생성 */ }
+  }
+
   const saju = computeSaju(input);
   const nowYear = new Date().getFullYear();
   const age = nowYear - input.year;
@@ -63,7 +85,7 @@ export async function POST(req: Request) {
       temperature: 0.85,
       stream: true,
       // 프롬프트 캐싱: 시스템 프롬프트(톤별 3종뿐)는 유저가 달라도 동일 → 입력 비용 ~90% 절감
-      system: [{ type: 'text', text: buildSystem(normalizeTone(body.tone)), cache_control: { type: 'ephemeral' } }],
+      system: [{ type: 'text', text: buildSystem(tone), cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: buildUser(saju, age, nowYear) }],
     }),
   });
@@ -84,6 +106,8 @@ export async function POST(req: Request) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let buf = '';
+      let full = ''; // 캐시 저장용 전체 텍스트
+      let broken = false;
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -99,14 +123,24 @@ export async function POST(req: Request) {
             try {
               const j = JSON.parse(payload);
               if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
+                full += j.delta.text;
                 controller.enqueue(encoder.encode(j.delta.text));
               }
             } catch { /* 부분 청크 무시 */ }
           }
         }
       } catch (e) {
+        broken = true;
         controller.enqueue(encoder.encode('\n\n(스트림이 중단되었어요. 다시 시도해 주세요.)'));
       } finally {
+        // 완결된 풀이만 캐시에 저장 (TTL 60일). 실패해도 무시.
+        if (!broken && full.length > 500 && kvUrl && kvTok) {
+          try {
+            await fetch(`${kvUrl}/set/${encodeURIComponent(cacheKey)}?EX=5184000`, {
+              method: 'POST', headers: { Authorization: `Bearer ${kvTok}` }, body: full,
+            });
+          } catch {}
+        }
         controller.close();
       }
     },
