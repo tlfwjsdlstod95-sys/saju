@@ -32,6 +32,11 @@ export async function POST(req: Request) {
     };
 
     const result = computeSaju(input);
+    // 누적 풀이 수 카운터 (실측 — 랜딩 사회적 증거용. env 없으면 생략, 실패 무시)
+    const kvUrl = process.env.UPSTASH_REDIS_REST_URL, kvTok = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (kvUrl && kvTok) {
+      fetch(`${kvUrl}/incr/stat:readings_total`, { headers: { Authorization: `Bearer ${kvTok}` } }).catch(() => {});
+    }
     return NextResponse.json(result);
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? '계산 중 오류가 발생했습니다.' }, { status: 500 });
