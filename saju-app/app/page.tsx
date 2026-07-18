@@ -181,6 +181,11 @@ export default function Home() {
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [notice, setNotice] = useState('');
+  // 누적 풀이 수 (실측 카운터 — 100 미만이면 표시 안 함)
+  const [stats, setStats] = useState(0);
+  useEffect(() => {
+    fetch('/api/stats').then((r) => r.json()).then((d) => setStats(d?.total ?? 0)).catch(() => {});
+  }, []);
   useEffect(() => {
     setProfiles(listProfiles());
     const onSync = () => setProfiles(listProfiles()); // 로그인·다른기기 동기화 후 갱신
@@ -343,12 +348,15 @@ export default function Home() {
 
       <div className="trust">
         <div className="trust-badges">
-          <span className="tb">⚙ VSOP87 천문 알고리즘</span>
-          <span className="tb">🛰 한국천문연구원(KASI) 기준 검증</span>
-          <span className="tb">◷ 절기·균시차·경도·야자시 보정</span>
-          <span className="tb">◎ 일주 정밀도 99.999%</span>
-          <span className="tb">🧪 만세력 1,000건 교차 검증 통과</span>
+          <span className="tb">🧪 만세력 1,000건 교차 검증 — 1000/1000 일치</span>
+          <span className="tb">🛰 절기 시각, 천문연구원(KASI) 공표값 ±1분</span>
+          <span className="tb">◷ 야자시·서머타임·출생지 경도 보정</span>
         </div>
+        {stats >= 100 && (
+          <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-mute)', textAlign: 'center' }}>
+            지금까지 <b style={{ color: 'var(--gold)' }}>{stats.toLocaleString()}명</b>이 명식을 확인했어요
+          </p>
+        )}
         <p className="trust-sub">대부분의 무료 만세력이 놓치는 진태양시·야자시·서머타임까지 보정해, 역술가가 직접 뽑은 명식과 일치합니다.</p>
       </div>
 
@@ -356,6 +364,9 @@ export default function Home() {
 
       <div className="card">
         <h2>생년월일시 입력</h2>
+        <div style={{ margin: '2px 0 14px' }}>
+          <Link href="/gunghap" style={{ fontSize: 14, color: 'var(--gold)', textDecoration: 'none' }}>💞 궁합 보러 오셨다면 여기 →</Link>
+        </div>
         <div style={{ marginBottom: 14 }}><label>이름 (선택 · 풀이에 반영)</label><input value={form.name} onChange={(e) => set('name', e.target.value)} /></div>
         <div className="cal-toggle">
           <button type="button" className={form.calType === 'solar' ? 'on' : ''} onClick={() => set('calType', 'solar')}>양력</button>
@@ -382,6 +393,9 @@ export default function Home() {
         </div>
         <div className="row">
           <label className="chk"><input type="checkbox" checked={form.unknownTime} onChange={(e) => set('unknownTime', e.target.checked)} /> 태어난 시간 모름</label>
+          {form.unknownTime && (
+            <span style={{ fontSize: 12.5, color: 'var(--text-mute)' }}>→ 년·월·일 3개 기둥으로 풀이하고, 시주 관련 항목은 빼고 보여드려요. 아는 만큼만 정직하게.</span>
+          )}
           <label className="chk"><input type="radio" name="sex" checked={form.sex === 'M'} onChange={() => set('sex', 'M')} /> 남</label>
           <label className="chk"><input type="radio" name="sex" checked={form.sex === 'F'} onChange={() => set('sex', 'F')} /> 여</label>
         </div>
@@ -395,6 +409,12 @@ export default function Home() {
           </div>
         )}
         <button className="btn" onClick={submit} disabled={loading}>{loading ? '천문 데이터 분석 중…' : '내 사주 분석하기 →'}</button>
+        <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', textAlign: 'center' }}>
+          🔒 입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
+        </p>
+        <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
+          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <s style={{ opacity: 0.6 }}>₩9,900</s> <b style={{ color: 'var(--gold)' }}>₩5,900</b> (런칭가)
+        </p>
         {error && <div className="warn error">{error}</div>}
       </div>
 
