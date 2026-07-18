@@ -316,7 +316,9 @@ export default function Home() {
   }
 
   const maxOhaeng = result ? Math.max(...(['목','화','토','금','수'] as const).map((o) => (result.ohaeng as any)[o])) : 1;
-  const hapchung = result ? computeHapchung(result.pillars) : [];
+  const gmp = result?.advanced.gongmang.pillars;
+  const gmPos = gmp ? ([gmp.year && '년', gmp.month && '월', gmp.day && '일', gmp.hour && '시'].filter(Boolean) as string[]) : undefined;
+  const hapchung = result ? computeHapchung(result.pillars, gmPos) : [];
   const lunarBirth = result ? solarToLunar(result.input.year, result.input.month, result.input.day) : null;
 
   return (
@@ -556,6 +558,7 @@ export default function Home() {
 
           <div className="card">
             <h2>오행 분포 (五行)</h2>
+            <div className="meta" style={{ marginBottom: 10 }}>천간·지지 8자 기준 — 지지 속에 숨은 지장간(支藏干)의 기운은 격국·풀이에 별도로 반영됩니다.</div>
             {(['목','화','토','금','수'] as const).map((o) => {
               const c = (result.ohaeng as any)[o] as number;
               const st = (result.ohaeng.status as any)[o];
@@ -584,6 +587,7 @@ export default function Home() {
               <div className="chip">용신 <b>{result.gyeokYong.yongsin.primary}(五行)</b></div>
               <div className="chip">조후 <b>{result.gyeokYong.johu.climate}</b></div>
             </div>
+            <p style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>판정 근거: {result.gyeokYong.gyeokguk.via} → {result.gyeokYong.gyeokguk.name}</p>
             <p style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.gyeokguk.desc}</p>
             <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.yongsin.desc}</p>
           </div>
