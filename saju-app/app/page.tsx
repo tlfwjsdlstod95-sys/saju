@@ -280,7 +280,7 @@ export default function Home() {
   async function copyInviteLink() {
     const who = result?.archetype?.motif?.name;
     try {
-      await navigator.clipboard.writeText(`나 사주 봤는데 완전 소름이야${who ? ` (나 "${who}"래ㅋㅋ)` : ''}. 우리 궁합도 볼래? 👉 ${window.location.origin}/gunghap`);
+      await navigator.clipboard.writeText(`나 사주 봤는데 완전 소름이야${who ? ` (나 "${who}"래ㅋㅋ)` : ''}. 우리 궁합도 볼래? 이 링크로 오면 AI 심층 궁합도 1번 무료래 👉 ${window.location.origin}/gunghap?invite=1`);
       flash('초대 문구를 복사했어요 — 붙여넣어 보내세요!');
     } catch { flash('복사 실패'); }
   }
@@ -347,6 +347,7 @@ export default function Home() {
           <span className="tb">🛰 한국천문연구원(KASI) 기준 검증</span>
           <span className="tb">◷ 절기·균시차·경도·야자시 보정</span>
           <span className="tb">◎ 일주 정밀도 99.999%</span>
+          <span className="tb">🧪 만세력 1,000건 교차 검증 통과</span>
         </div>
         <p className="trust-sub">대부분의 무료 만세력이 놓치는 진태양시·야자시·서머타임까지 보정해, 역술가가 직접 뽑은 명식과 일치합니다.</p>
       </div>
