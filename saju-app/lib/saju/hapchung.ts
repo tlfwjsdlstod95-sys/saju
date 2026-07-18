@@ -3,7 +3,7 @@
 import { JIJI, JIJI_HANJA, CHEONGAN, CHEONGAN_HANJA } from './constants';
 import type { Pillar } from './types';
 
-export type HapchungType = '천간합' | '육합' | '삼합' | '반합' | '충' | '형' | '해';
+export type HapchungType = '천간합' | '육합' | '삼합' | '반합' | '충' | '형' | '파' | '해';
 
 export interface Hapchung {
   type: HapchungType;
@@ -36,6 +36,10 @@ const JAHYEONG = [4, 6, 9, 11];                         // 辰午酉亥 자형
 const HAE: [number, number][] = [
   [0, 7], [1, 6], [2, 5], [3, 4], [8, 11], [9, 10],
 ];
+// 파(破): 6쌍 — 子酉 丑辰 寅亥 卯午 巳申 戌未
+const PA: [number, number][] = [
+  [0, 9], [1, 4], [2, 11], [3, 6], [5, 8], [7, 10],
+];
 
 function jName(ji: number) { return `${JIJI_HANJA[ji]}(${JIJI[ji]})`; }
 
@@ -50,7 +54,10 @@ function pillarsList(p: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar
   return arr;
 }
 
-export function computeHapchung(p: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): Hapchung[] {
+/**
+ * @param gongmangPos 공망이 든 기둥 위치(['년','시'] 등). 전달 시 해당 자리가 낀 지지 관계에 감쇠 주석을 답니다.
+ */
+export function computeHapchung(p: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }, gongmangPos?: string[]): Hapchung[] {
   const list = pillarsList(p);
   const out: Hapchung[] = [];
 
@@ -146,6 +153,27 @@ export function computeHapchung(p: { year: Pillar; month: Pillar; day: Pillar; h
       desc: `${jName(a)}·${jName(b)}가 서로를 깎는 해(害). 가까운 사이에서 서운함이 쌓이기 쉬우니 선을 지키는 게 좋아요.`,
       tone: 'neutral',
     });
+  }
+
+  // 파(破)
+  for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+    const a = list[i].ji, b = list[j].ji;
+    const hit = PA.find(([x, y]) => (x === a && y === b) || (x === b && y === a));
+    if (hit) out.push({
+      type: '파', name: `${JIJI[hit[0]]}${JIJI[hit[1]]} 파(破)`,
+      positions: [list[i].pos, list[j].pos],
+      desc: `${jName(a)}·${jName(b)}가 서로를 깨뜨리는 파(破). 진행 중인 일이 중간에 틀어지거나 재정비되는 자리 — 계획에 여유분을 두면 오히려 전화위복이 됩니다.`,
+      tone: 'neutral',
+    });
+  }
+
+  // 공망 감쇠 주석 — 공망 든 자리가 낀 지지 관계(육합·삼합·반합·충·형·파·해)는 통설상 작용력이 줄어듦
+  if (gongmangPos?.length) {
+    for (const h of out) {
+      if (h.type === '천간합') continue; // 공망은 지지 기준
+      const hitPos = h.positions.filter((x) => gongmangPos.includes(x));
+      if (hitPos.length) h.desc += ` ※ ${hitPos.join('·')}지가 공망(空亡)이라 이 작용의 힘은 통설상 다소 약해집니다.`;
+    }
   }
 
   return out;

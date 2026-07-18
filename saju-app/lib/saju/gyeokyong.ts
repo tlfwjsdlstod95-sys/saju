@@ -53,11 +53,12 @@ export function computeGyeokguk(
 }
 
 // ── 조후(調候) — 계절 한난조습 ──
-export type Climate = '한습' | '조열' | '온화';
+export type Climate = '한습' | '조열' | '서늘' | '온화';
 export interface Johu { climate: Climate; need: Ohaeng | null; desc: string; urgent: boolean; }
 
 const WINTER = [11, 0, 1]; // 亥子丑
 const SUMMER = [5, 6, 7];  // 巳午未
+const AUTUMN = [8, 9, 10]; // 申酉戌 — 금왕절, 한기가 돌기 시작
 
 export function computeJohu(dayGan: number, monthJi: number): Johu {
   const dayO = GAN_OHAENG[dayGan];
@@ -70,6 +71,11 @@ export function computeJohu(dayGan: number, monthJi: number): Johu {
     const urgent = dayO === '목' || dayO === '화'; // 목화 일간 여름생 = 강한 조열
     return { climate: '조열', need: '수', urgent,
       desc: `여름에 난 ${urgent ? '목·화' : ''} 사주라 기운이 뜨겁고 메마릅니다. 시원한 물(水) 기운 — 휴식·지혜·차분함·물가가 당신을 식혀 균형을 줍니다.${urgent ? ' 조후가 시급한 구조예요.' : ''}` };
+  }
+  // 가을 금·수 일간: 조후론에선 서늘한 금왕절에 정화(丁火) 등 불 기운을 먼저 보는 견해가 있음 → 보조 처방으로 연결
+  if (AUTUMN.includes(monthJi) && (dayO === '금' || dayO === '수')) {
+    return { climate: '서늘', need: '화', urgent: false,
+      desc: '가을 금왕절에 난 금·수 사주라 서서히 한기가 돕니다. 강약 균형(억부)이 우선이지만, 조후 관점에선 따뜻한 불(火) — 표현·활동·양지의 기운이 결실을 돕는 보조 처방이에요.' };
   }
   return { climate: '온화', need: null, urgent: false,
     desc: '계절의 기운이 치우치지 않아, 한난조습보다 강약 균형(억부)이 더 중요한 사주입니다.' };

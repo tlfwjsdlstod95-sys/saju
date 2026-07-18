@@ -68,6 +68,22 @@ export function computeSinsal(
   if (BAEKHO.some(([gn, jn]) => dayGan === gn && pillars.day.ji === jn))
     list.push({ name: '백호살', targets: '일주', tone: 'caution', desc: '강렬한 에너지와 추진력. 의료·법·무관 등 생사를 다루는 분야에서 대성합니다.' });
 
+  // 원진·귀문 — 지지 쌍 관계 (모든 기둥 조합 스캔)
+  const WONJIN: [number, number][] = [[0, 7], [1, 6], [2, 9], [3, 8], [4, 11], [5, 10]]; // 子未 丑午 寅酉 卯申 辰亥 巳戌
+  const GWIMUN: [number, number][] = [[0, 9], [1, 6], [2, 7], [3, 8], [4, 11], [5, 10]]; // 子酉 丑午 寅未 卯申 辰亥 巳戌
+  const pairHit = (pairs: [number, number][]) => {
+    const hits: string[] = [];
+    for (let i = 0; i < branches.length; i++) for (let j = i + 1; j < branches.length; j++) {
+      if (pairs.some(([a, b]) => (a === branches[i] && b === branches[j]) || (b === branches[i] && a === branches[j])))
+        hits.push(`${JIJI[branches[i]]}${JIJI[branches[j]]}(${names[i]}·${names[j]})`);
+    }
+    return Array.from(new Set(hits));
+  };
+  const wj = pairHit(WONJIN);
+  if (wj.length) list.push({ name: '원진살', targets: wj.join(' '), tone: 'caution', desc: '이유 없이 밀고 당기는 애증의 기운. 가까운 관계일수록 서운함이 쌓이기 쉬우니, 담아두지 말고 표현하는 게 약입니다.' });
+  const gmh = pairHit(GWIMUN);
+  if (gmh.length) list.push({ name: '귀문관살', targets: gmh.join(' '), tone: 'caution', desc: '예민한 직감과 깊은 몰입의 별. 감수성·통찰이 비상하지만 생각이 꼬리를 물 땐 수면과 루틴으로 머리를 식혀주세요.' });
+
   return list;
 }
 
