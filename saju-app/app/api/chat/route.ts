@@ -51,7 +51,8 @@ export async function POST(req: Request) {
   const saju = computeSaju(input);
   const nowYear = new Date().getFullYear();
   const age = nowYear - input.year;
-  const model = process.env.SAJU_MODEL || 'claude-sonnet-4-6';
+  // 상담 챗은 Haiku로 티어링(품질 충분·비용 1/5↓). 필요 시 SAJU_MODEL_CHAT로 오버라이드.
+  const model = process.env.SAJU_MODEL_CHAT || 'claude-haiku-4-5-20251001';
 
   let upstream: Response;
   try {
@@ -67,7 +68,8 @@ export async function POST(req: Request) {
       max_tokens: 1200,
       temperature: 0.85,
       stream: true,
-      system: buildChatSystem(saju, age, nowYear, normalizeTone(body.tone)),
+      // 프롬프트 캐싱: 같은 명식 멀티턴 대화에서 시스템 프롬프트 입력 비용 절감 (5분 TTL)
+      system: [{ type: 'text', text: buildChatSystem(saju, age, nowYear, normalizeTone(body.tone)), cache_control: { type: 'ephemeral' } }],
       messages,
     }),
   });
