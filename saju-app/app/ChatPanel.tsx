@@ -12,9 +12,11 @@ const SUGGESTIONS = [
   '지금 이직/도전해도 괜찮은 시기인가요?',
 ];
 
-// 명식별 '첫 질문 1회 무료' 사용 여부 추적 키 (브라우저 localStorage)
+// 명식별 무료 질문 사용 횟수 추적 키 (브라우저 localStorage). 값: 사용한 턴 수(구버전 '1' 호환)
 const freeKey = (b: any) =>
   `saju_chatfree_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}`;
+// 무료 상담 턴 수 — 3턴까지 무료(Haiku라 저비용), 이후 결제 유도. 상담이 비용이 아니라 전환 장치.
+const FREE_TURNS = 3;
 
 export default function ChatPanel({
   reqBody, name, premium, onLocked,
@@ -28,28 +30,28 @@ export default function ChatPanel({
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [err, setErr] = useState('');
-  const [freeUsed, setFreeUsed] = useState(false);
+  const [freeCount, setFreeCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const who = name ? `${name}님` : '당신';
 
   const ck = freeKey(reqBody());
-  // 명식이 바뀌면 그 명식의 무료 사용 여부를 다시 확인
+  // 명식이 바뀌면 그 명식의 무료 사용 횟수를 다시 확인
   useEffect(() => {
-    try { setFreeUsed(!!localStorage.getItem(ck)); } catch { setFreeUsed(false); }
+    try { setFreeCount(parseInt(localStorage.getItem(ck) || '0', 10) || 0); } catch { setFreeCount(0); }
   }, [ck]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [msgs, streaming]);
 
-  // 무료 사용자가 지금 보낼 수 있는지: 프리미엄이거나, 이 명식 첫 질문(무료 1회)이면 OK
-  const canSend = premium || !freeUsed;
+  // 무료 사용자가 지금 보낼 수 있는지: 프리미엄이거나, 무료 턴이 남아 있으면 OK
+  const canSend = premium || freeCount < FREE_TURNS;
 
   async function send(text: string) {
     const q = text.trim();
     if (!q || streaming) return;
-    if (!premium && freeUsed) { onLocked(); return; } // 무료 1회 소진 → 결제
-    const isFreeTurn = !premium && !freeUsed;
+    if (!premium && freeCount >= FREE_TURNS) { onLocked(); return; } // 무료 턴 소진 → 결제
+    const isFreeTurn = !premium;
     setErr('');
     setInput('');
     const history: Msg[] = [...msgs, { role: 'user', content: q }];
@@ -77,8 +79,9 @@ export default function ChatPanel({
       if (!acc.trim()) {
         setMsgs((m) => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: '(답을 받지 못했어요. 다시 한 번 물어봐 주세요.)' }; return c; });
       } else if (isFreeTurn) {
-        try { localStorage.setItem(ck, '1'); } catch {}
-        setFreeUsed(true); // 무료 1회 소진
+        const n = freeCount + 1;
+        try { localStorage.setItem(ck, String(n)); } catch {}
+        setFreeCount(n);
       }
     } catch (e: any) {
       setErr(e.message);
@@ -90,10 +93,10 @@ export default function ChatPanel({
 
   return (
     <div className="card chat-card">
-      <h2>🔮 AI 사주 상담 {!premium && (freeUsed ? <span className="lock-tag">프리미엄</span> : <span className="lock-tag">1회 무료</span>)}</h2>
+      <h2>🔮 AI 사주 상담 {!premium && (freeCount >= FREE_TURNS ? <span className="lock-tag">프리미엄</span> : <span className="lock-tag">무료 {FREE_TURNS - freeCount}턴</span>)}</h2>
       <div className="meta" style={{ marginBottom: 16 }}>
         {who}의 명식을 다 꿰고 있는 선배에게 직접 물어보세요. 연애·돈·진로·올해 운, 뭐든 편하게.
-        {!premium && !freeUsed && <><br /><b style={{ color: '#e6c878' }}>✨ 첫 질문 1개는 무료예요.</b> 편하게 하나 물어보세요.</>}
+        {!premium && freeCount < FREE_TURNS && <><br /><b style={{ color: '#e6c878' }}>✨ 질문 {FREE_TURNS - freeCount}개까지 무료예요.</b> 편하게 물어보세요.</>}
       </div>
 
       <div className="chat-window" ref={scrollRef}>
@@ -130,7 +133,7 @@ export default function ChatPanel({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={premium ? '궁금한 걸 물어보세요…' : freeUsed ? '🔒 더 깊은 상담은 프리미엄에서 (무료 1회 사용함)' : '✨ 첫 질문은 무료! 궁금한 걸 물어보세요…'}
+          placeholder={premium ? '궁금한 걸 물어보세요…' : freeCount >= FREE_TURNS ? '🔒 더 깊은 상담은 프리미엄에서 (무료 턴 소진)' : `✨ 무료 ${FREE_TURNS - freeCount}턴 남음! 궁금한 걸 물어보세요…`}
           disabled={streaming}
         />
         <button type="submit" className="chat-send" disabled={streaming || !input.trim()}>

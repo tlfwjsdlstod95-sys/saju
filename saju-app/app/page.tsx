@@ -214,8 +214,9 @@ export default function Home() {
       const elapsed = Date.now() - started;
       if (elapsed < 2000) await sleep(2000 - elapsed); // 정밀 분석 연출 최소 노출
       setResult(data);
-      // 무료 포함 모든 사용자에게 AI 풀이 자동 생성 (캐시 히트면 즉시, 실패하면 규칙 풀이로 폴백)
-      askAI('free', bodyObj);
+      // 비용 원칙: AI 실시간 호출은 결제 사용자만. 무료는 규칙 엔진 풀이 즉시 표시(API 0원).
+      // 프리미엄이면 심층 풀이 자동 생성(명식+톤별 캐시라 재방문 0원).
+      if (premium) askAI('premium', bodyObj);
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
@@ -462,22 +463,22 @@ export default function Home() {
 
             {/* 풀이 톤 선택 — 같은 명식, 다른 말투 (톤별 캐시) */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>
-              <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>말투</span>
+              <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>말투{premium ? '' : ' 🔒'}</span>
               {([['default', '🎓 선배 톤'], ['blunt', '🔥 팩폭'], ['warm', '🍵 따뜻하게']] as const).map(([k, label]) => (
                 <button
                   key={k}
                   className="mini-btn"
                   style={tone === k ? { background: 'var(--gold)', color: '#14101f', borderColor: 'transparent', fontWeight: 700 } : undefined}
                   disabled={aiLoading || aiStreaming}
-                  onClick={() => { if (tone === k) return; setTone(k); askAI('free', undefined, k); }}
+                  onClick={() => { if (tone === k) return; if (!premium) { setPayOpen(true); return; } setTone(k); askAI('premium', undefined, k); }}
                 >{label}</button>
               ))}
             </div>
 
             {!ai && (
               <div className="ai-cta">
-                <div className="ai-cta-txt"><b>✨ AI 풀이</b><span>{aiErr ? 'AI 풀이 생성에 실패했어요. 잠시 후 다시 시도해 주세요. (지금은 기본 풀이를 보여드려요)' : '당신 명식만을 위해 AI가 새로 써주는 풀이로 볼 수 있어요.'}</span></div>
-                <button className="btn ai-btn" onClick={() => askAI('free')} disabled={aiLoading}>{aiLoading ? '명식을 읽는 중…' : 'AI 풀이로 보기 →'}</button>
+                <div className="ai-cta-txt"><b>✨ AI 심층 풀이</b><span>{aiErr ? 'AI 풀이 생성에 실패했어요. 잠시 후 다시 시도해 주세요. (지금은 기본 풀이를 보여드려요)' : '지금 보시는 건 기본 풀이예요. 프리미엄은 당신 명식만을 위해 AI가 매번 새로 쓰고, 말투(선배/팩폭/따뜻)도 고를 수 있어요.'}</span></div>
+                <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '명식을 읽는 중…' : premium ? 'AI 심층 풀이 생성 →' : 'AI 심층 풀이 받기 🔒'}</button>
                 {aiErr && <div className="warn" style={{ marginTop: 12 }}>{aiErr}</div>}
               </div>
             )}
