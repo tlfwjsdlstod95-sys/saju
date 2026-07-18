@@ -36,15 +36,16 @@ export async function POST(req: Request) {
     name: body.name ? String(body.name).slice(0, 20) : undefined,
   };
 
+  // 비용 원칙: AI 실시간 호출은 프리미엄 전용. 무료 티어 요청(구버전 캐시 클라이언트 포함)은 거절 → 클라가 규칙 풀이로 폴백.
+  if (body.tier !== 'premium') {
+    return NextResponse.json({ error: 'AI 심층 풀이는 프리미엄 전용입니다. 기본 풀이를 이용해 주세요.' }, { status: 402 });
+  }
+
   const saju = computeSaju(input);
   const nowYear = new Date().getFullYear();
   const age = nowYear - input.year;
-  // 티어별 모델: 무료=Haiku(저비용·빠름), 프리미엄=Sonnet(심층). 환경변수로 오버라이드 가능.
-  const tier = body.tier === 'premium' ? 'premium' : 'free';
-  const model = tier === 'premium'
-    ? (process.env.SAJU_MODEL || 'claude-sonnet-4-6')
-    : (process.env.SAJU_MODEL_FREE || 'claude-haiku-4-5-20251001');
-  const maxTokens = tier === 'premium' ? 3000 : 2600;
+  const model = process.env.SAJU_MODEL || 'claude-sonnet-4-6';
+  const maxTokens = 3000;
 
   let upstream: Response;
   try {
@@ -60,7 +61,8 @@ export async function POST(req: Request) {
       max_tokens: maxTokens,
       temperature: 0.85,
       stream: true,
-      system: buildSystem(normalizeTone(body.tone)),
+      // 프롬프트 캐싱: 시스템 프롬프트(톤별 3종뿐)는 유저가 달라도 동일 → 입력 비용 ~90% 절감
+      system: [{ type: 'text', text: buildSystem(normalizeTone(body.tone)), cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: buildUser(saju, age, nowYear) }],
     }),
   });
