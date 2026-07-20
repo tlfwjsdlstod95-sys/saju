@@ -8,18 +8,26 @@ import type { CompatResult } from '@/lib/saju/compatibility';
 import { parseReadingStream, GUNGHAP_KEYS, GUNGHAP_ICONS, GUNGHAP_LABELS } from '@/lib/saju/readingMeta';
 import GunghapCard from '../GunghapCard';
 import Paywall, { usePremium } from '../Paywall';
+import { CITY_GROUPS, CITIES } from '../cities';
 import AccountButton from '../AccountButton';
 
 const OHAENG_COLOR: Record<string, string> = {
   목: '#22c55e', 화: '#ef4444', 토: '#eab308', 금: '#e2e8f0', 수: '#3b82f6',
 };
-const CITIES: Record<string, number> = {
-  '서울': 126.978, '인천': 126.705, '부산': 129.075, '대구': 128.601,
-  '광주': 126.851, '대전': 127.385, '울산': 129.311, '제주': 126.531,
-};
+// 출생 도시는 app/cities.ts 공용 목록 사용 (메인과 동일 60여 개)
 
 type P = { name: string; year: string; month: string; day: string; hour: string; minute: string; city: string; unknownTime: boolean; sex: 'M' | 'F' };
 const empty = (sex: 'M' | 'F'): P => ({ name: '', year: '', month: '', day: '', hour: '', minute: '0', city: '서울', unknownTime: false, sex });
+
+// 초대 링크 페이로드 — URL 해시(#p=)에 담아 서버 로그에 남지 않게 (UTF-8 안전 base64)
+function encodeP(p: P): string { return btoa(unescape(encodeURIComponent(JSON.stringify(p)))); }
+function decodeP(s: string): P | null {
+  try {
+    const o = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(s)))));
+    if (!o || !o.year) return null;
+    return { ...empty('F'), ...o };
+  } catch { return null; }
+}
 
 function profileToP(prof: Profile): P {
   return { name: prof.name, year: String(prof.year), month: String(prof.month), day: String(prof.day), hour: prof.hour === null ? '' : String(prof.hour), minute: String(prof.minute), city: prof.city, unknownTime: prof.unknownTime, sex: prof.sex };
@@ -46,7 +54,11 @@ function PersonForm({ p, set, idx, profiles, onPick }: { p: P; set: (k: string, 
         <div><label>시 (0~23)</label><input type="number" value={p.hour} disabled={p.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
         <div><label>출생도시</label>
           <select value={p.city} onChange={(e) => set('city', e.target.value)}>
-            {Object.keys(CITIES).map((c) => <option key={c} value={c}>{c}</option>)}
+            {CITY_GROUPS.map((g) => (
+              <optgroup key={g.region} label={g.region}>
+                {Object.keys(g.cities).map((c) => <option key={c} value={c}>{c}</option>)}
+              </optgroup>
+            ))}
           </select>
         </div>
       </div>
@@ -97,13 +109,21 @@ export default function Gunghap() {
     window.addEventListener('saju:synced', onSync);
     return () => window.removeEventListener('saju:synced', onSync);
   }, []);
+  const [notice, setNotice] = useState('');
+  const [fromInvite, setFromInvite] = useState<string | null>(null);
 
   // 초대 특전: ?invite=1 로 유입 + 미사용이면 AI 궁합 심층 풀이 1회 무료 (바이럴 루프 인센티브)
   const [inviteFree, setInviteFree] = useState(false);
   useEffect(() => {
     try {
-      const p = new URLSearchParams(window.location.search);
-      if (p.get('invite') && !localStorage.getItem('saju_gh_invite_used_v1')) setInviteFree(true);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get('invite') && !localStorage.getItem('saju_gh_invite_used_v1')) setInviteFree(true);
+      // 초대 링크 페이로드: 보낸 사람 정보를 '상대방' 칸에 자동 입력
+      const m = window.location.hash.match(/#p=([^&]+)/);
+      if (m) {
+        const d = decodeP(m[1]);
+        if (d) { setB({ ...d, name: d.name || '상대' }); setFromInvite(d.name || '상대'); }
+      }
     } catch {}
   }, []);
 
@@ -118,6 +138,17 @@ export default function Gunghap() {
     setPendingAi(true); setPayOpen(true);
   }
   function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askGunghapAI(); } }
+
+  // 상대 정보 없이도 궁합: 내 정보만 담은 링크를 만들어 보낸다 (진짜 바이럴 루프)
+  function copyPairLink() {
+    if (!a.year || !a.month || !a.day) { setError("링크를 만들려면 먼저 위 '나' 칸에 내 정보부터 입력하세요."); return; }
+    setError('');
+    const url = `${window.location.origin}/gunghap?invite=1#p=${encodeURIComponent(encodeP(a))}`;
+    navigator.clipboard.writeText(`우리 궁합 몇 점인지 볼래?ㅋㅋ 내 정보는 미리 넣어놨어 — 너는 네 것만 입력하면 바로 나와 💞 (AI 심층 궁합도 1번 무료) ${url}`)
+      .then(() => setNotice('초대 문구를 복사했어요 — 카톡에 붙여넣어 보내세요!'))
+      .catch(() => setNotice('복사 실패 — 주소창의 링크를 직접 공유해주세요.'));
+    setTimeout(() => setNotice(''), 4000);
+  }
 
   const body = (p: P) => ({
     name: p.name,
@@ -167,7 +198,18 @@ export default function Gunghap() {
         <Link href="/" className="backlink">← 내 사주 분석으로</Link>
       </div>
 
+      {fromInvite && (
+        <div className="card" style={{ borderColor: 'var(--gold)' }}>
+          <div className="meta">💌 <b>{fromInvite}</b>님이 궁합 정보를 보내왔어요 — &lsquo;상대방&rsquo; 칸에 이미 채워져 있어요. <b>내 정보만 입력</b>하고 궁합 분석을 누르면 끝!</div>
+        </div>
+      )}
       <PersonForm p={a} idx={0} profiles={profiles} onPick={(pr) => setA(profileToP(pr))} set={(k, v) => setA((s) => ({ ...s, [k]: v }))} />
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div className="meta" style={{ marginBottom: 12 }}>상대방 생일을 몰라도 돼요 — <b>내 정보만 넣고 링크를 보내면</b>, 상대가 자기 정보를 입력하는 순간 둘의 궁합이 완성됩니다.</div>
+        <button className="btn share-btn ghost" onClick={copyPairLink} style={{ width: 'auto' }}>🔗 내 정보 담은 궁합 링크 복사</button>
+        {notice && <div className="meta" style={{ marginTop: 10, color: 'var(--gold)' }}>{notice}</div>}
+      </div>
+
       <PersonForm p={b} idx={1} profiles={profiles} onPick={(pr) => setB(profileToP(pr))} set={(k, v) => setB((s) => ({ ...s, [k]: v }))} />
       <button className="btn" onClick={submit} disabled={loading}>{loading ? '두 사주를 비교하는 중…' : '💞 궁합 분석하기'}</button>
       {error && <div className="warn error" style={{ marginTop: 16 }}>{error}</div>}
