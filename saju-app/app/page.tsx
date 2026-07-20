@@ -18,6 +18,7 @@ import NamingCard from './NamingCard';
 import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium } from './Paywall';
+import { CITY_GROUPS, CITIES } from './cities';
 import AccountButton from './AccountButton';
 import { listProfiles, saveProfile, removeProfile, type Profile } from '@/lib/profiles';
 
@@ -25,31 +26,7 @@ const OHAENG_COLOR: Record<string, string> = {
   목: '#22c55e', 화: '#ef4444', 토: '#eab308', 금: '#e2e8f0', 수: '#3b82f6',
 };
 
-// 지역별 도시 경도 프리셋 (시도 광역 단위로 그룹화)
-const CITY_GROUPS: { region: string; cities: Record<string, number> }[] = [
-  { region: '서울·경기·인천', cities: {
-    '서울': 126.978, '인천': 126.705, '수원': 127.029, '성남': 127.138, '용인': 127.178,
-    '고양': 126.832, '부천': 126.766, '안양': 126.957, '평택': 127.113, '의정부': 127.045,
-    '파주': 126.780, '김포': 126.716, '안산': 126.832, '시흥': 126.803, '남양주': 127.216, '이천': 127.442,
-  } },
-  { region: '강원', cities: { '춘천': 127.734, '원주': 127.920, '강릉': 128.896, '속초': 128.591, '동해': 129.114, '태백': 128.986, '삼척': 129.165, '홍천': 127.889, '횡성': 127.985, '영월': 128.462 } },
-  { region: '충청·대전·세종', cities: {
-    '대전': 127.385, '세종': 127.289, '천안': 127.114, '청주': 127.489, '충주': 127.926, '아산': 127.004, '서산': 126.450,
-    '제천': 128.191, '공주': 127.119, '논산': 127.099, '당진': 126.646, '보령': 126.613,
-  } },
-  { region: '경상·부산·대구·울산', cities: {
-    '부산': 129.075, '대구': 128.601, '울산': 129.311, '창원': 128.681, '김해': 128.889, '진주': 128.107,
-    '포항': 129.365, '경주': 129.225, '안동': 128.727, '구미': 128.344, '통영': 128.433,
-    '거제': 128.621, '양산': 129.037, '경산': 128.741, '상주': 128.159, '문경': 128.187,
-  } },
-  { region: '전라·광주', cities: {
-    '광주': 126.851, '전주': 127.148, '목포': 126.392, '여수': 127.662, '순천': 127.487, '군산': 126.737, '익산': 126.957, '남원': 127.390,
-    '정읍': 126.856, '나주': 126.711, '광양': 127.696, '김제': 126.881,
-  } },
-  { region: '제주', cities: { '제주': 126.531, '서귀포': 126.560 } },
-];
-// 경도 조회용 평탄화 맵
-const CITIES: Record<string, number> = Object.assign({}, ...CITY_GROUPS.map((g) => g.cities));
+// 출생 도시 목록은 app/cities.ts에서 공용 관리 (궁합 페이지와 공유)
 
 function scoreColor(s: number): string {
   return s >= 20 ? '#22c55e' : s <= -20 ? '#ef4444' : '#eab308';
@@ -342,8 +319,8 @@ export default function Home() {
       <div className="hero">
         <div className="brand-name">헤아림</div>
         <div className="hero-kr">命理</div>
-        <h1>사주, <span>나를 꿰뚫다</span></h1>
-        <p>틀린 사주로 인생을 정할 순 없으니까 — 천문 데이터로 계산한 진짜 명식 위에서, 인생의 결정을 돕습니다</p>
+        <h1 style={{ fontSize: 'clamp(28px, 6vw, 46px)', lineHeight: 1.3 }}>틀린 사주로 <span>인생을 정할 순 없으니까</span></h1>
+        <p>사주, 나를 꿰뚫다 — 천문 데이터로 계산한 진짜 명식 위에서, 인생의 결정을 돕습니다</p>
       </div>
 
       <div className="trust">
@@ -413,10 +390,23 @@ export default function Home() {
           🔒 입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
         </p>
         <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
-          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <s style={{ opacity: 0.6 }}>₩9,900</s> <b style={{ color: 'var(--gold)' }}>₩5,900</b> (런칭가)
+          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <s style={{ opacity: 0.6 }}>₩9,900</s> <b style={{ color: 'var(--gold)' }}>₩5,900</b> — 런칭 기념 · 첫 500명 한정
         </p>
         {error && <div className="warn error">{error}</div>}
       </div>
+
+      {/* 결과 미리보기 — 입력 전 '시식 코너' (실제 생성된 풀이 문장 사용) */}
+      {!result && (
+        <div className="card">
+          <h2>이런 풀이를 받아요</h2>
+          <div className="meta" style={{ marginBottom: 12 }}>실제 무료 풀이 예시 — 무인(戊寅)일주 · 신약</div>
+          <div className="lead-card" style={{ marginTop: 0 }}>
+            <div className="lead-mark">✦ 당신의 사주</div>
+            <p className="lead-quote">당신은 산처럼 버티면서 정작 자기 무게에 짓눌리는 사람입니다 — 혼자 버티려 하지만, 물이 흘러야 비로소 빛나는 구조로 태어났어요.</p>
+          </div>
+          <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>명식표 · 오행 분포 · 격국/용신 · 오늘의 운세 · 행운 부적 카드까지 전부 무료예요.</p>
+        </div>
+      )}
 
       <div className="card shelf-card">
         <h2>📁 내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
