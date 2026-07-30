@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: BASE, changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE}/gunghap`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/iljoo`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/pricing`, changeFrequency: 'monthly', priority: 0.7 },
     ...iljoo,
   ];
 }

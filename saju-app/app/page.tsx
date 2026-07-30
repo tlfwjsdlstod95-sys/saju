@@ -391,6 +391,7 @@ export default function Home() {
         </p>
         <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
           명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <s style={{ opacity: 0.6 }}>₩9,900</s> <b style={{ color: 'var(--gold)' }}>₩5,900</b> — 런칭 기념 · 첫 500명 한정
+          {' '}<Link href="/pricing" style={{ color: 'var(--gold)' }}>이용권 안내 →</Link>
         </p>
         {error && <div className="warn error">{error}</div>}
       </div>
