@@ -482,6 +482,9 @@ export default function Home() {
                 {result.advanced.sinsal.map((s, i) => (
                   <div className={`sinsal ${s.tone}`} key={i}><div className="sinsal-h"><b>{s.name}</b> <span>{s.targets}</span></div><p>{s.desc}</p></div>
                 ))}
+                <p style={{ marginTop: 10, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
+                  ※ 도화·역마·화개는 <b>일지(日支) 삼합</b>을 기준으로 잡았어요. 년지 기준으로 보는 학파도 있어, 다른 곳과 결과가 다를 수 있습니다.
+                </p>
               </div>
             )}
             <div className="hapchung-wrap">
@@ -632,6 +635,10 @@ export default function Home() {
             <p style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>판정 근거: {result.gyeokYong.gyeokguk.via} → {result.gyeokYong.gyeokguk.name}</p>
             <p style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.gyeokguk.desc}</p>
             <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.yongsin.desc}</p>
+            <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
+              ※ 신강·신약은 <b>득령(월지)·득지(일지)·득세</b>를 가중 합산해 판정하며, 득세는 일간 자신을 뺀 나머지 글자로 셉니다.
+              용신은 <b>억부(강약 보완)를 기본</b>으로 하되 계절 치우침이 심하면 조후를 먼저 씁니다. 억부·조후·병약 등 용신 학파에 따라 결과가 달라질 수 있어요.
+            </p>
           </div>
 
           <div className="card">
