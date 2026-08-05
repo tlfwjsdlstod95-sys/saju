@@ -105,20 +105,22 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   const dayO = GAN_OHAENG[dayGan];
 
   // ── 종격(從格) — 명식이 극단적으로 기울면 억부 대신 '대세를 따르는' 용신 (엣지 케이스 방어) ──
-  if (strength >= 0.88) {
+  // 임계값 주: 강약 계산에서 일간 자신을 제외(2026-08 수정)한 뒤 분포가 낮아져, 종격 임계도 재보정함.
+  //  종격은 정통에서도 희귀 케이스이므로 상·하위 3% 수준에서만 발동하도록 둔다.
+  if (strength >= 0.90) {
     // 종왕격(전왕): 일간 세력이 판을 지배 → 왕한 기운을 따름
     const huisin = inseongOhaeng(dayO), gisin = gwanOhaeng(dayO);
     return { primary: dayO, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
       desc: `명식이 일간 쪽으로 극단적으로 기울어, 일반 억부가 아니라 대세를 따르는 종왕격(從旺格)으로 봅니다. 왕한 ${dayO} 기운을 거스르지 말고 올라타는 것이 길 — ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
   }
-  if (strength <= 0.12 && counts) {
+  if (strength <= 0.03 && counts) {
     // 종세: 일간이 기댈 곳 없이 약하고 특정 세력이 지배 → 식상(종아)/재성(종재)/관성(종살)을 따름
     const cand: [Ohaeng, string][] = [
       [SAENG[dayO], '종아격(從兒格)'], [GEUK[dayO], '종재격(從財格)'], [gwanOhaeng(dayO), '종살격(從殺格)'],
     ];
     cand.sort((a, b) => (counts[b[0]] ?? 0) - (counts[a[0]] ?? 0));
     const [primary, gname] = cand[0];
-    if ((counts[primary] ?? 0) >= 3) {
+    if ((counts[primary] ?? 0) >= 4) { // 8글자 중 절반 이상을 특정 세력이 지배할 때만
       const huisin = inseongOhaeng(primary), gisin = gwanOhaeng(primary);
       return { primary, eokbu: inseongOhaeng(dayO), johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
         desc: `일간이 기댈 곳 없이 약하고 ${primary} 세력이 판을 지배해, 일반 억부가 아니라 대세를 따르는 ${gname}으로 봅니다. 억지로 나를 세우기보다 ${primary}의 흐름에 올라타는 것이 길 — ${primary}·${huisin} 기운이 약이고, 흐름을 거스르는 ${gisin} 기운은 주의합니다.` };

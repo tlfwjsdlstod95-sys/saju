@@ -58,13 +58,18 @@ export function dayMasterStrength(
   // 득지: 일지가 일간을 돕는가
   const ji = helps(JI_OHAENG[pillars.day.ji]) ? 1 : 0;
 
-  // 득세: 전체 글자 중 일간을 돕는 비율
+  // 득세: 일간을 '제외한' 나머지 글자 중 일간을 돕는 비율
+  // ※ 일간 자신은 정의상 항상 같은 오행이라, 포함하면 모든 사주가 신강 쪽으로 편향된다.
+  //   정통 명리도 일간을 뺀 나머지 7글자(시주 미상이면 5글자)의 세력으로 강약을 본다.
   const all: (Pillar | null)[] = [pillars.year, pillars.month, pillars.day, pillars.hour];
   let helpCount = 0, totalChars = 0;
   for (const p of all) {
     if (!p) continue;
-    totalChars += 2;
-    if (helps(GAN_OHAENG[p.gan])) helpCount++;
+    if (p !== pillars.day) { // 일간(일주 천간)만 제외 — 일지는 포함
+      totalChars++;
+      if (helps(GAN_OHAENG[p.gan])) helpCount++;
+    }
+    totalChars++;
     if (helps(JI_OHAENG[p.ji])) helpCount++;
   }
   const se = totalChars ? helpCount / totalChars : 0;
