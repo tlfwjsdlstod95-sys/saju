@@ -482,11 +482,26 @@ export default function Home() {
                 {result.advanced.sinsal.map((s, i) => (
                   <div className={`sinsal ${s.tone}`} key={i}><div className="sinsal-h"><b>{s.name}</b> <span>{s.targets}</span></div><p>{s.desc}</p></div>
                 ))}
-                <p style={{ marginTop: 10, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
-                  ※ 도화·역마·화개는 <b>일지(日支) 삼합</b>을 기준으로 잡았어요. 년지 기준으로 보는 학파도 있어, 다른 곳과 결과가 다를 수 있습니다.
-                </p>
               </div>
             )}
+            {/* 12신살 — 삼합 기준 12개 체계 (도화=연살, 역마, 화개 포함) */}
+            <div className="hapchung-wrap">
+              <h3 className="hapchung-title">12신살(十二神殺)</h3>
+              <div className="meta" style={{ marginBottom: 10 }}>띠(년지)를 기준으로 본 열두 가지 살. 명식에 실제로 걸린 것만 표시합니다.</div>
+              <div className="sinsal-wrap">
+                {result.advanced.sin12.byYear.map((x) => (
+                  <div className={`sinsal ${x.tone}`} key={x.name}>
+                    <div className="sinsal-h"><b>{x.name}{x.alias ? ` (${x.alias})` : ''}</b> <span>{x.ji} · {x.at.join('·')}</span></div>
+                    <p>{x.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <p style={{ marginTop: 10, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
+                ※ 12신살은 <b>년지(띠) 기준</b>이 통설이라 위 목록은 년지로 잡았어요. 일지 기준으로 보는 학파도 있어 함께 적어둡니다 —{' '}
+                <b>일지 기준</b>: {result.advanced.sin12.byDay.map((x) => `${x.name}(${x.ji})`).join(', ')}.
+                {' '}천을귀인·문창·양인·괴강·백호·원진·귀문은 일간/일주 기준의 별도 신살입니다.
+              </p>
+            </div>
             <div className="hapchung-wrap">
               <h3 className="hapchung-title">합충(合沖) 관계</h3>
               {hapchung.length === 0 ? (
