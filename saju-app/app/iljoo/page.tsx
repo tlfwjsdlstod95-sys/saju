@@ -43,6 +43,7 @@ export default function IljuIndex() {
       <div className="card" style={{ textAlign: 'center' }}>
         <p className="meta" style={{ marginBottom: 12 }}>내 일주가 뭔지 모른다면 — 1분이면 나옵니다.</p>
         <Link href="/" className="btn share-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>내 명식 무료 확인 →</Link>
+        <p className="meta" style={{ marginTop: 14 }}><Link href="/sinsal" style={{ color: 'var(--gold)' }}>12신살 사전도 보기 (역마살·도화살·장성살…) →</Link></p>
       </div>
     </main>
   );
