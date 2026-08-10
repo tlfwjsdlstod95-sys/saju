@@ -88,9 +88,20 @@ export interface Yongsin {
   johu: Ohaeng | null; // 조후용신
   huisin: Ohaeng;      // 희신(용신을 생하는 오행)
   gisin: Ohaeng;       // 기신(용신을 극하는 오행)
-  method: '조후우선' | '억부' | '종격';
+  method: '조후우선' | '억부' | '종격' | '통관' | '병약';
   desc: string;
 }
+
+// 한글 조사 자동 선택(받침 유무). '수이(가)' 같은 어색한 표기 방지.
+function jong(w: string): boolean {
+  const c = w.charCodeAt(w.length - 1);
+  if (c < 0xac00 || c > 0xd7a3) return false;
+  return (c - 0xac00) % 28 !== 0;
+}
+const iga = (w: string) => `${w}${jong(w) ? '이' : '가'}`;
+const gwa = (w: string) => `${w}${jong(w) ? '과' : '와'}`;
+const eul = (w: string) => `${w}${jong(w) ? '을' : '를'}`;
+const ira = (w: string) => `${w}${jong(w) ? '이라' : '라'}`;
 
 // 생아자(인성 오행): X where SAENG[X]=dayO
 function inseongOhaeng(dayO: Ohaeng): Ohaeng {
@@ -135,9 +146,49 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   const johuRes = computeJohu(dayGan, monthJi);
   const johu = johuRes.need;
 
-  // 조후가 시급하면 조후 우선, 아니면 억부 우선
-  const method: Yongsin['method'] = johuRes.urgent && johu ? '조후우선' : '억부';
-  const primary = method === '조후우선' && johu ? johu : eokbu;
+  // ── 통관용신(通關) — 대립하는 두 세력이 팽팽할 때, 사이를 이어 흐르게 하는 오행 ──
+  //   예) 금3 vs 목3 (금극목)으로 맞서면 → 수(금생수·수생목)가 통관용신.
+  //   조건: 서로 극하는 두 오행이 각 3개 이상이고 세력차가 1 이내(=진짜 대립).
+  let tonggwan: Ohaeng | null = null;
+  let tonggwanPair: [Ohaeng, Ohaeng] | null = null;
+  if (counts) {
+    const OHS: Ohaeng[] = ['목', '화', '토', '금', '수'];
+    let best = -1;
+    for (const a of OHS) for (const b of OHS) {
+      if (GEUK[a] !== b) continue; // a가 b를 극하는 쌍만
+      const ca = counts[a] ?? 0, cb = counts[b] ?? 0;
+      if (ca < 3 || cb < 3) continue;
+      if (Math.abs(ca - cb) > 1) continue;
+      // a生X, X生b 를 만족하는 X = a가 생하는 오행
+      const bridge = SAENG[a];
+      if (SAENG[bridge] !== b) continue;
+      const power = ca + cb;
+      if (power > best) { best = power; tonggwan = bridge; tonggwanPair = [a, b]; }
+    }
+  }
+
+  // ── 병약용신(病藥) — 사주의 '병'(한 오행의 극단적 과다)을 덜어내는 '약' ──
+  //   조건: 특정 오행이 5개 이상(8자 중 과반 이상)이고, 그게 일간 오행이 아닐 때.
+  //   약 = 그 병을 극하는 오행(직접 제거).
+  let byeong: Ohaeng | null = null;
+  let yak: Ohaeng | null = null;
+  if (counts) {
+    for (const o of ['목', '화', '토', '금', '수'] as Ohaeng[]) {
+      if ((counts[o] ?? 0) >= 5 && o !== dayO) {
+        byeong = o;
+        yak = (Object.keys(GEUK) as Ohaeng[]).find((x) => GEUK[x] === o)!;
+        break;
+      }
+    }
+  }
+
+  // 우선순위: 조후 시급 > 병약(극단 편중) > 통관(팽팽한 대립) > 억부
+  let method: Yongsin['method'];
+  let primary: Ohaeng;
+  if (johuRes.urgent && johu) { method = '조후우선'; primary = johu; }
+  else if (byeong && yak) { method = '병약'; primary = yak; }
+  else if (tonggwan) { method = '통관'; primary = tonggwan; }
+  else { method = '억부'; primary = eokbu; }
   const huisin = inseongOhaeng(primary);     // 용신을 생하는 오행
   const gisin = gwanOhaeng(primary);         // 용신을 극하는 오행
 
@@ -145,8 +196,12 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   const desc =
     `당신에게 약이 되는 핵심 기운(용신)은 ${primary}(五行)입니다. ` +
     (method === '조후우선'
-      ? `계절(조후)이 너무 치우쳐, 억부용신 ${eokbu}보다 조후용신 ${johu}을(를) 먼저 씁니다. `
-      : `${label} 구조라 ${eokbu} 기운이 당신을 풀어줍니다. ${johu ? `보조로 조후의 ${johu} 기운도 도움이 돼요. ` : ''}`) +
+      ? `계절(조후)이 너무 치우쳐, 억부용신 ${eokbu}보다 조후용신 ${eul(johu!)} 먼저 씁니다. `
+      : method === '병약'
+        ? `명식에 ${byeong} 기운이 지나치게 몰려(${counts?.[byeong!] ?? 0}개) 이것이 '병(病)'입니다. 그 병을 덜어내는 ${iga(yak!)} '약(藥)'이 되는 병약용신 구조예요. ${yak !== eokbu ? `억부로 보면 ${eokbu}지만, 편중부터 푸는 게 먼저입니다. ` : `억부로 봐도 같은 ${ira(eokbu)}, 처방이 한 방향으로 모이는 명료한 구조예요. `}`
+        : method === '통관'
+          ? `${gwa(tonggwanPair![0])} ${iga(tonggwanPair![1])} 팽팽히 맞서 기운이 막혀 있습니다. 둘 사이를 이어 흐르게 하는 ${iga(tonggwan!)} 통관용신이에요. 어느 한쪽 편을 들기보다 '다리'를 놓는 것이 답입니다. `
+          : `${label} 구조라 ${eokbu} 기운이 당신을 풀어줍니다. ${johu ? `보조로 조후의 ${johu} 기운도 도움이 돼요. ` : ''}`) +
     `${primary} 기운이 들어오는 시기·환경·사람·색·방위가 당신에게 길합니다. 반대로 ${gisin} 기운이 과하면 답답해집니다.`;
 
   return { primary, eokbu, johu, huisin, gisin, method, desc };
