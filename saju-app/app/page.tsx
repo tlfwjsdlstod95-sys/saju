@@ -492,7 +492,7 @@ export default function Home() {
                 {result.advanced.sin12.byYear.map((x) => (
                   <div className={`sinsal ${x.tone}`} key={x.name}>
                     <div className="sinsal-h"><b>{x.name}{x.alias ? ` (${x.alias})` : ''}</b> <span>{x.ji} · {x.at.join('·')}</span></div>
-                    <p>{x.desc}</p>
+                    <p>{x.desc} <a href={`/sinsal/${x.name}`} style={{ color: 'var(--gold)', whiteSpace: 'nowrap' }}>{x.name} 자세히 →</a></p>
                   </div>
                 ))}
               </div>
@@ -500,6 +500,7 @@ export default function Home() {
                 ※ 12신살은 <b>년지(띠) 기준</b>이 통설이라 위 목록은 년지로 잡았어요. 일지 기준으로 보는 학파도 있어 함께 적어둡니다 —{' '}
                 <b>일지 기준</b>: {result.advanced.sin12.byDay.map((x) => `${x.name}(${x.ji})`).join(', ')}.
                 {' '}천을귀인·문창·양인·괴강·백호·원진·귀문은 일간/일주 기준의 별도 신살입니다.
+                {' '}<a href="/sinsal" style={{ color: 'var(--gold)' }}>12신살 사전 전체 보기 →</a>
               </p>
             </div>
             <div className="hapchung-wrap">
@@ -645,6 +646,7 @@ export default function Home() {
             <div className="chips">
               <div className="chip">그릇 <b>{result.gyeokYong.gyeokguk.name}</b></div>
               <div className="chip">용신 <b>{result.gyeokYong.yongsin.primary}(五行)</b></div>
+              <div className="chip">용신법 <b>{result.gyeokYong.yongsin.method}</b></div>
               <div className="chip">조후 <b>{result.gyeokYong.johu.climate}</b></div>
             </div>
             <p style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>판정 근거: {result.gyeokYong.gyeokguk.via} → {result.gyeokYong.gyeokguk.name}</p>
@@ -652,7 +654,9 @@ export default function Home() {
             <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.yongsin.desc}</p>
             <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
               ※ 신강·신약은 <b>득령(월지)·득지(일지)·득세</b>를 가중 합산해 판정하며, 득세는 일간 자신을 뺀 나머지 글자로 셉니다.
-              용신은 <b>억부(강약 보완)를 기본</b>으로 하되 계절 치우침이 심하면 조후를 먼저 씁니다. 억부·조후·병약 등 용신 학파에 따라 결과가 달라질 수 있어요.
+              용신은 서낙오 『자평수언』의 <b>5용신 정법 — 억부·조후·병약·통관·전왕(종격)</b>을 모두 적용해,
+              명식 구조에 맞는 법을 자동으로 고릅니다(우선순위: 종격 → 조후 시급 → 병약 → 통관 → 억부).
+              어떤 법을 우선하느냐는 학파에 따라 견해가 갈릴 수 있어요.
             </p>
           </div>
 
