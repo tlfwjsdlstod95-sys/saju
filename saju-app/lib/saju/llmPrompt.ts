@@ -11,12 +11,15 @@ function structureFacts(r: SajuResult): string {
   const patStr = pats.length ? pats.slice(0, 3).map((p) => `${p.name}`).join(' / ') : '뚜렷한 편중 없는 균형 구조';
   const edge = edgeKeywordSet(r.pillars.month.jiSipsin, r.advanced.unseong.day, r.advanced.sinsal);
   const gy = r.gyeokYong;
+  const s12 = r.advanced.sin12?.byYear ?? [];
+  const s12Str = s12.length ? s12.map((x) => `${x.name}${x.alias ? `(${x.alias})` : ''}`).join('·') : '';
   return `- 일주 캐릭터: ${iju.name} '${iju.tag}' — ${iju.trait}
 - 격국(타고난 그릇): ${gy.gyeokguk.name} (${gy.gyeokguk.via}) — ${gy.gyeokguk.desc}
 - 용신(약이 되는 핵심 기운): ${gy.yongsin.primary}(五行) · 방식 ${gy.yongsin.method} · 희신 ${gy.yongsin.huisin} · 기신 ${gy.yongsin.gisin}. ${gy.yongsin.desc}
 - 조후(계절 기운): ${gy.johu.climate}${gy.johu.need ? ` → ${gy.johu.need} 필요` : ''}. ${gy.johu.desc}
 - 구조 패턴(이 사람만의 결, 반드시 반영): ${patStr}` +
-    (edge ? `\n- 엣지 키워드세트(월지십신+십이운성+신살): ${edge}` : '');
+    (edge ? `\n- 엣지 키워드세트(월지십신+십이운성+신살): ${edge}` : '') +
+    (s12Str ? `\n- 12신살(띄 기준, 이 사람에게 실제로 걸린 것): ${s12Str} — 살 이름을 그대로 나열하지 말고, 그 기운이 일상에서 어떻게 드러나는지로 풀 것` : '');
 }
 
 // 원국+대운+세운 동적 형충회합 — 시기별로 변하는 역동적 해석의 근거
