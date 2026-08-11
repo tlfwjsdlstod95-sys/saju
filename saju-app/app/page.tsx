@@ -170,6 +170,12 @@ export default function Home() {
     return () => window.removeEventListener('saju:synced', onSync);
   }, []);
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(''), 2000); };
+  // 결과 화면 복원 — 12신살 사전 등 다른 페이지에 갔다 뒤로 오면 입력 화면으로 초기화되던 문제.
+  // 결과가 React state에만 있어 페이지를 벗어나면 날아갔음. sessionStorage 스냅샷으로 되살린다.
+  const SESSION_KEY = 'saju_session_v1';
+  const [restored, setRestored] = useState(false);
+  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(s.ai); if (s?.tone) setTone(s.tone); } } catch {} setRestored(true); }, []);
+  useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form]);
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
     tone, // 풀이·상담 말투 (api/saju 등에선 무시됨)
