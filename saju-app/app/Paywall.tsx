@@ -126,8 +126,7 @@ export default function Paywall(
           </button>
           {err && <div className="warn" style={{ marginTop: 12 }}>{err}</div>}
           <p className="pay-demo">
-            ※ 테스트 모드입니다. 토스 결제창에서 <b>아무 카드 번호나</b> 입력해도 실제 청구는 일어나지 않습니다.
-            {clientKey?.startsWith('test_') === false ? '' : ' (운영 전환 시 가맹점 키로 교체)'}
+            결제 완료 즉시 웹에서 열람 · 자동갱신 없음 · 별도 배송이 없는 디지털 콘텐츠입니다.
           </p>
         </div>
       </div>
