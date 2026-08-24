@@ -3,6 +3,8 @@ import { computeSaju } from '@/lib/saju';
 import { computeCompatibility } from '@/lib/saju/compatibility';
 import { buildGunghapSystem, buildGunghapUser } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
+import { pairId } from '@/lib/chartId';
+import { checkEntitled } from '@/lib/entitlement';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -33,6 +35,21 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: '잘못된 요청' }, { status: 400 }); }
   if (!body?.a?.year || !body?.b?.year) {
     return NextResponse.json({ error: '두 사람의 생년월일이 필요합니다.' }, { status: 400 });
+  }
+
+  // 이용권 검증 — 궁합은 '두 명식의 쌍'이 판매 단위 1건.
+  // 단, 초대 링크로 들어온 첫 1회는 프로모션으로 무료 제공한다(바이럴 인센티브).
+  {
+    const invite = body.invite === true || body.invite === 1 || body.invite === '1';
+    if (!invite) {
+      const { entitled } = await checkEntitled(pairId(body.a, body.b));
+      if (!entitled) {
+        return NextResponse.json(
+          { error: '이 궁합의 AI 심층 풀이를 아직 구매하지 않으셨어요.', needsPurchase: true },
+          { status: 402 },
+        );
+      }
+    }
   }
 
   const sajuA = computeSaju(parse(body.a));
