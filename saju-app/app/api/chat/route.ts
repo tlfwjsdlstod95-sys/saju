@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
 import { buildChatSystem, normalizeTone } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
+import { chartId } from '@/lib/chartId';
+import { checkEntitled } from '@/lib/entitlement';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -48,6 +50,20 @@ export async function POST(req: Request) {
     jasiMode: body.jasiMode === 'jeongja' ? 'jeongja' : undefined,
     name: body.name ? String(body.name).slice(0, 20) : undefined,
   };
+
+  // 상담 챗은 맛보기 3턴까지 무료(유입 장치). 그 이상은 그 명식의 리포트를 구매해야 한다.
+  // 클라이언트 카운트는 우회 가능하므로 서버에서도 턴 수를 센다.
+  const FREE_TURNS = 3;
+  const userTurns = raw.filter((m: any) => m?.role === 'user').length;
+  if (userTurns > FREE_TURNS) {
+    const { entitled } = await checkEntitled(chartId(input));
+    if (!entitled) {
+      return NextResponse.json(
+        { error: `무료 상담은 ${FREE_TURNS}턴까지예요. 이어서 물어보려면 이 사주의 정밀 리포트를 구매해 주세요.`, needsPurchase: true },
+        { status: 402 },
+      );
+    }
+  }
 
   const saju = computeSaju(input);
   const nowYear = new Date().getFullYear();
