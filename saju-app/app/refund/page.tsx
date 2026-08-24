@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { BIZ } from '../biz';
 
-export const metadata = { title: '취소·환불 정책 · 사주 명리' };
+export const metadata = { title: '취소·환불 정책 · 헤아림' };
 
 export default function RefundPage() {
   return (
@@ -11,6 +11,15 @@ export default function RefundPage() {
       <p className="legal-meta">시행일: {BIZ.effectiveDate}</p>
 
       <p>{BIZ.name}(이하 “회사”)가 제공하는 유료서비스(AI 심층 풀이, 정밀 리포트, 가이드북 등)는 「전자상거래 등에서의 소비자보호에 관한 법률」에 따라 다음과 같이 취소·환불을 운영합니다.</p>
+
+      <h2>0. 판매 단위</h2>
+      <p>회사의 유료서비스는 <strong>리포트 1건 단위로 판매</strong>됩니다. 1회의 결제는 결제 시점에 지정된
+      <strong> 생년월일시 1건(궁합의 경우 두 사람의 생년월일시 1쌍)</strong>에 대한 리포트 1건의 대가이며,
+      결제 승인 즉시 해당 리포트가 생성되어 제공됨으로써 이행이 완료됩니다.
+      다른 생년월일시의 리포트가 필요한 경우 건별로 다시 결제하셔야 하고,
+      <strong>1회 결제로 기간·건수 제한 없이 이용할 수 있는 상품은 판매하지 않습니다.</strong>
+      이미 구매하신 리포트는 로그인 계정에 저장되어 재열람하실 수 있으며, 재열람에는 추가 비용이 없습니다.
+      정기결제·자동갱신 상품 또한 취급하지 않습니다.</p>
 
       <h2>1. 콘텐츠 제공 전 (열람 전)</h2>
       <p>결제 후 유료 콘텐츠(AI 풀이·리포트 등)가 <strong>생성·제공되기 전</strong>에는 결제일로부터 7일 이내에 청약철회 및 전액 환불을 요청할 수 있습니다.</p>
