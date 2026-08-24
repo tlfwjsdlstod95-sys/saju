@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
 import { buildSystem, buildUser, normalizeTone } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
+import { chartId } from '@/lib/chartId';
+import { checkEntitled } from '@/lib/entitlement';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -37,9 +39,19 @@ export async function POST(req: Request) {
     name: body.name ? String(body.name).slice(0, 20) : undefined,
   };
 
-  // 비용 원칙: AI 실시간 호출은 프리미엄 전용. 무료 티어 요청(구버전 캐시 클라이언트 포함)은 거절 → 클라가 규칙 풀이로 폴백.
+  // 비용 원칙: AI 실시간 호출은 결제 사용자만. 무료 티어 요청(구버전 캐시 클라이언트 포함)은 거절 → 클라가 규칙 풀이로 폴백.
   if (body.tier !== 'premium') {
-    return NextResponse.json({ error: 'AI 심층 풀이는 프리미엄 전용입니다. 기본 풀이를 이용해 주세요.' }, { status: 402 });
+    return NextResponse.json({ error: 'AI 심층 풀이는 리포트 구매 후 이용할 수 있어요. 기본 풀이를 이용해 주세요.' }, { status: 402 });
+  }
+
+  // 이용권 검증 — 판매 단위가 '명식 1건'이므로, 요청 본문의 명식을 서버에서 직접 해싱해
+  // 그 명식의 결제 기록이 있는지 확인한다. 클라이언트가 보낸 값은 신뢰하지 않는다.
+  const { entitled } = await checkEntitled(chartId(input));
+  if (!entitled) {
+    return NextResponse.json(
+      { error: '이 사주의 정밀 리포트를 아직 구매하지 않으셨어요.', needsPurchase: true },
+      { status: 402 },
+    );
   }
 
   // ── 명식 단위 서버 캐시 (Upstash Redis REST) ──
