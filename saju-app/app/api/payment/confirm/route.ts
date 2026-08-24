@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth as getSession } from '@/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { chartFromOrderId } from '@/lib/chartId';
 
 export const runtime = 'nodejs';
 
@@ -29,6 +30,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
   }
 
+  // ── 승인 전 사전 검증 ──────────────────────────────────────────
+  // 이 라우트(=토스 confirm)가 실제로 돈이 빠져나가는 지점이다. 그러니 승인 조건이
+  // 안 맞으면 토스를 호출하기 '전에' 끊는다. 이러면 청구가 아예 발생하지 않는다.
+
+  // 1) 어떤 명식에 대한 결제인지 — 주문번호에 새겨져 있어야 한다.
+  const chart = chartFromOrderId(orderId);
+  if (!chart) {
+    return NextResponse.json(
+      { error: '주문 정보가 올바르지 않습니다. 결제를 다시 시도해 주세요.' },
+      { status: 400 },
+    );
+  }
+
+  // 2) 로그인 필수 — 구매한 리포트를 계정에 묶어야 기기를 바꿔도 열람할 수 있다.
+  const session = await getSession();
+  const uid = ((session as any)?.uid as string) ?? null;
+  if (!uid) {
+    return NextResponse.json(
+      { error: '로그인 후 결제할 수 있어요. 구매하신 리포트를 계정에 저장하기 위해 필요합니다.', needsLogin: true },
+      { status: 401 },
+    );
+  }
+
   // 토스 시크릿 키로 Basic 인증 (키 뒤에 콜론, 비밀번호는 빈 값)
   const auth = Buffer.from(`${secretKey}:`).toString('base64');
 
@@ -53,18 +77,14 @@ export async function POST(req: Request) {
 
   const isTest = secretKey.startsWith('test_');
 
-  // 승인 성공 — 로그인 유저면 서버에 이용권/영수증을 기록한다.
-  // (이게 "진짜" 권한이라 localStorage 우회로 매출이 새지 않음)
+  // 승인 성공 — 결제 기록을 남긴다. 주문번호에 명식 id가 들어 있으므로
+  // 이 한 줄이 곧 "그 명식 리포트 1건"에 대한 이용권 증빙이 된다.
+  // (계정 전체를 여는 프리미엄 플래그는 두지 않는다 — 1회 결제 무제한 구조 금지)
+  let saved = false;
   try {
-    const session = await getSession();
-    const uid = (session as any)?.uid ?? null;
     const sb = supabaseAdmin();
-    if (uid && sb) {
-      await sb.from('saju_entitlements').upsert(
-        { user_id: uid, premium: true, source: 'toss', last_order_id: data.orderId, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' },
-      );
-      await sb.from('saju_receipts').upsert(
+    if (sb) {
+      const { error: recErr } = await sb.from('saju_receipts').upsert(
         {
           order_id: data.orderId, user_id: uid,
           order_name: data.orderName, amount: data.totalAmount,
@@ -72,8 +92,9 @@ export async function POST(req: Request) {
         },
         { onConflict: 'order_id' },
       );
+      saved = !recErr;
     }
-  } catch { /* 기록 실패해도 승인 자체는 성공으로 응답 */ }
+  } catch { /* 아래에서 saved=false 로 처리 */ }
 
   return NextResponse.json({
     ok: true,
@@ -83,5 +104,8 @@ export async function POST(req: Request) {
     method: data.method,
     approvedAt: data.approvedAt,
     isTest,
+    chart,
+    // 기록 실패 시 클라이언트가 안내를 띄울 수 있게 알려준다(결제 자체는 이미 승인됨).
+    saved,
   });
 }
