@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { chartId } from '@/lib/chartId';
 import type { SajuResult, Pillar, LuckPillar } from '@/lib/saju/types';
 import { parseReadingStream } from '@/lib/saju/readingMeta';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
@@ -144,15 +145,30 @@ export default function Home() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiErr, setAiErr] = useState('');
-  const [premium, unlock] = usePremium();
+  // 실제로 분석한 입력값. 판매 단위가 "명식 1건"이라 이용권 판정의 기준이 된다.
+  // (편집 중인 form 이 아니라 '분석된' 명식이어야 한다)
+  const [analyzed, setAnalyzed] = useState<any>(null);
+  const chart = useMemo(() => (analyzed ? chartId(analyzed) : null), [analyzed]);
+  const [premium, unlock] = usePremium(chart);
   const [payOpen, setPayOpen] = useState(false);
   const [pendingAi, setPendingAi] = useState(false);
   // 풀이 톤(문체) — default 선배 톤 / blunt 팩폭 / warm 따뜻한 상담
   const [tone, setTone] = useState<'default' | 'blunt' | 'warm'>('default');
 
-  // 무료는 결과와 함께 AI 풀이가 자동 생성됨. 이 버튼은 '프리미엄 심층(Sonnet) 재생성'.
-  function onAiClick() { if (premium) askAI('premium'); else { setPendingAi(true); setPayOpen(true); } }
-  function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askAI('premium'); } }
+  // 무료는 규칙 풀이. 이 버튼은 구매한 명식의 '심층(Sonnet) 생성/재생성'.
+  function onAiClick() { if (premium) askAI('premium', analyzed ?? undefined); else { setPendingAi(true); setPayOpen(true); } }
+  function handleUnlock() { unlock(); setPayOpen(false); if (pendingAi) { setPendingAi(false); askAI('premium', analyzed ?? undefined); } }
+
+  // 이용권이 확인된 명식은 심층 풀이를 자동 생성한다.
+  // (서버 확인이 비동기라 분석 직후엔 아직 false 일 수 있어서 effect 로 처리)
+  const autoAiFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!premium || !chart || !result || !analyzed) return;
+    if (autoAiFor.current === chart) return; // 명식당 1회만
+    autoAiFor.current = chart;
+    askAI('premium', analyzed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [premium, chart, result, analyzed]);
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -170,12 +186,13 @@ export default function Home() {
     return () => window.removeEventListener('saju:synced', onSync);
   }, []);
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(''), 2000); };
+
   // 결과 화면 복원 — 12신살 사전 등 다른 페이지에 갔다 뒤로 오면 입력 화면으로 초기화되던 문제.
   // 결과가 React state에만 있어 페이지를 벗어나면 날아갔음. sessionStorage 스냅샷으로 되살린다.
   const SESSION_KEY = 'saju_session_v1';
   const [restored, setRestored] = useState(false);
-  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(s.ai); if (s?.tone) setTone(s.tone); } } catch {} setRestored(true); }, []);
-  useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form]);
+  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(s.ai); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
+  useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone, analyzed })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form, analyzed]);
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
     tone, // 풀이·상담 말투 (api/saju 등에선 무시됨)
@@ -194,7 +211,7 @@ export default function Home() {
     `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}-${b.jasiMode || 'yaja'}:${tier}:${tn}`;
 
   async function runAnalysis(bodyObj: any) {
-    setError(''); setResult(null); setAi(null); setAiErr('');
+    setError(''); setResult(null); setAnalyzed(null); setAi(null); setAiErr('');
     setLoading(true);
     const started = Date.now();
     try {
@@ -204,9 +221,9 @@ export default function Home() {
       const elapsed = Date.now() - started;
       if (elapsed < 2000) await sleep(2000 - elapsed); // 정밀 분석 연출 최소 노출
       setResult(data);
+      setAnalyzed(bodyObj); // 이용권 판정 기준이 되는 '분석된 명식'
       // 비용 원칙: AI 실시간 호출은 결제 사용자만. 무료는 규칙 엔진 풀이 즉시 표시(API 0원).
-      // 프리미엄이면 심층 풀이 자동 생성(명식+톤별 캐시라 재방문 0원).
-      if (premium) askAI('premium', bodyObj);
+      // 이 명식의 리포트를 구매했는지는 서버 확인이 비동기라, 아래 useEffect 가 대신 띄운다.
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
@@ -601,17 +618,17 @@ export default function Home() {
           />
 
           <div className="card premium">
-            <h2>{premium ? '✓ 정밀 리포트 (이용 중)' : '🔒 정밀 리포트 (프리미엄)'}</h2>
+            <h2>{premium ? '✓ 정밀 리포트 (구매 완료)' : '🔒 정밀 리포트 1건'}</h2>
             <p className="meta" style={{ marginBottom: 14 }}>이직·이사·계약·연애 — 진짜 결정을 앞뒀다면, 정밀 리포트에서 '언제, 어느 방향으로'까지 확인하세요.</p>
             <ul className="prem-list">
-              <li>🔮 프리미엄 심층 AI 풀이 — 더 길고 깊게, 무제한 재생성</li>
-              <li>📈 평생 대운 80년 상세 — 시기별 재물·직업·건강 변곡점</li>
+              <li>🔮 이 명식만을 위한 심층 AI 풀이 — 말투 3종 선택</li>
+              <li>📈 대운 80년 상세 — 시기별 재물·직업·건강 변곡점</li>
               <li>🗓️ {new Date().getFullYear()}~{new Date().getFullYear() + 1} 신년운세 — 월별 길흉 캘린더</li>
               <li>🍀 나만의 개운법 · 결혼·이직·이사 택일</li>
             </ul>
             {premium
               ? <>
-                  <div className="prem-unlocked">✓ 프리미엄 잠금이 해제되어 모든 기능을 이용 중이에요.</div>
+                  <div className="prem-unlocked">✓ 이 사주의 리포트를 구매하셨어요. 계정에 저장되어 언제든 다시 열람할 수 있습니다.</div>
                   <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '심층 풀이 생성 중…' : '✨ 프리미엄 심층 풀이로 다시 풀기'}</button>
                 </>
               : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · <s style={{ opacity: .6, fontWeight: 400 }}>₩9,900</s> ₩5,900</button>}
@@ -726,7 +743,13 @@ export default function Home() {
         ※ 경계 시각(절기 전후·자정 무렵) 출생은 한국천문연구원(KASI) 교차검증 권장
       </div>
 
-      <Paywall open={payOpen} onClose={() => setPayOpen(false)} onUnlock={handleUnlock} />
+      <Paywall
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        onUnlock={handleUnlock}
+        chart={chart}
+        productName="사주 정밀 리포트 1건"
+      />
       {notice && <div className="toast">{notice}</div>}
     </main>
   );
