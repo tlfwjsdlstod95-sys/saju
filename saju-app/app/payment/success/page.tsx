@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { addReceipt } from '@/lib/receipts';
 
-const PREMIUM_KEY = 'saju_premium_v1';
+const ENT_PREFIX = 'saju_ent_v2:'; // 명식별 이용권 로컬 캐시 (진짜 권한은 서버)
 const RETURN_KEY = 'saju_pay_return';
 
 function SuccessInner() {
@@ -36,11 +36,15 @@ function SuccessInner() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || '결제 승인 실패');
 
-        try { localStorage.setItem(PREMIUM_KEY, '1'); } catch {}
+        // 결제한 그 명식만 해제한다(계정 전체 해제 아님).
+        try {
+          const chart = data.chart as string | undefined;
+          if (chart) localStorage.setItem(ENT_PREFIX + chart, '1');
+        } catch {}
         // 이용 내역에 영수증 저장
         addReceipt({
           orderId: data.orderId ?? orderId,
-          orderName: data.orderName ?? '사주 정밀 리포트 · 프리미엄',
+          orderName: data.orderName ?? '사주 정밀 리포트 1건',
           amount: data.amount ?? amount,
           method: data.method ?? '카드',
           approvedAt: data.approvedAt ?? new Date().toISOString(),
@@ -71,7 +75,7 @@ function SuccessInner() {
           <>
             <div className="pay-result-icon ok">✓</div>
             <h2>결제 완료!</h2>
-            <p className="meta">프리미엄 잠금이 해제됐어요. 잠시 후 자동으로 돌아갑니다.</p>
+            <p className="meta">리포트가 생성됐어요. 잠시 후 자동으로 돌아갑니다.</p>
           </>
         )}
         {state === 'error' && (
