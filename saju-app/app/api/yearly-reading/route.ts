@@ -3,6 +3,8 @@ import { computeSaju } from '@/lib/saju';
 import { computeYearlyFortune } from '@/lib/saju/yearly';
 import { buildYearlySystem, buildYearlyUser } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
+import { chartId } from '@/lib/chartId';
+import { checkEntitled } from '@/lib/entitlement';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -37,6 +39,17 @@ export async function POST(req: Request) {
     jasiMode: body.jasiMode === 'jeongja' ? 'jeongja' : undefined,
     name: body.name ? String(body.name).slice(0, 20) : undefined,
   };
+
+  // 이용권 검증 — 신년운세 AI 총평은 그 명식의 리포트를 구매한 경우에만.
+  {
+    const { entitled } = await checkEntitled(chartId(input));
+    if (!entitled) {
+      return NextResponse.json(
+        { error: '이 사주의 정밀 리포트를 아직 구매하지 않으셨어요.', needsPurchase: true },
+        { status: 402 },
+      );
+    }
+  }
 
   // 분석 대상 연도(올해/내년). 미지정 시 올해.
   const nowYear = new Date().getFullYear();
