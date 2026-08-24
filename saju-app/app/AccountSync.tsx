@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   cloudListProfiles, cloudSaveProfile,
-  cloudListReceipts, cloudAddReceipt, cloudGetEntitlement,
+  cloudListReceipts, cloudAddReceipt,
 } from '@/lib/cloud';
 import type { Profile } from '@/lib/profiles';
 import type { Receipt } from '@/lib/receipts';
@@ -29,9 +29,11 @@ export default function AccountSync() {
     let done = false;
 
     (async () => {
-      // 1) 이용권: 서버가 프리미엄이면 로컬에도 반영
-      const ent = await cloudGetEntitlement();
-      if (ent) { try { localStorage.setItem(PREMIUM_KEY, '1'); } catch {} }
+      // 1) 이용권은 여기서 동기화하지 않는다.
+      //    판매 단위가 '리포트 1건'이라 계정 전체를 여는 플래그가 존재하지 않는다.
+      //    각 명식의 구매 여부는 Paywall 의 usePremium(chart) 가 /api/entitlement?chart= 로 그때그때 확인한다.
+      //    (옛 전역 프리미엄 키가 남아 있으면 잠금이 잘못 풀리므로 정리한다)
+      try { localStorage.removeItem(PREMIUM_KEY); } catch {}
 
       // 2) 보관함 병합 (id 기준, savedAt 최신 우선)
       const localP = read<Profile>(P_KEY);
