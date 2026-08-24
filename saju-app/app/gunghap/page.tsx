@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { pairId } from '@/lib/chartId';
 import { listProfiles, type Profile } from '@/lib/profiles';
 import type { SajuResult } from '@/lib/saju/types';
 import type { CompatResult } from '@/lib/saju/compatibility';
@@ -99,7 +100,10 @@ export default function Gunghap() {
   const [ai, setAi] = useState<{ lead: string; sections: any[] } | null>(null);
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiErr, setAiErr] = useState('');
-  const [premium, unlock] = usePremium();
+  // 궁합은 '두 명식의 쌍'이 판매 단위 1건이다. 결과가 나온 뒤에만 특정된다.
+  const [analyzed, setAnalyzed] = useState<{ a: any; b: any } | null>(null);
+  const chart = useMemo(() => (analyzed ? pairId(analyzed.a, analyzed.b) : null), [analyzed]);
+  const [premium, unlock] = usePremium(chart);
   const [payOpen, setPayOpen] = useState(false);
   const [pendingAi, setPendingAi] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -132,7 +136,7 @@ export default function Gunghap() {
     if (inviteFree) {
       try { localStorage.setItem('saju_gh_invite_used_v1', '1'); } catch {}
       setInviteFree(false);
-      askGunghapAI();
+      askGunghapAI(true); // 초대 특전 1회 무료
       return;
     }
     setPendingAi(true); setPayOpen(true);
@@ -157,10 +161,10 @@ export default function Gunghap() {
     unknownTime: p.unknownTime || p.hour === '', longitude: CITIES[p.city], sex: p.sex,
   });
 
-  async function askGunghapAI() {
+  async function askGunghapAI(useInvite = false) {
     setAiErr(''); setAiStreaming(true); setAi({ lead: '', sections: [] });
     try {
-      const r = await fetch('/api/gunghap-reading', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: body(a), b: body(b) }) });
+      const r = await fetch('/api/gunghap-reading', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: body(a), b: body(b), invite: useInvite }) });
       if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error ?? 'AI 궁합 오류'); }
       if (!r.body) throw new Error('스트림 없음');
       const reader = r.body.getReader(); const dec = new TextDecoder(); let acc = '';
@@ -176,14 +180,16 @@ export default function Gunghap() {
   }
 
   async function submit() {
-    setError(''); setRes(null); setAi(null); setAiErr('');
+    setError(''); setRes(null); setAnalyzed(null); setAi(null); setAiErr('');
     if (!a.year || !a.month || !a.day || !b.year || !b.month || !b.day) { setError('두 사람의 생년월일을 입력하세요.'); return; }
     setLoading(true);
     try {
-      const r = await fetch('/api/gunghap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: body(a), b: body(b) }) });
+      const pa = body(a), pb = body(b);
+      const r = await fetch('/api/gunghap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: pa, b: pb }) });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       setRes(data);
+      setAnalyzed({ a: pa, b: pb }); // 이용권 판정 기준이 되는 '분석된 쌍'
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
@@ -300,7 +306,13 @@ export default function Gunghap() {
       </div>
 
       <div className="foot">결과는 명리학적 상성 참고용이며, 실제 관계는 두 사람의 노력으로 만들어집니다.</div>
-      <Paywall open={payOpen} onClose={() => setPayOpen(false)} onUnlock={handleUnlock} />
+      <Paywall
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        onUnlock={handleUnlock}
+        chart={chart}
+        productName="AI 궁합 심층 풀이 1건"
+      />
     </main>
   );
 }
