@@ -229,6 +229,21 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .pay-list li:last-child { border-bottom: none; }
 .pay-demo { color: var(--text-mute); font-size: 12px; line-height: 1.6; margin: 14px 0 0; text-align: center; }
 
+/* 결제 전 로그인 안내 — 구매한 리포트를 계정에 묶기 위해 로그인이 필요하다 */
+.pay-login { margin-top: 4px; }
+.pay-login-msg {
+  background: rgba(230, 200, 120, 0.08);
+  border: 1px solid rgba(230, 200, 120, 0.25);
+  border-radius: 12px;
+  color: var(--text-mute);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+}
+.pay-login-msg b { color: var(--gold); }
+.pay-login .login-providers { display: flex; flex-direction: column; gap: 8px; }
+
 /* 사주 보관함 */
 .shelf-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; margin-left: 10px; border-radius: 999px; background: var(--gold-soft, #e6c878); color: #1a1430; font-size: 13px; font-weight: 800; vertical-align: middle; }
 .shelf-empty { text-align: center; padding: 22px 12px 8px; }
