@@ -11,18 +11,20 @@ export const metadata: Metadata = {
 
 const ITEMS = [
   {
-    name: '정밀 사주 리포트 (프리미엄 이용권)',
+    name: '정밀 사주 리포트 1건',
     price: 5900,
     list: 9900,
-    desc: 'AI가 내 명식만을 위해 새로 쓰는 심층 풀이(말투 선택 가능) + 신년운세 월별 캘린더 + 결혼·이사·계약 택일 + 개운법 + 인생 가이드북 PDF + 평생 대운 80년 상세.',
-    how: '결제 완료 즉시 웹에서 열람 (별도 배송 없는 디지털 콘텐츠)',
+    unit: '생년월일시 1건 기준',
+    desc: 'AI가 그 명식만을 위해 새로 쓰는 심층 풀이(말투 선택 가능) + 신년운세 월별 캘린더 + 결혼·이사·계약 택일 + 개운법 + 인생 가이드북 PDF + 대운 80년 상세.',
+    how: '결제 승인 즉시 해당 생년월일시의 리포트가 생성되어 웹에서 열람 (별도 배송 없는 디지털 콘텐츠)',
   },
   {
-    name: 'AI 궁합 심층 리포트',
+    name: 'AI 궁합 심층 리포트 1건',
     price: 4900,
     list: null,
+    unit: '두 사람의 생년월일시 1쌍 기준',
     desc: '두 사람의 명식을 대조해 상성 점수·잘 맞는 지점·부딪히는 지점·관계 운영법을 AI가 길게 풀어주는 궁합 리포트.',
-    how: '결제 완료 즉시 웹에서 열람 (별도 배송 없는 디지털 콘텐츠)',
+    how: '결제 승인 즉시 해당 두 명식의 궁합 리포트가 생성되어 웹에서 열람 (별도 배송 없는 디지털 콘텐츠)',
   },
 ];
 
@@ -45,11 +47,14 @@ export default function Pricing() {
               {it.list && <s style={{ opacity: 0.6, marginLeft: 6 }}>{it.list.toLocaleString()}원</s>}
             </div>
             <div className="chip">부가세 포함</div>
-            <div className="chip">1회 결제 · 자동갱신 없음</div>
+            <div className="chip">건별 결제 · 자동갱신 없음</div>
+            <div className="chip">{it.unit}</div>
           </div>
           <p style={{ lineHeight: 1.75 }}>{it.desc}</p>
           <p style={{ marginTop: 10, fontSize: 14, color: 'var(--text-mute)' }}>
             제공 방식: {it.how}<br />
+            판매 단위: <b>리포트 1건</b>입니다. 다른 생년월일시의 리포트가 필요하면 건별로 다시 결제하셔야 하며,
+            1회 결제로 무제한 이용되는 구조가 아닙니다. 구매하신 리포트는 로그인 계정에 저장되어 다시 열람하실 수 있습니다.<br />
             결제 수단: 신용·체크카드, 계좌이체, 간편결제 (결제 대행: 토스페이먼츠)
           </p>
         </div>
