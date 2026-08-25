@@ -21,10 +21,24 @@ export async function currentUid(): Promise<string | null> {
   }
 }
 
+/**
+ * 사장님(운영자) 계정인가 — 판매 상품이 아니라 내부 확인용 통과다.
+ * Vercel 환경변수 `SAJU_OWNER_UIDS` 에 uid 를 콤마로 나열한다. 예) kakao:123,google:456
+ * 비어 있으면 아무도 통과하지 않는다(기본 잠금).
+ */
+export function isOwnerUid(uid: string | null): boolean {
+  if (!uid) return false;
+  const raw = process.env.SAJU_OWNER_UIDS;
+  if (!raw) return false;
+  return raw.split(',').map((s) => s.trim()).filter(Boolean).includes(uid);
+}
+
 /** 이 유저가 이 명식(또는 궁합 쌍)의 리포트를 구매했는가 */
 export async function hasChartEntitlement(uid: string | null, chart: string | null): Promise<boolean> {
   const id = safeChartId(chart);
   if (!uid || !id) return false;
+  // 운영자는 결제 기록 없이도 통과 (사장님 무료 이용)
+  if (isOwnerUid(uid)) return true;
   const sb = supabaseAdmin();
   if (!sb) return false;
   try {
