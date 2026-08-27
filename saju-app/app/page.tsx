@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { chartId } from '@/lib/chartId';
 import type { SajuResult, Pillar, LuckPillar } from '@/lib/saju/types';
 import { parseReadingStream } from '@/lib/saju/readingMeta';
+import { cloudGetReport } from '@/lib/cloud';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
 import { computeHapchung } from '@/lib/saju/hapchung';
 import ShareCard from './ShareCard';
@@ -19,6 +20,7 @@ import NamingCard from './NamingCard';
 import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium } from './Paywall';
+import ReportShelf from './ReportShelf';
 import { CITY_GROUPS, CITIES } from './cities';
 import AccountButton from './AccountButton';
 import { listProfiles, saveProfile, removeProfile, type Profile } from '@/lib/profiles';
@@ -304,6 +306,21 @@ export default function Home() {
     } catch {}
     setAiErr(''); setAiLoading(true); setAiStreaming(true);
     setAi({ lead: '', sections: [] });
+
+    // 서버 보관본 먼저 확인 — 폰에서 산 리포트를 PC에서 열어도 '그때 그 글'이 나와야 한다.
+    // (localStorage 는 기기 종속이고, Redis 캐시는 60일 뒤 만료된다.)
+    if (tier === 'premium') {
+      try {
+        const saved = await cloudGetReport('reading', chartId(base), tn);
+        const parsed = saved ? parseReadingStream(saved) : null;
+        if (parsed && parsed.sections.length) {
+          setAi(parsed); setAiLoading(false); setAiStreaming(false);
+          try { localStorage.setItem(key, JSON.stringify(parsed)); } catch {}
+          return;
+        }
+      } catch {}
+    }
+
     try {
       const res = await fetch('/api/reading', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -455,6 +472,9 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* 받아본 리포트 원문 보관소 — 없으면 아무것도 그리지 않는다 */}
+      <ReportShelf />
 
       {result && (
         <>

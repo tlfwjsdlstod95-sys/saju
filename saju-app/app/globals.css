@@ -623,3 +623,24 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 
 /* ── 헤아림 브랜드 워드마크 (첫 화면 히어로) ── */
 .brand-name { font-family: 'Nanum Myeongjo', serif; font-size: 22px; font-weight: 800; letter-spacing: 0.18em; color: #e6c878; margin-bottom: 10px; }
+
+/* ── 내 리포트함 (2026-08-27) ─────────────────────────────
+   구매한 리포트의 원문 재열람. 보관함(.shelf-*)은 '사람' 단위, 여기는 '리포트' 단위. */
+.report-list { display: flex; flex-direction: column; gap: 10px; }
+.report-item { background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color .15s; }
+.report-item.open { border-color: var(--gold-soft); }
+.report-head { display: flex; align-items: center; gap: 12px; padding: 13px 14px; cursor: pointer; }
+.report-head:hover { background: rgba(230, 200, 120, .05); }
+.report-emoji { font-size: 24px; flex-shrink: 0; }
+.report-info { display: flex; flex-direction: column; line-height: 1.4; min-width: 0; flex: 1; }
+.report-info b { font-size: 15px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.report-info small { font-size: 11.5px; color: var(--text-mute); }
+.report-tag { display: inline-block; font-size: 10.5px; font-weight: 700; color: #1a1205; background: var(--gold); border-radius: 999px; padding: 1px 7px; margin-right: 6px; vertical-align: middle; }
+.report-caret { color: var(--text-mute); font-size: 11px; flex-shrink: 0; }
+.report-body { padding: 4px 16px 16px; border-top: 1px solid var(--border); }
+.report-body p { font-size: 14.5px; line-height: 1.85; margin: 0 0 10px; }
+.report-lead { font-family: var(--serif); color: var(--gold); font-size: 15.5px; line-height: 1.8; padding: 12px 0 2px; }
+.report-sec { margin-top: 16px; }
+.report-sec h4 { font-family: var(--serif); font-size: 16px; color: var(--gold); margin: 0 0 8px; }
+.report-actions { display: flex; gap: 8px; margin-top: 18px; }
+.mini-btn.danger { color: #f0a5a5; border-color: rgba(240, 165, 165, .4); }
