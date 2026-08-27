@@ -4,6 +4,7 @@ import { buildSystem, buildUser, normalizeTone } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
 import { chartId } from '@/lib/chartId';
 import { checkEntitled } from '@/lib/entitlement';
+import { saveReport } from '@/lib/reports';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -46,13 +47,26 @@ export async function POST(req: Request) {
 
   // 이용권 검증 — 판매 단위가 '명식 1건'이므로, 요청 본문의 명식을 서버에서 직접 해싱해
   // 그 명식의 결제 기록이 있는지 확인한다. 클라이언트가 보낸 값은 신뢰하지 않는다.
-  const { entitled } = await checkEntitled(chartId(input));
+  const chart = chartId(input);
+  const { uid, entitled } = await checkEntitled(chart);
   if (!entitled) {
     return NextResponse.json(
       { error: '이 사주의 정밀 리포트를 아직 구매하지 않으셨어요.', needsPurchase: true },
       { status: 402 },
     );
   }
+
+  // 명식은 캐시 히트든 아니든 필요하다(보관용 메타). 순수 계산이라 비용은 무시할 수준.
+  const saju = computeSaju(input);
+  const reportMeta = {
+    name: input.name,
+    birth: `${input.year}.${String(input.month).padStart(2, '0')}.${String(input.day).padStart(2, '0')}`
+      + (input.unknownTime || input.hour == null ? ' (시간 모름)' : ` ${String(input.hour).padStart(2, '0')}:${String(input.minute ?? 0).padStart(2, '0')}`),
+    ilju: saju.pillars.day.ganKor + saju.pillars.day.jiKor,
+    motif: saju.archetype.motif.name,
+    emoji: saju.archetype.motif.emoji,
+  };
+  const reportTitle = `${input.name?.trim() || '이름 없음'} · 정밀 사주 리포트`;
 
   // ── 명식 단위 서버 캐시 (Upstash Redis REST) ──
   // 같은 명식+톤이면 기기·유저가 달라도 캐시 반환(원가 0). 환경변수 없으면 자동 비활성.
@@ -68,6 +82,8 @@ export async function POST(req: Request) {
       if (g.ok) {
         const j = await g.json();
         if (typeof j?.result === 'string' && j.result.length > 200) {
+          // 캐시에서 왔더라도 "내 리포트"로는 계정에 남겨야 재열람이 된다.
+          await saveReport({ uid, kind: 'reading', chart, variant: tone, title: reportTitle, meta: reportMeta, body: j.result });
           return new Response(j.result, {
             headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-cache', 'x-saju-cache': 'hit' },
           });
@@ -76,7 +92,6 @@ export async function POST(req: Request) {
     } catch { /* 캐시 실패는 무시하고 정상 생성 */ }
   }
 
-  const saju = computeSaju(input);
   const nowYear = new Date().getFullYear();
   const age = nowYear - input.year;
   const model = process.env.SAJU_MODEL || 'claude-sonnet-4-6';
@@ -152,6 +167,10 @@ export async function POST(req: Request) {
               method: 'POST', headers: { Authorization: `Bearer ${kvTok}` }, body: full,
             });
           } catch {}
+        }
+        // 계정 보관 — 약관에 적은 "구매한 리포트 재열람"의 실체. 캐시(TTL 60일)와 달리 만료되지 않는다.
+        if (!broken) {
+          await saveReport({ uid, kind: 'reading', chart, variant: tone, title: reportTitle, meta: reportMeta, body: full });
         }
         controller.close();
       }
