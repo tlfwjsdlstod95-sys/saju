@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { pairId } from '@/lib/chartId';
+import { cloudGetReport } from '@/lib/cloud';
 import { listProfiles, type Profile } from '@/lib/profiles';
 import type { SajuResult } from '@/lib/saju/types';
 import type { CompatResult } from '@/lib/saju/compatibility';
@@ -163,6 +164,14 @@ export default function Gunghap() {
 
   async function askGunghapAI(useInvite = false) {
     setAiErr(''); setAiStreaming(true); setAi({ lead: '', sections: [] });
+
+    // 서버 보관본 먼저 — 이미 받아본 궁합이면 AI를 다시 부르지 않고 같은 글을 돌려준다.
+    try {
+      const saved = await cloudGetReport('gunghap', pairId(body(a), body(b)), 'v1');
+      const parsed = saved ? parseReadingStream(saved, GUNGHAP_KEYS, GUNGHAP_ICONS, GUNGHAP_LABELS) : null;
+      if (parsed && parsed.sections.length) { setAi(parsed); setAiStreaming(false); return; }
+    } catch {}
+
     try {
       const r = await fetch('/api/gunghap-reading', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: body(a), b: body(b), invite: useInvite }) });
       if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error ?? 'AI 궁합 오류'); }
