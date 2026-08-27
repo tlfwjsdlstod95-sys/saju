@@ -644,3 +644,16 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .report-sec h4 { font-family: var(--serif); font-size: 16px; color: var(--gold); margin: 0 0 8px; }
 .report-actions { display: flex; gap: 8px; margin-top: 18px; }
 .mini-btn.danger { color: #f0a5a5; border-color: rgba(240, 165, 165, .4); }
+.report-old { display: inline-block; margin-left: 8px; font-size: 10.5px; font-weight: 700; color: var(--text-mute); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; vertical-align: middle; }
+.report-notice { font-size: 12.5px !important; line-height: 1.7 !important; color: var(--text-mute) !important; background: rgba(155,127,212,.08); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 12px 0 4px !important; }
+.report-notice b { color: var(--gold); }
+
+/* ── 심사 전용 로그인 (2026-08-27) ─────────────────────── */
+.review-form { display: flex; flex-direction: column; gap: 14px; }
+.review-label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text-mute); }
+.review-label input { width: 100%; }
+.review-err { color: #f0a5a5; font-size: 13px; margin: 0; }
+.review-ok { color: var(--gold); font-weight: 700; font-size: 16px; margin: 0 0 10px; }
+.review-done { display: flex; flex-direction: column; gap: 6px; }
+.review-actions { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.review-actions .btn { text-decoration: none; display: inline-block; width: auto; padding: 10px 20px; }
