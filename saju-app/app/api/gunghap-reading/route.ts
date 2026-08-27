@@ -4,7 +4,8 @@ import { computeCompatibility } from '@/lib/saju/compatibility';
 import { buildGunghapSystem, buildGunghapUser } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
 import { pairId } from '@/lib/chartId';
-import { checkEntitled } from '@/lib/entitlement';
+import { checkEntitled, currentUid } from '@/lib/entitlement';
+import { saveReport } from '@/lib/reports';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -39,17 +40,20 @@ export async function POST(req: Request) {
 
   // 이용권 검증 — 궁합은 '두 명식의 쌍'이 판매 단위 1건.
   // 단, 초대 링크로 들어온 첫 1회는 프로모션으로 무료 제공한다(바이럴 인센티브).
-  {
-    const invite = body.invite === true || body.invite === 1 || body.invite === '1';
-    if (!invite) {
-      const { entitled } = await checkEntitled(pairId(body.a, body.b));
-      if (!entitled) {
-        return NextResponse.json(
-          { error: '이 궁합의 AI 심층 풀이를 아직 구매하지 않으셨어요.', needsPurchase: true },
-          { status: 402 },
-        );
-      }
+  const pair = pairId(body.a, body.b);
+  const invite = body.invite === true || body.invite === 1 || body.invite === '1';
+  let uid: string | null;
+  if (invite) {
+    uid = await currentUid();
+  } else {
+    const chk = await checkEntitled(pair);
+    if (!chk.entitled) {
+      return NextResponse.json(
+        { error: '이 궁합의 AI 심층 풀이를 아직 구매하지 않으셨어요.', needsPurchase: true },
+        { status: 402 },
+      );
     }
+    uid = chk.uid;
   }
 
   const sajuA = computeSaju(parse(body.a));
@@ -79,9 +83,14 @@ export async function POST(req: Request) {
   const reader = upstream.body.getReader();
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
+  const nameA = String(body?.a?.name ?? '').trim() || 'A';
+  const nameB = String(body?.b?.name ?? '').trim() || 'B';
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let buf = '';
+      let full = '';   // 계정 보관용 전체 텍스트
+      let broken = false;
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -94,11 +103,28 @@ export async function POST(req: Request) {
             if (!t.startsWith('data:')) continue;
             const p = t.slice(5).trim();
             if (!p || p === '[DONE]') continue;
-            try { const j = JSON.parse(p); if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') controller.enqueue(encoder.encode(j.delta.text)); } catch {}
+            try {
+              const j = JSON.parse(p);
+              if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
+                full += j.delta.text;
+                controller.enqueue(encoder.encode(j.delta.text));
+              }
+            } catch {}
           }
         }
-      } catch { controller.enqueue(encoder.encode('\n\n(스트림 중단. 다시 시도해 주세요.)')); }
-      finally { controller.close(); }
+      } catch { broken = true; controller.enqueue(encoder.encode('\n\n(스트림 중단. 다시 시도해 주세요.)')); }
+      finally {
+        // 계정 보관 — 초대 무료분도 남긴다(다시 볼 때 AI를 또 호출하지 않아도 되므로 비용도 준다).
+        if (!broken) {
+          await saveReport({
+            uid, kind: 'gunghap', chart: pair, variant: 'v1',
+            title: `${nameA} × ${nameB} · 궁합 리포트`,
+            meta: { name: nameA, partner: nameB, free: invite },
+            body: full,
+          });
+        }
+        controller.close();
+      }
     },
   });
   return new Response(stream, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-cache, no-transform' } });
