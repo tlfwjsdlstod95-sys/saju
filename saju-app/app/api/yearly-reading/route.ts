@@ -5,6 +5,7 @@ import { buildYearlySystem, buildYearlyUser } from '@/lib/saju/llmPrompt';
 import { guardAI, clampInt } from '@/lib/apiGuard';
 import { chartId } from '@/lib/chartId';
 import { checkEntitled } from '@/lib/entitlement';
+import { saveReport } from '@/lib/reports';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -41,14 +42,13 @@ export async function POST(req: Request) {
   };
 
   // 이용권 검증 — 신년운세 AI 총평은 그 명식의 리포트를 구매한 경우에만.
-  {
-    const { entitled } = await checkEntitled(chartId(input));
-    if (!entitled) {
-      return NextResponse.json(
-        { error: '이 사주의 정밀 리포트를 아직 구매하지 않으셨어요.', needsPurchase: true },
-        { status: 402 },
-      );
-    }
+  const chart = chartId(input);
+  const { uid, entitled } = await checkEntitled(chart);
+  if (!entitled) {
+    return NextResponse.json(
+      { error: '이 사주의 정밀 리포트를 아직 구매하지 않으셨어요.', needsPurchase: true },
+      { status: 402 },
+    );
   }
 
   // 분석 대상 연도(올해/내년). 미지정 시 올해.
@@ -95,6 +95,8 @@ export async function POST(req: Request) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let buf = '';
+      let full = '';   // 계정 보관용 전체 텍스트
+      let broken = false;
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -110,14 +112,29 @@ export async function POST(req: Request) {
             try {
               const j = JSON.parse(payload);
               if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
+                full += j.delta.text;
                 controller.enqueue(encoder.encode(j.delta.text));
               }
             } catch { /* 부분 청크 무시 */ }
           }
         }
       } catch {
+        broken = true;
         controller.enqueue(encoder.encode('\n\n(총평 스트림이 중단됐어요. 다시 시도해 주세요.)'));
       } finally {
+        // 계정 보관 — 연도별로 1건씩 남는다.
+        if (!broken) {
+          await saveReport({
+            uid, kind: 'yearly', chart, variant: String(safeYear),
+            title: `${safeYear}년 신년운세 · ${input.name?.trim() || '이름 없음'}`,
+            meta: {
+              name: input.name, year: safeYear,
+              ilju: saju.pillars.day.ganKor + saju.pillars.day.jiKor,
+              motif: saju.archetype.motif.name, emoji: saju.archetype.motif.emoji,
+            },
+            body: full,
+          });
+        }
         controller.close();
       }
     },
