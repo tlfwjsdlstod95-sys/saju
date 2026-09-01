@@ -158,7 +158,9 @@ section('용신(computeYongsin)');
     const dayO = r.dayMaster.ohaeng as Ohaeng;
     const s = r.dayMasterStrength;
     const inseong = OHS.find((x) => SAENG[x] === dayO)!;
-    const expected = s <= 0.38 ? inseong : s >= 0.55 ? SAENG[dayO] : GEUK[dayO];
+    // 2026-09-01 v4: 중화 구간을 '재성'에서 '식상'으로 바꿨다. 근거는 적천수천미 원전 표본.
+    //   문헌이 고른 십신 — 중화 4건: 식상 3 / 비겁 1  (재성 0건)
+    const expected = s <= 0.38 ? inseong : SAENG[dayO];
     if (y.primary !== expected) eokbuOk = false;
   }
   ok('순수 억부는 강약 구간과 처방이 일치', eokbuOk, `표본 ${eokbuN}건`);
