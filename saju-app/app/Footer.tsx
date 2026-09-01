@@ -12,6 +12,8 @@ export default function Footer() {
         <Link href="/refund">취소·환불 정책</Link>
         <span aria-hidden>·</span>
         <Link href="/pricing">이용권 안내</Link>
+        <span aria-hidden>·</span>
+        <Link href="/accuracy">정확도·검증</Link>
       </nav>
       <div className="footer-biz">
         <p>상호 {BIZ.corpName} (서비스명 {BIZ.name}) · 대표 {BIZ.owner}</p>

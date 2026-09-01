@@ -365,16 +365,19 @@ export default function Home() {
 
       <div className="trust">
         <div className="trust-badges">
-          <span className="tb">🧪 만세력 1,000건 교차 검증 — 1000/1000 일치</span>
-          <span className="tb">🛰 절기 시각, 천문연구원(KASI) 공표값 ±1분</span>
-          <span className="tb">◷ 야자시·서머타임·출생지 경도 보정</span>
+          <span className="tb">🛰 NASA JPL 행성력 대비 절기 오차 평균 6.8초</span>
+          <span className="tb">🧪 1900~2100 만세력 71,733일 교차검증 100%</span>
+          <span className="tb">◷ 진태양시·야자시·서머타임 보정</span>
         </div>
         {stats >= 100 && (
           <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-mute)', textAlign: 'center' }}>
             지금까지 <b style={{ color: 'var(--gold)' }}>{stats.toLocaleString()}명</b>이 명식을 확인했어요
           </p>
         )}
-        <p className="trust-sub">대부분의 무료 만세력이 놓치는 진태양시·야자시·서머타임까지 보정해, 역술가가 직접 뽑은 명식과 일치합니다.</p>
+        <p className="trust-sub">
+          대부분의 무료 만세력이 놓치는 진태양시·야자시·서머타임까지 보정하고, 고전 원전 59命으로 판정을 채점해 공개합니다.{' '}
+          <a href="/accuracy" style={{ color: 'var(--gold)' }}>검증 방법과 숫자 전부 보기 →</a>
+        </p>
       </div>
 
       {loading && <Analyzing corr={`${(((CITIES[form.city] ?? 126.978) - 135) * 4).toFixed(1)}분`} />}
@@ -759,7 +762,8 @@ export default function Home() {
       </div>
 
       <div className="foot">
-        만세력 엔진: VSOP87 천문 알고리즘 기반 절기·균시차 자체 연산 · 절기 시각 KASI 공표값 1분 이내 일치 · 일주 60갑자 국제표준 보정<br />
+        만세력 엔진: VSOP87 천문 알고리즘 기반 절기·균시차 자체 연산 · 절기 시각 KASI 공표값 1분 이내 일치 · 일주 60갑자 국제표준 보정
+        {' '}· <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 상세</a><br />
         ※ 경계 시각(절기 전후·자정 무렵) 출생은 한국천문연구원(KASI) 교차검증 권장
       </div>
 

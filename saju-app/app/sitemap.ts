@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { CHEONGAN, JIJI } from '@/lib/saju/constants';
 import { SIN12_ORDER } from '@/lib/saju/advanced';
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://saju-cznh.vercel.app';
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://heaarim.co.kr';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const iljoo: MetadataRoute.Sitemap = [];
@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/gunghap`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/iljoo`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/sinsal`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/accuracy`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/pricing`, changeFrequency: 'monthly', priority: 0.7 },
     ...iljoo,
     ...sinsal,
