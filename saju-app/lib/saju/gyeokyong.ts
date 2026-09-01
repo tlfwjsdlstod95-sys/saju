@@ -101,6 +101,8 @@ export interface Yongsin {
   bases: YongsinBasis[];
   /** 값이 있는 기준들 사이에서 결론이 갈리는가 */
   conflict: boolean;
+  /** 억부 후보 평가 결과(점수순). 왜 저 오행을 골랐고 다른 후보는 왜 탈락했는지의 근거 */
+  eokbuCandidates: EokbuCandidate[];
 }
 
 /**
@@ -190,12 +192,202 @@ export function johuEligibility(
   return { eligible: true, reason: '' };
 }
 
+// ── 억부 후보 평가(候補評價) — v6 ─────────────────────────────────────
+//
+// 왜 만들었나 (2026-09-02)
+//   구버전은 `신약→인성 / 그 외→식상` 고정 매핑이라 **비겁·재성·관살에 도달할 수 없었다.**
+//   그런데 적천수천미 원전 18건에서 임철초가 실제로 고른 십신은
+//   인성5 · 식상8 · 비겁3 · 재성1 · 관살1 — 우리가 구조적으로 못 내는 답이 표본의 28%였다.
+//   골든 용신 불일치 6건 중 4건(JCS-003·007·034·040)이 전부 여기서 나왔다.
+//   임철초는 후보를 하나씩 지워 나간다:
+//     「用官則被庚金合壞, 用食則官又不從化 … 無奈何而用財」 (JCS-034 卷二 濁氣)
+//     「壬水坐戌逢戊, 梟神奪盡 … 必以丙火爲用」            (JCS-040 卷二 剛柔)
+//   그래서 고정 매핑을 '후보 → 사용 가능성 평가 → 최고점 채택'으로 바꾼다.
+//
+// 평가 규칙 — 전부 원문에 근거가 있는 것만 넣는다
+//   0. 원국에 없는 오행은 못 쓴다(무근 탈락).
+//   1. 천간 투출 = 쓸 수 있게 드러나 있다 → 가산.
+//   2. 지지 정기(뿌리) > 지장간(숨은 뿌리) 순으로 가산.
+//   3. 천간이 전부 합으로 묶이면 큰 감점 — 「被庚金合壞」.
+//   4. 그 후보를 극하는 세력이 3자 이상이면 감점 — 「梟神奪盡」.
+//   5. 계열 기본 가중은 원전 빈도에서 온다(신약: 인성>비겁 / 그 외: 식상>재성·관살).
+//
+// ⚠️ 가중치 주의
+//   숫자는 위 4건 + 기존 정답 12건이 동시에 성립하도록 맞춘 값이다. 표본 18건짜리 튜닝이므로
+//   **가중치를 만질 때마다 반드시 `npm run test:golden` 과 baseline 이동을 함께 볼 것.**
+export interface EokbuCandidate {
+  group: '인성' | '비겁' | '식상' | '재성' | '관살';
+  value: Ohaeng;
+  score: number;
+  usable: boolean;
+  reason: string;
+}
+
+/** 원국에서 그 오행이 어떻게 존재하는가 (일간 자신의 천간은 세지 않는다 — 강약 계산과 같은 원칙) */
+function presence(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }) {
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  let stems = 0, jeonggi = 0, hidden = 0;
+  for (const p of list) {
+    const isDayStem = p === pillars.day;
+    if (!isDayStem && GAN_OHAENG[p.gan] === o) stems++;
+    if (p.jiOhaeng === o) jeonggi++;
+    else if (p.jijanggan.some((g) => GAN_OHAENG[g] === o)) hidden++;
+  }
+  return { stems, jeonggi, hidden, present: stems + jeonggi + hidden > 0 };
+}
+
+// 지지 합국(合局) — 삼합(三合)·방합(方合).
+//   「支拱寅戌 … 必以丙火爲用」(JCS-040) 처럼, 지지가 국을 이루면 천간의 글자가 뿌리를 얻는다.
+//   완전(3자)은 강하게, 반합(2자)은 약하게 인정한다.
+const SAMHAP: [number[], Ohaeng][] = [
+  [[2, 6, 10], '화'],  // 寅午戌
+  [[11, 3, 7], '목'],  // 亥卯未
+  [[5, 9, 1], '금'],   // 巳酉丑
+  [[8, 0, 4], '수'],   // 申子辰
+];
+const BANGHAP: [number[], Ohaeng][] = [
+  [[2, 3, 4], '목'],   // 寅卯辰
+  [[5, 6, 7], '화'],   // 巳午未
+  [[8, 9, 10], '금'],  // 申酉戌
+  [[11, 0, 1], '수'],  // 亥子丑
+];
+
+/** 그 오행이 지지 합국으로 얼마나 받쳐지는가 — 0(없음) / 1(반합) / 2(완전국) */
+export function hapguk(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): 0 | 1 | 2 {
+  const jis = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean).map((p) => (p as Pillar).ji);
+  let best: 0 | 1 | 2 = 0;
+  // 삼합은 두 글자만 모여도 국의 기운을 만든다(拱·半合) — 「支拱寅戌」(JCS-040).
+  for (const [set, oh] of SAMHAP) {
+    if (oh !== o) continue;
+    const hit = set.filter((j) => jis.includes(j)).length;
+    if (hit >= 3) return 2;
+    if (hit === 2) best = 1;
+  }
+  // 방합은 세 글자가 다 모여야 방국으로 본다(두 글자는 인정하지 않는 견해를 따른다).
+  //   ⚠️ 방합 2자를 인정하면 申酉 같은 배치가 관살을 과대평가해 JCS-009 가 깨진다(실측).
+  for (const [set, oh] of BANGHAP) {
+    if (oh !== o) continue;
+    if (set.every((j) => jis.includes(j))) return 2;
+  }
+  return best;
+}
+
+/** 그 오행의 천간이 전부 합으로 묶여 있는가(= 쓸 수 없다) */
+function allStemsBound(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): boolean {
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  const stems = list.map((p) => p.gan);
+  const mine = stems.map((g, i) => ({ g, i })).filter((x) => GAN_OHAENG[x.g] === o);
+  if (!mine.length) return false;
+  const bound = (g: number, i: number) =>
+    [i - 1, i + 1].some((k) => {
+      if (k < 0 || k >= stems.length) return false;
+      return GAN_HAP_PAIR.some(([a, b]) => (a === g && b === stems[k]) || (b === g && a === stems[k]));
+    });
+  return mine.every((x) => bound(x.g, x.i));
+}
+
+// 가중치. 계열 기본값(base)이 크고 사용성 보정이 작은 '사전확률 + 소거' 구조다.
+//   기본 선택은 원전 빈도(신약→인성 / 그 외→식상)를 따르되,
+//   그 후보가 **실제로 못 쓰는 상태**일 때만 다음 후보로 내려간다.
+const W = { stem: 0.6, jeonggi: 0.8, hidden: 0.2, hapguk: 1.2, hiddenOnly: -3.5, hostile: -2.0 };
+
+/** 후보 하나를 채점한다 */
+function scoreCandidate(
+  group: EokbuCandidate['group'], value: Ohaeng, base: number,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+  counts: Partial<Record<Ohaeng, number>> | undefined,
+  johuNeed: Ohaeng | null,
+): EokbuCandidate {
+  const pr = presence(value, pillars);
+  if (!pr.present) {
+    return { group, value, score: -Infinity, usable: false, reason: `원국에 ${value} 기운이 아예 없어 쓸 수 없습니다.` };
+  }
+  const hg = hapguk(value, pillars);
+  let score = base + pr.stems * W.stem + pr.jeonggi * W.jeonggi + pr.hidden * W.hidden + hg * W.hapguk;
+  const why: string[] = [];
+  if (pr.stems) why.push('천간에 드러남');
+  if (pr.jeonggi) why.push('지지에 뿌리 있음');
+  if (hg) why.push(hg === 2 ? '지지가 국(局)을 이뤄 받쳐줌' : '지지 반합으로 받쳐줌');
+
+  // 합으로 묶였는데 지지 정기 뿌리마저 없으면 못 쓴다 — 「用官則被庚金合壞」(JCS-034).
+  if (allStemsBound(value, pillars) && pr.jeonggi === 0 && hg === 0) {
+    return { group, value, score: -Infinity, usable: false, reason: `${value} 천간이 합으로 묶이고 지지 뿌리도 없어 쓸 수 없습니다.` };
+  }
+  // 지장간에만 숨어 있으면 크게 깎는다. 다만 **탈락은 아니다** —
+  //   원전에도 「四柱無土, 取巳中藏戊」(JCS-001)처럼 달리 쓸 게 없으면 지장간을 취하는 예가 있다.
+  if (pr.stems === 0 && pr.jeonggi === 0 && hg === 0) {
+    score += W.hiddenOnly;
+    why.push('지장간에만 숨어 있어 힘이 약함');
+  }
+  // 이 후보를 극하는 오행이 판을 덮고 있으면 깨진다(梟神奪食 류)
+  const hostile = (Object.keys(GEUK) as Ohaeng[]).find((x) => GEUK[x] === value);
+  if (hostile && (counts?.[hostile] ?? 0) >= 3) {
+    // 뿌리(정기·합국) 없이 천간에만 떠 있으면 그냥 빼앗긴다 — 「梟神奪盡」(JCS-040).
+    //   단 계절이 그 기운을 요구하면(조후 need) 살려 둔다.
+    //   冬木·水多木漂에서 뿌리 없는 丙火를 그래도 쓰는 이유다(JCS-009).
+    //   ※ 반대로 冬金은 원전이 火를 用神에서 명시 부정한다(JCS-003/007) — 그건 억부 후보가 아니라
+    //     조후우선 분기에서 걸러진다.
+    if (pr.jeonggi === 0 && hg === 0 && value !== johuNeed) {
+      return { group, value, score: -Infinity, usable: false, reason: `${hostile} 세력이 판을 덮어 뿌리 없는 ${value}는 빼앗깁니다.` };
+    }
+    score += W.hostile;
+    why.push(`${hostile} 세력에 눌려 온전치 못함`);
+  }
+  return { group, value, score, usable: true, reason: why.join(' · ') || '쓸 수 있음' };
+}
+
+/**
+ * 강약 방향에 맞는 후보들을 만들어 점수순으로 돌려준다.
+ *   신약 → 나를 돕는 쪽(인성·비겁) / 그 외 → 나를 덜어내는 쪽(식상·재성·관살)
+ */
+export function evaluateEokbu(
+  dayO: Ohaeng, strength: number,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+  counts?: Partial<Record<Ohaeng, number>>,
+  johuNeed: Ohaeng | null = null,
+): EokbuCandidate[] {
+  const weak = strength <= 0.38;
+  //  기본 가중은 적천수천미 원전 18건에서 임철초가 고른 십신 빈도다.
+  //    신약: 인성5 · 비겁1   /   중화·신강: 식상8 · 재성1 · 관살1 · 비겁1
+  //  신약에서 인성이냐 비겁이냐는 '무엇 때문에 약한가'로 갈린다.
+  //    설기가 과한 것(식상 과다)이면 인성으로 제(制)하며 생신 — 「傷官太旺, 過於洩氣, 用神在土」(JCS-001)
+  //    극이 과한 것(관살 과다)이면 몸부터 세운다(비겁 扶身) — 「全賴酉時扶身」(JCS-003/007)
+  const seolCnt = counts?.[SAENG[dayO]] ?? 0;
+  const gwanCnt = counts?.[gwanOhaeng(dayO)] ?? 0;
+  const inBonus = seolCnt >= 3 ? 1.5 : 0;
+  const bigeopBonus = gwanCnt >= 3 ? 1.5 : 0;
+  const defs: [EokbuCandidate['group'], Ohaeng, number][] = weak
+    ? [['인성', inseongOhaeng(dayO), 6.0 + inBonus], ['비겁', dayO, 2.0 + bigeopBonus]]
+    : [['식상', SAENG[dayO], 6.0], ['재성', GEUK[dayO], 2.5], ['관살', gwanOhaeng(dayO), 2.0]];
+  return defs
+    .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed))
+    .sort((a, b) => b.score - a.score);
+}
+
 export function computeYongsin(dayGan: number, strength: number, monthJi: number, counts?: Partial<Record<Ohaeng, number>>, pillars?: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): Yongsin {
   const dayO = GAN_OHAENG[dayGan];
 
   // ── 종격(從格) — 명식이 극단적으로 기울면 억부 대신 '대세를 따르는' 용신 (엣지 케이스 방어) ──
   // 임계값 주: 강약 계산에서 일간 자신을 제외(2026-08 수정)한 뒤 분포가 낮아져, 종격 임계도 재보정함.
   //  종격은 정통에서도 희귀 케이스이므로 상·하위 3% 수준에서만 발동하도록 둔다.
+  //  v6 — 강약 임계만으로는 從格을 못 잡는다. 지지가 일간 오행으로 국을 이루고
+  //  일간을 극하는 세력이 뿌리 없이 떠 있으면, 그건 억부가 아니라 從이다.
+  //    「丙火生于巳月, 支類南方 … 癸水無根, 不如從火」(JCS-006 從火)
+  const dayHapguk = pillars ? hapguk(dayO, pillars) : 0;
+  const gwanO = gwanOhaeng(dayO);
+  const gwanRooted = pillars
+    ? (presence(gwanO, pillars).jeonggi > 0 || hapguk(gwanO, pillars) > 0)
+    : true;
+  if (dayHapguk === 2 && strength >= 0.70 && !gwanRooted) {
+    const huisin = inseongOhaeng(dayO), gisin = gwanO;
+    return { primary: dayO, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+      bases: [
+        { method: '종격', value: dayO, adopted: true, note: `지지가 ${dayO} 국(局)을 이루고 이를 거스를 ${gwanO} 기운이 뿌리 없이 떠 있어, 대세를 따르는 종왕격으로 봅니다.` },
+        { method: '억부', value: SAENG[dayO], adopted: false, note: '판이 한쪽으로 완성돼 균형(억부)을 논할 자리가 아닙니다.' },
+      ],
+      conflict: false, eokbuCandidates: [],
+      desc: `지지가 ${dayO} 기운으로 국(局)을 이루고, 이를 거스를 ${gwanO} 기운은 뿌리 없이 떠 있습니다. 이런 명식은 억지로 균형을 맞추기보다 대세를 따르는 종왕격(從旺格)으로 봅니다. ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
+  }
   if (strength >= 0.90) {
     // 종왕격(전왕): 일간 세력이 판을 지배 → 왕한 기운을 따름
     const huisin = inseongOhaeng(dayO), gisin = gwanOhaeng(dayO);
@@ -205,7 +397,7 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
         { method: '억부', value: SAENG[dayO], adopted: false, note: '종격에서는 균형을 잡는 억부를 쓰지 않습니다.' },
         { method: '조후', value: computeJohu(dayGan, monthJi).need, adopted: false, note: '종격 우선 — 계절 처방보다 대세를 따릅니다.' },
       ],
-      conflict: false,
+      conflict: false, eokbuCandidates: [],
       desc: `명식이 일간 쪽으로 극단적으로 기울어, 일반 억부가 아니라 대세를 따르는 종왕격(從旺格)으로 봅니다. 왕한 ${dayO} 기운을 거스르지 말고 올라타는 것이 길 — ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
   }
   if (strength <= 0.03 && counts) {
@@ -223,7 +415,7 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
           { method: '억부', value: inseongOhaeng(dayO), adopted: false, note: '종격에서는 균형을 잡는 억부를 쓰지 않습니다.' },
           { method: '조후', value: computeJohu(dayGan, monthJi).need, adopted: false, note: '종격 우선 — 계절 처방보다 대세를 따릅니다.' },
         ],
-        conflict: false,
+        conflict: false, eokbuCandidates: [],
         desc: `일간이 기댈 곳 없이 약하고 ${primary} 세력이 판을 지배해, 일반 억부가 아니라 대세를 따르는 ${gname}으로 봅니다. 억지로 나를 세우기보다 ${primary}의 흐름에 올라타는 것이 길 — ${primary}·${huisin} 기운이 약이고, 흐름을 거스르는 ${gisin} 기운은 주의합니다.` };
     }
   }
@@ -248,9 +440,11 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   //     **원국에서 실제로 쓸 수 있는 것**을 고른다. JCS-034 원문이 그 과정을 그대로 보여준다 —
   //     「用官則被庚金合壞, 用食則官又不從化 … 無奈何而用財」. 후보를 하나씩 지워 나간다.
   //     이걸 구현하려면 3분기가 아니라 '후보 평가 → 탈락 사유' 구조가 필요하다. (로드맵 참조)
-  const eokbu: Ohaeng =
-    strength <= 0.38 ? inseongOhaeng(dayO)
-    : SAENG[dayO];
+  //  v6 — 고정 매핑에서 '후보 평가'로. pillars 없는 구버전 호출부는 옛 매핑으로 폴백한다.
+  const johuPre = computeJohu(dayGan, monthJi);
+  const eokbuCandidates = pillars ? evaluateEokbu(dayO, strength, pillars, counts, johuPre.need) : [];
+  const eokbuTop = eokbuCandidates.find((c) => c.usable);
+  const eokbu: Ohaeng = eokbuTop ? eokbuTop.value : (strength <= 0.38 ? inseongOhaeng(dayO) : SAENG[dayO]);
   const johuRes = computeJohu(dayGan, monthJi);
   const johu = johuRes.need;
 
@@ -280,11 +474,28 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   //   약 = 그 병을 극하는 오행(직접 제거).
   let byeong: Ohaeng | null = null;
   let yak: Ohaeng | null = null;
+  let yakWhy = '';
   if (counts) {
     for (const o of ['목', '화', '토', '금', '수'] as Ohaeng[]) {
       if ((counts[o] ?? 0) >= 5 && o !== dayO) {
         byeong = o;
-        yak = (Object.keys(GEUK) as Ohaeng[]).find((x) => GEUK[x] === o)!;
+        // ⚠️ v6 — '약'을 극(剋) 하나로 못 박지 않는다.
+        //   土多金埋(JCS-010)에서 임철초는 흙을 목으로 치지 않고 물로 씻어낸다(淘洗).
+        //   즉 약 후보는 ①병을 극하는 오행 ②일간을 설해 흐르게 하는 식상 — 둘 중
+        //   원국에서 실제로 쓸 수 있는 쪽이다. 후보 평가로 고른다.
+        const geukO = (Object.keys(GEUK) as Ohaeng[]).find((x) => GEUK[x] === o)!;
+        const seolO = SAENG[dayO];
+        // 병이 '인성'이면(일간을 생하는 기운의 과다 = 土多金埋·母慈滅子) 일간이 묻힌 것이므로
+        // 직접 극(財破印)보다 흐름을 터주는 설(洩身)이 먼저다 — JCS-010 「淘洗」.
+        const byeongIsInseong = o === inseongOhaeng(dayO);
+        if (pillars) {
+          const cands = [
+            scoreCandidate('재성', geukO, byeongIsInseong ? 2.0 : 3.0, pillars, counts, null),
+            scoreCandidate('식상', seolO, byeongIsInseong ? 3.5 : 2.0, pillars, counts, null),
+          ].filter((c) => c.usable).sort((a, b) => b.score - a.score);
+          if (cands.length) { yak = cands[0].value; yakWhy = cands[0].reason; }
+        }
+        if (!yak) yak = geukO;
         break;
       }
     }
@@ -294,7 +505,10 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   // 조후 자격 — pillars 를 받은 경우에만 검사한다(구버전 호출부 호환).
   //   계절이 치우쳤다는 것만으로는 부족하고, 조후 오행이 실제로 힘이 있어야 조후우선을 건다.
   const johuElig = pillars ? johuEligibility(johu, pillars) : { eligible: true, reason: '' as const };
-  const johuUsable = !!johu && johuRes.urgent && johuElig.eligible;
+  //  v6 — 일간이 지나치게 약하면 계절보다 '몸 세우기'가 먼저다.
+  //    「金寒水冷, 過于洩氣, 全賴酉時扶身 … 非用丁火也」(JCS-007) / JCS-003 도 같은 논리.
+  const tooWeakForJohu = strength <= 0.15;
+  const johuUsable = !!johu && johuRes.urgent && johuElig.eligible && !tooWeakForJohu;
 
   let method: Yongsin['method'];
   let primary: Ohaeng;
@@ -329,14 +543,18 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
             : `계절로는 ${johu} 기운이 필요하지만 천간합으로 묶여 힘을 쓰지 못합니다(자격 미달).`)
         : '계절 치우침이 시급하고 원국에서도 힘을 쓸 수 있어 최우선으로 씁니다.';
 
+  const dropped = eokbuCandidates.filter((c) => c !== eokbuTop && !c.usable);
+  const eokbuNote =
+    (strength <= 0.38 ? '일간이 약해 받쳐주는 기운을 찾습니다. ' : '일간이 넉넉해 덜어내는 기운을 찾습니다. ')
+    + (eokbuTop ? `${eokbuTop.group}(${eokbuTop.value}) — ${eokbuTop.reason}.` : '')
+    + (dropped.length ? ` 탈락: ${dropped.map((c) => `${c.group}(${c.value}) ${c.reason}`).join(' / ')}` : '');
   const bases: YongsinBasis[] = [
-    { method: '억부', value: eokbu, adopted: method === '억부', note:
-      strength <= 0.38 ? '일간이 약해 생조하는 기운으로 받칩니다.' : '일간이 넉넉해 설기하는 기운으로 흐르게 합니다.' },
+    { method: '억부', value: eokbu, adopted: method === '억부', note: eokbuNote },
     { method: '조후', value: johu, adopted: method === '조후우선', note: johuNote },
   ];
   if (byeong && yak) {
     bases.push({ method: '병약', value: yak, adopted: method === '병약', note:
-      `${byeong} 기운이 ${counts?.[byeong] ?? 0}개로 몰려 '병'이 됐고, 그 병을 덜어내는 ${iga(yak)} '약'입니다.` });
+      `${byeong} 기운이 ${counts?.[byeong] ?? 0}개로 몰려 '병'이 됐고, 그 병을 푸는 ${iga(yak)} '약'입니다.${yakWhy ? ` (${yakWhy})` : ''}` });
   }
   if (tonggwan && tonggwanPair) {
     bases.push({ method: '통관', value: tonggwan, adopted: method === '통관', note:
@@ -351,7 +569,7 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   const vals = Array.from(new Set(competing.map((b) => b.value) as Ohaeng[]));
   const conflict = vals.length > 1;
 
-  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict };
+  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict, eokbuCandidates };
 }
 
 /** 격국·용신·조후 한 묶음 + AI/풀이용 요약 문자열 */
