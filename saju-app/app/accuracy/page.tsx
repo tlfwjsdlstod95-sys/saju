@@ -159,16 +159,16 @@ export default function AccuracyPage() {
           만든 것이라, 엔진이 바뀌면 이 표도 함께 바뀝니다.
         </p>
         <div style={{ overflowX: 'auto', marginTop: 14 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 680 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 600 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', textAlign: 'left', whiteSpace: 'nowrap' }}>
                 <th style={{ padding: '8px 10px' }}>케이스</th>
                 <th style={{ padding: '8px 10px' }}>출전(판본 · 편 · 쪽)</th>
-                <th style={{ padding: '8px 10px' }}>원전</th>
-                <th style={{ padding: '8px 10px' }}>엔진</th>
-                <th style={{ padding: '8px 10px' }}>판정 방법</th>
-                <th style={{ padding: '8px 10px' }}>일치</th>
-                <th style={{ padding: '8px 10px' }}>엔진</th>
+                <th style={{ padding: '8px 6px' }}>원전 결론</th>
+                <th style={{ padding: '8px 6px' }}>엔진 결론</th>
+                <th style={{ padding: '8px 6px' }}>판정 방법</th>
+                <th style={{ padding: '8px 6px' }}>일치</th>
+                <th style={{ padding: '8px 6px' }}>버전</th>
               </tr>
             </thead>
             <tbody style={{ opacity: 0.9 }}>
@@ -179,13 +179,13 @@ export default function AccuracyPage() {
                     {row.book}<br />
                     <span style={{ opacity: 0.7 }}>{row.chapter} · {row.page}</span>
                   </td>
-                  <td style={{ padding: '8px 10px' }}>{row.expected}</td>
-                  <td style={{ padding: '8px 10px', color: row.match ? undefined : 'var(--mystic)' }}>{row.got}</td>
-                  <td style={{ padding: '8px 10px', fontSize: 12.5 }}>{row.method}</td>
-                  <td style={{ padding: '8px 10px', color: row.match ? 'var(--gold)' : 'var(--mystic)', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '8px 6px' }}>{row.expected}</td>
+                  <td style={{ padding: '8px 6px', color: row.match ? undefined : 'var(--mystic)' }}>{row.got}</td>
+                  <td style={{ padding: '8px 6px', fontSize: 12.5 }}>{row.method}</td>
+                  <td style={{ padding: '8px 6px', color: row.match ? 'var(--gold)' : 'var(--mystic)', whiteSpace: 'nowrap' }}>
                     {row.match ? '일치' : '불일치'}
                   </td>
-                  <td style={{ padding: '8px 10px', fontSize: 12.5, opacity: 0.7, whiteSpace: 'nowrap' }}>v{row.engine}</td>
+                  <td style={{ padding: '8px 6px', fontSize: 12.5, opacity: 0.7, whiteSpace: 'nowrap' }}>v{row.engine}</td>
                 </tr>
               ))}
             </tbody>
