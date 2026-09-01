@@ -114,6 +114,11 @@ for (const c of cases) {
   console.log(`   병약: ${byeong ? `병 ${byeong}(${counts[byeong]}개) → 약 ${OHS.find((x) => GEUK[x] === byeong)}` : '해당 없음'}`);
   console.log(`   통관: ${pairs.length ? pairs.join(' / ') : '해당 없음'}`);
   console.log(`   종격 조건: 강약 ${strength.toFixed(3)} (종왕 ≥0.90 / 종세 ≤0.03 + 특정오행 4개↑) → ${strength >= 0.9 || strength <= 0.03 ? '발동' : '미발동'}`);
+  const cands = (gy.yongsin as any).eokbuCandidates ?? [];
+  if (cands.length) {
+    console.log('   억부 후보:');
+    for (const c of cands) console.log(`     - ${c.group}(${c.value}) ${Number.isFinite(c.score) ? c.score.toFixed(2) : '탈락'} — ${c.reason}`);
+  }
   console.log(`   격국 ${gy.gyeokguk.name}`);
   if (c.note) console.log(`   원문: ${String(c.note).slice(0, 200)}`);
 }

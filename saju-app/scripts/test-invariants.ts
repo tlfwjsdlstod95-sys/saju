@@ -149,7 +149,12 @@ section('용신(computeYongsin)');
   ok('용신 ≠ 기신', selfOk);
   ok('method·오행 값이 유효 범위', methodOk);
 
-  // 억부 규칙: 조후/병약/통관이 아닌 순수 억부일 때만 강약↔용신 관계가 성립해야 한다
+  // 억부 규칙 — 2026-09-02 v6 에서 '고정 매핑'에서 '후보 평가'로 바뀌었다.
+  //   그래서 "신약이면 무조건 인성" 같은 검사는 더 이상 참이 아니다(그게 이번 변경의 핵심).
+  //   대신 **방향**은 반드시 지켜져야 한다:
+  //     신약  → 나를 돕는 쪽(인성 또는 비겁)
+  //     그 외 → 나를 덜어내는 쪽(식상·재성·관살)
+  //   또 채택된 용신은 반드시 후보 목록 안에 있어야 한다(임의의 오행이 튀어나오면 버그).
   let eokbuOk = true; let eokbuN = 0;
   for (const r of results) {
     const y = r.gyeokYong.yongsin;
@@ -158,12 +163,14 @@ section('용신(computeYongsin)');
     const dayO = r.dayMaster.ohaeng as Ohaeng;
     const s = r.dayMasterStrength;
     const inseong = OHS.find((x) => SAENG[x] === dayO)!;
-    // 2026-09-01 v4: 중화 구간을 '재성'에서 '식상'으로 바꿨다. 근거는 적천수천미 원전 표본.
-    //   문헌이 고른 십신 — 중화 4건: 식상 3 / 비겁 1  (재성 0건)
-    const expected = s <= 0.38 ? inseong : SAENG[dayO];
-    if (y.primary !== expected) eokbuOk = false;
+    const allowed = s <= 0.38
+      ? [inseong, dayO]
+      : [SAENG[dayO], GEUK[dayO], OHS.find((x) => GEUK[x] === dayO)!];
+    if (!allowed.includes(y.primary)) eokbuOk = false;
+    const cands = (y as any).eokbuCandidates as { value: string }[] | undefined;
+    if (cands && cands.length && !cands.some((c) => c.value === y.primary)) eokbuOk = false;
   }
-  ok('순수 억부는 강약 구간과 처방이 일치', eokbuOk, `표본 ${eokbuN}건`);
+  ok('억부 용신은 강약 방향의 후보 안에서 나온다', eokbuOk, `표본 ${eokbuN}건`);
 
   // 경계 안정성: strength 를 아주 조금 흔들었을 때 용신이 요동치지 않아야 한다
   // (임계 근처를 제외하면 ±0.005 로는 바뀌면 안 된다)
