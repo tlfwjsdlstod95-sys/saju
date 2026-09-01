@@ -213,6 +213,50 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .lock-tag { font-size: 11px; font-weight: 700; color: #1a1205; background: var(--gold); border-radius: 999px; padding: 2px 9px; margin-left: 6px; vertical-align: middle; }
 .prem-unlocked { background: rgba(230,200,120,.1); border: 1px solid var(--gold-soft); border-radius: 10px; padding: 14px; color: var(--gold); font-weight: 700; font-size: 14px; text-align: center; }
 
+/* ── 실후기 (수집 카드 / 공개 목록 / 관리자) ─────────────────────── */
+.review-card { border-color: rgba(230,200,120,.28); }
+.review-stars { display: flex; align-items: center; gap: 4px; margin: 4px 0 14px; flex-wrap: wrap; }
+.review-stars .star {
+  background: none; border: none; cursor: pointer; padding: 0 2px;
+  font-size: 30px; line-height: 1; color: #3a3358; transition: color .12s, transform .08s;
+}
+.review-stars .star.on { color: var(--gold); }
+.review-stars .star:hover { transform: translateY(-1px); }
+.review-rate-txt { margin-left: 10px; font-size: 13px; color: var(--text-mute); }
+.review-body {
+  width: 100%; background: var(--bg-card-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.7; resize: vertical;
+  font-family: inherit;
+}
+.review-body:focus { outline: none; border-color: var(--gold-soft); }
+.review-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.review-nick {
+  flex: 0 1 180px; background: var(--bg-card-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; padding: 9px 12px; font-size: 14px; font-family: inherit;
+}
+.review-nick:focus { outline: none; border-color: var(--gold-soft); }
+.review-count { margin-left: auto; font-size: 12px; color: var(--text-mute); }
+.review-consent { margin-top: 12px; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+.review-consent b { color: var(--gold); font-weight: 700; }
+.review-submit { margin-top: 14px; }
+.review-note { margin-top: 10px; font-size: 12px; line-height: 1.7; }
+.review-thanks { display: flex; flex-direction: column; gap: 6px; text-align: center; padding: 8px 0; }
+.review-thanks b { color: var(--gold); font-size: 16px; }
+.review-thanks span { font-size: 13px; color: var(--text-mute); line-height: 1.7; }
+
+.review-list { display: flex; flex-direction: column; gap: 12px; }
+.review-item { background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+.review-item-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.review-item-stars { color: var(--gold); font-size: 14px; letter-spacing: 1px; }
+.review-item-stars .off { color: #3a3358; }
+.review-item-who { font-size: 12px; color: var(--text-mute); }
+.review-item-body { margin: 0; font-size: 14.5px; line-height: 1.75; color: var(--text-dim); white-space: pre-wrap; }
+.review-item.admin.st-public { border-color: var(--gold-soft); }
+.review-item.admin.st-hidden { opacity: .55; }
+.review-admin-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.review-status { font-size: 12px; border-radius: 999px; padding: 3px 10px; border: 1px solid var(--border); color: var(--text-mute); }
+.review-status.st-public { color: var(--gold); border-color: var(--gold-soft); }
+
 /* 결과 화면 검증 배지 — 명식 카드 / 프리미엄 카드 */
 .verify-strip {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

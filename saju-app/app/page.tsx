@@ -22,6 +22,8 @@ import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium } from './Paywall';
 import ReportShelf from './ReportShelf';
+import Reviews from './Reviews';
+import ReviewPrompt from './ReviewPrompt';
 import { CITY_GROUPS, CITIES } from './cities';
 import AccountButton from './AccountButton';
 import { listProfiles, saveProfile, removeProfile, type Profile } from '@/lib/profiles';
@@ -453,6 +455,8 @@ export default function Home() {
         </div>
       )}
 
+      <Reviews />
+
       <div className="card shelf-card">
         <h2>📁 내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
         {profiles.length > 0 ? (
@@ -767,6 +771,8 @@ export default function Home() {
           </div>
 
           <GuidebookPrint result={result} ai={ai} />
+
+          <ReviewPrompt chart={chart} premium={premium} />
         </>
       )}
 
