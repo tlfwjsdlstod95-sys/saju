@@ -336,11 +336,11 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   ];
   if (byeong && yak) {
     bases.push({ method: '병약', value: yak, adopted: method === '병약', note:
-      `${byeong} 기운이 ${counts?.[byeong] ?? 0}개로 몰려 '병'이 됐고, 그 병을 덜어내는 ${yak}이(가) '약'입니다.` });
+      `${byeong} 기운이 ${counts?.[byeong] ?? 0}개로 몰려 '병'이 됐고, 그 병을 덜어내는 ${iga(yak)} '약'입니다.` });
   }
   if (tonggwan && tonggwanPair) {
     bases.push({ method: '통관', value: tonggwan, adopted: method === '통관', note:
-      `${tonggwanPair[0]}과(와) ${tonggwanPair[1]}이(가) 맞서 막혀 있어 ${tonggwan}이(가) 다리가 됩니다.` });
+      `${gwa(tonggwanPair[0])} ${iga(tonggwanPair[1])} 맞서 막혀 있어 ${iga(tonggwan)} 다리가 됩니다.` });
   }
   // 값이 있는 기준들 사이에서 결론이 갈리는가.
   //   기각된 기준도 포함해서 본다 — 다른 앱이 그 기준을 채택했을 수 있고,
