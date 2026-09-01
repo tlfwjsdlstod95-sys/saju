@@ -97,6 +97,27 @@ export interface Yongsin {
   gisin: Ohaeng;       // 기신(용신을 극하는 오행)
   method: '조후우선' | '억부' | '종격' | '통관' | '병약';
   desc: string;
+  /** 기준(법)별 결론과 채택/기각 사유 — 화면·리포트에 그대로 펼친다 */
+  bases: YongsinBasis[];
+  /** 값이 있는 기준들 사이에서 결론이 갈리는가 */
+  conflict: boolean;
+}
+
+/**
+ * 용신을 정하는 '법' 하나의 결론.
+ *
+ * 왜 필요한가
+ *   만세력 앱마다 용신이 다른 이유는 대부분 계산이 틀려서가 아니라 **어느 법을 먼저 쓰느냐**가
+ *   달라서다. 우리가 고른 하나만 보여주면 사용자는 다른 앱과 비교했을 때 "틀렸다"고 읽는다.
+ *   기준별 결론과 기각 사유까지 같이 보여주면 "학파·기준이 다른 해석"으로 읽힌다.
+ *   (골든 케이스 JCS-003/007 처럼 원전 자체가 조후를 명시적으로 부정하는 사례도 있다.)
+ */
+export interface YongsinBasis {
+  method: '억부' | '조후' | '병약' | '통관' | '종격';
+  value: Ohaeng | null;
+  adopted: boolean;
+  /** 채택/기각 사유 한 줄 */
+  note: string;
 }
 
 // 한글 조사 자동 선택(받침 유무). '수이(가)' 같은 어색한 표기 방지.
@@ -179,6 +200,12 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
     // 종왕격(전왕): 일간 세력이 판을 지배 → 왕한 기운을 따름
     const huisin = inseongOhaeng(dayO), gisin = gwanOhaeng(dayO);
     return { primary: dayO, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+      bases: [
+        { method: '종격', value: dayO, adopted: true, note: '일간 세력이 판을 지배해 대세를 따릅니다(종왕격).' },
+        { method: '억부', value: SAENG[dayO], adopted: false, note: '종격에서는 균형을 잡는 억부를 쓰지 않습니다.' },
+        { method: '조후', value: computeJohu(dayGan, monthJi).need, adopted: false, note: '종격 우선 — 계절 처방보다 대세를 따릅니다.' },
+      ],
+      conflict: false,
       desc: `명식이 일간 쪽으로 극단적으로 기울어, 일반 억부가 아니라 대세를 따르는 종왕격(從旺格)으로 봅니다. 왕한 ${dayO} 기운을 거스르지 말고 올라타는 것이 길 — ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
   }
   if (strength <= 0.03 && counts) {
@@ -191,6 +218,12 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
     if ((counts[primary] ?? 0) >= 4) { // 8글자 중 절반 이상을 특정 세력이 지배할 때만
       const huisin = inseongOhaeng(primary), gisin = gwanOhaeng(primary);
       return { primary, eokbu: inseongOhaeng(dayO), johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+        bases: [
+          { method: '종격', value: primary, adopted: true, note: `${gname} — 일간이 기댈 곳이 없어 지배 세력을 따릅니다.` },
+          { method: '억부', value: inseongOhaeng(dayO), adopted: false, note: '종격에서는 균형을 잡는 억부를 쓰지 않습니다.' },
+          { method: '조후', value: computeJohu(dayGan, monthJi).need, adopted: false, note: '종격 우선 — 계절 처방보다 대세를 따릅니다.' },
+        ],
+        conflict: false,
         desc: `일간이 기댈 곳 없이 약하고 ${primary} 세력이 판을 지배해, 일반 억부가 아니라 대세를 따르는 ${gname}으로 봅니다. 억지로 나를 세우기보다 ${primary}의 흐름에 올라타는 것이 길 — ${primary}·${huisin} 기운이 약이고, 흐름을 거스르는 ${gisin} 기운은 주의합니다.` };
     }
   }
@@ -284,7 +317,41 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
           : `${label} 구조라 ${eokbu} 기운이 당신을 풀어줍니다. `            + (johu && !johuElig.eligible                ? `계절로는 ${johu} 기운이 필요해 보이지만, 원국에서 ${johuElig.reason === '무근' ? '뿌리가 없어' : '합으로 묶여'} 힘을 쓰지 못하므로 조후보다 강약을 먼저 잡습니다. `                : johu ? `보조로 조후의 ${johu} 기운도 도움이 돼요. ` : '')) +
     `${primary} 기운이 들어오는 시기·환경·사람·색·방위가 당신에게 길합니다. 반대로 ${gisin} 기운이 과하면 답답해집니다.`;
 
-  return { primary, eokbu, johu, huisin, gisin, method, desc };
+  // ── 기준별 결론 펼치기 ──
+  //   화면·리포트·AI 프롬프트가 이걸 그대로 쓴다. "왜 저 법을 안 썼나"에 답할 수 있어야 한다.
+  const johuNote = !johu
+    ? '계절이 치우치지 않아 조후 처방이 필요 없습니다.'
+    : !johuRes.urgent
+      ? '계절 치우침이 시급한 수준은 아니라 보조 처방으로 둡니다.'
+      : !johuElig.eligible
+        ? (johuElig.reason === '무근'
+            ? `계절로는 ${johu} 기운이 필요하지만 원국에 뿌리가 없어 힘을 쓰지 못합니다(자격 미달).`
+            : `계절로는 ${johu} 기운이 필요하지만 천간합으로 묶여 힘을 쓰지 못합니다(자격 미달).`)
+        : '계절 치우침이 시급하고 원국에서도 힘을 쓸 수 있어 최우선으로 씁니다.';
+
+  const bases: YongsinBasis[] = [
+    { method: '억부', value: eokbu, adopted: method === '억부', note:
+      strength <= 0.38 ? '일간이 약해 생조하는 기운으로 받칩니다.' : '일간이 넉넉해 설기하는 기운으로 흐르게 합니다.' },
+    { method: '조후', value: johu, adopted: method === '조후우선', note: johuNote },
+  ];
+  if (byeong && yak) {
+    bases.push({ method: '병약', value: yak, adopted: method === '병약', note:
+      `${byeong} 기운이 ${counts?.[byeong] ?? 0}개로 몰려 '병'이 됐고, 그 병을 덜어내는 ${yak}이(가) '약'입니다.` });
+  }
+  if (tonggwan && tonggwanPair) {
+    bases.push({ method: '통관', value: tonggwan, adopted: method === '통관', note:
+      `${tonggwanPair[0]}과(와) ${tonggwanPair[1]}이(가) 맞서 막혀 있어 ${tonggwan}이(가) 다리가 됩니다.` });
+  }
+  // 값이 있는 기준들 사이에서 결론이 갈리는가.
+  //   기각된 기준도 포함해서 본다 — 다른 앱이 그 기준을 채택했을 수 있고,
+  //   사용자가 실제로 마주치는 건 그 차이이기 때문이다.
+  //   단 '시급하지 않은 조후'는 제외한다. 그건 경쟁하는 기준이 아니라 보조 처방이라
+  //   포함하면 무작위 표본의 47.8%에 충돌 배지가 붙어 배지가 무의미해진다(2026-09-02 실측).
+  const competing = bases.filter((b) => b.value && (b.method !== '조후' || johuRes.urgent));
+  const vals = Array.from(new Set(competing.map((b) => b.value) as Ohaeng[]));
+  const conflict = vals.length > 1;
+
+  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict };
 }
 
 /** 격국·용신·조후 한 묶음 + AI/풀이용 요약 문자열 */
@@ -316,5 +383,10 @@ export function computeGyeokYong(
 
 /** AI 프롬프트/요약용 한 줄 표기 */
 export function gyeokYongBrief(gy: GyeokYong): string {
-  return `${gy.gyeokguk.name} · 용신 ${gy.yongsin.primary}(${gy.yongsin.method}) · 조후 ${gy.johu.climate}${gy.johu.need ? `(${gy.johu.need} 필요)` : ''}`;
+  // 기준이 갈리면 그 사실도 넘긴다 — AI 가 "용신은 X다"라고 단정하지 않고
+  // "어느 기준으로 보느냐에 따라 갈린다"고 쓸 수 있어야 한다.
+  const conflictNote = gy.yongsin.conflict
+    ? ` · 기준별: ${gy.yongsin.bases.filter((b) => b.value).map((b) => `${b.method} ${b.value}${b.adopted ? '(채택)' : ''}`).join(' / ')}`
+    : '';
+  return `${gy.gyeokguk.name} · 용신 ${gy.yongsin.primary}(${gy.yongsin.method}) · 조후 ${gy.johu.climate}${gy.johu.need ? `(${gy.johu.need} 필요)` : ''}${conflictNote}`;
 }
