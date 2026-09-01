@@ -213,6 +213,26 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .lock-tag { font-size: 11px; font-weight: 700; color: #1a1205; background: var(--gold); border-radius: 999px; padding: 2px 9px; margin-left: 6px; vertical-align: middle; }
 .prem-unlocked { background: rgba(230,200,120,.1); border: 1px solid var(--gold-soft); border-radius: 10px; padding: 14px; color: var(--gold); font-weight: 700; font-size: 14px; text-align: center; }
 
+/* ── 용신 기준별 결론 (억부/조후/병약/통관 병기 + 충돌 표시) ─────────── */
+.basis-box { margin-top: 16px; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; background: var(--bg-card-2); }
+.basis-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.basis-head b { font-size: 14.5px; color: var(--text); }
+.basis-flag { font-size: 11.5px; color: var(--mystic); border: 1px solid var(--mystic); border-radius: 999px; padding: 3px 10px; }
+.basis-row { display: grid; grid-template-columns: 78px 34px auto; align-items: baseline; gap: 8px; padding: 7px 0; border-top: 1px dashed rgba(255,255,255,.06); }
+.basis-row:first-of-type { border-top: none; }
+.basis-row .basis-k { font-size: 13px; color: var(--text-mute); }
+.basis-row .basis-v { font-size: 15px; font-weight: 700; color: var(--text-dim); font-family: var(--serif); }
+.basis-row.on .basis-v { color: var(--gold); }
+.basis-tag { grid-column: 3; justify-self: start; font-size: 11px; color: var(--gold); border: 1px solid var(--gold-soft); border-radius: 999px; padding: 2px 8px; }
+.basis-row .basis-n { grid-column: 3; font-size: 12.5px; color: var(--text-mute); line-height: 1.6; }
+.basis-sum { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+.basis-sum b { color: var(--gold); }
+.basis-note { margin: 10px 0 0; font-size: 12px; color: var(--text-mute); line-height: 1.7; }
+.basis-note b { color: var(--text-dim); font-weight: 700; }
+@media (max-width: 560px) {
+  .basis-row { grid-template-columns: 68px 30px auto; }
+}
+
 /* ── 실후기 (수집 카드 / 공개 목록 / 관리자) ─────────────────────── */
 .review-card { border-color: rgba(230,200,120,.28); }
 .review-stars { display: flex; align-items: center; gap: 4px; margin: 4px 0 14px; flex-wrap: wrap; }

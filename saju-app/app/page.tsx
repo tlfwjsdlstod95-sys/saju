@@ -712,6 +712,28 @@ export default function Home() {
               <div className="chip">용신법 <b>{result.gyeokYong.yongsin.method}</b></div>
               <div className="chip">조후 <b>{result.gyeokYong.johu.climate}</b></div>
             </div>
+            <div className="basis-box">
+              <div className="basis-head">
+                <b>기준별 결론</b>
+                {result.gyeokYong.yongsin.conflict && <span className="basis-flag">기준에 따라 답이 갈립니다</span>}
+              </div>
+              {result.gyeokYong.yongsin.bases.map((b) => (
+                <div className={`basis-row${b.adopted ? ' on' : ''}`} key={b.method}>
+                  <span className="basis-k">{b.method} 기준</span>
+                  <span className="basis-v">{b.value ?? '—'}</span>
+                  {b.adopted && <span className="basis-tag">채택</span>}
+                  <span className="basis-n">{b.note}</span>
+                </div>
+              ))}
+              <div className="basis-sum">
+                종합 — <b>{result.gyeokYong.yongsin.primary}</b>({result.gyeokYong.yongsin.method} 기준 채택)
+                {result.gyeokYong.yongsin.conflict && <span> · 다른 만세력에서 용신이 다르게 나온다면, 대개 계산이 아니라 <b>어느 기준을 먼저 쓰느냐</b>의 차이입니다.</span>}
+              </div>
+              <p className="basis-note">
+                ※ 『자평진전』이 말하는 ‘용신’은 <b>월령이 만든 격</b>(여기서는 {result.gyeokYong.gyeokguk.name})을 가리키는 말로,
+                위의 억부·조후 계열 용신과는 <b>다른 개념</b>입니다. 두 체계를 섞어 비교하면 서로 틀린 것처럼 보입니다.
+              </p>
+            </div>
             <p style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>판정 근거: {result.gyeokYong.gyeokguk.via} → {result.gyeokYong.gyeokguk.name}</p>
             <p style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.gyeokguk.desc}</p>
             <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.yongsin.desc}</p>
