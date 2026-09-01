@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
+import { yongsinRows, rate } from '@/lib/goldenReport';
 
 export const metadata: Metadata = {
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
@@ -16,6 +17,9 @@ const row = { display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap'
 const num = { color: 'var(--gold)', fontWeight: 700 as const };
 
 export default function AccuracyPage() {
+  // 표는 손으로 쓰지 않는다 — 지금 배포된 엔진으로 원전 명식을 다시 판정해 만든다.
+  const rows = yongsinRows();
+  const r = rate(rows);
   return (
     <main className="wrap">
       <div className="hero" style={{ paddingTop: 40 }}>
@@ -107,7 +111,7 @@ export default function AccuracyPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', textAlign: 'left' }}>
                 <th style={{ padding: '8px 10px' }}>판정 항목</th>
-                <th style={{ padding: '8px 10px' }}>고전 원전 일치율</th>
+                <th style={{ padding: '8px 10px' }}>고전 원전 재현율 (적중/표본)</th>
                 <th style={{ padding: '8px 10px' }}>비고</th>
               </tr>
             </thead>
@@ -124,8 +128,8 @@ export default function AccuracyPage() {
               </tr>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <td style={{ padding: '8px 10px' }}>용신(用神)</td>
-                <td style={{ padding: '8px 10px' }}><b style={num}>67%</b> (12/18)</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>개선 중 — 직전 버전 50%에서 상향</td>
+                <td style={{ padding: '8px 10px' }}><b style={num}>{r.pct}%</b> ({r.hit}/{r.total})</td>
+                <td style={{ padding: '8px 10px', fontSize: 13 }}>적천수천미 계열 · 아래 케이스별 전체 공개</td>
               </tr>
               <tr>
                 <td style={{ padding: '8px 10px' }}>조후(調候)</td>
@@ -138,7 +142,59 @@ export default function AccuracyPage() {
         <p style={{ lineHeight: 1.8, marginTop: 12, fontSize: 14, opacity: 0.8 }}>
           100%가 아닌 숫자를 그대로 적는 이유 — 해석 영역에서 &ldquo;다 맞힌다&rdquo;는 말은 검증을 안 했다는
           뜻이기 쉽습니다. 헤아림은 어긋난 케이스를 하나씩 문헌과 대조해 엔진을 고치고, 고칠 때마다
-          이 숫자를 갱신합니다. 위 일치율은 판정 엔진 v{ENGINE_VERSION} 기준입니다.
+          이 숫자를 갱신합니다. 위 수치는 판정 엔진 v{ENGINE_VERSION} 기준입니다.
+        </p>
+        <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
+          ⚠️ 이 숫자는 <b>&lsquo;원전 재현율&rsquo;</b>입니다 — 고전에 실린 <b>{r.total}건</b>의 명식에서 원문이
+          지목한 용신을 엔진이 다시 짚어내는 비율이고, 세상 모든 사주에 대한 &lsquo;정확도&rsquo;가 아닙니다.
+          표본이 작다는 점을 그대로 밝히고, 표본은 계속 늘리는 중입니다.
+        </p>
+      </div>
+
+      <div className="card">
+        <h2>3-B. 용신 {r.total}건, 케이스마다 전부 공개합니다</h2>
+        <p style={{ lineHeight: 1.8 }}>
+          위 재현율의 근거 전체입니다. 맞은 것도 틀린 것도 숨기지 않고, <b>어느 책 어느 편 몇 쪽</b>의
+          명식인지까지 적습니다. 이 표는 손으로 쓴 게 아니라 <b>지금 배포된 엔진이 원전 명식을 다시 판정해</b>
+          만든 것이라, 엔진이 바뀌면 이 표도 함께 바뀝니다.
+        </p>
+        <div style={{ overflowX: 'auto', marginTop: 14 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 680 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                <th style={{ padding: '8px 10px' }}>케이스</th>
+                <th style={{ padding: '8px 10px' }}>출전(판본 · 편 · 쪽)</th>
+                <th style={{ padding: '8px 10px' }}>원전</th>
+                <th style={{ padding: '8px 10px' }}>엔진</th>
+                <th style={{ padding: '8px 10px' }}>판정 방법</th>
+                <th style={{ padding: '8px 10px' }}>일치</th>
+                <th style={{ padding: '8px 10px' }}>엔진</th>
+              </tr>
+            </thead>
+            <tbody style={{ opacity: 0.9 }}>
+              {rows.map((row) => (
+                <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{row.id}</td>
+                  <td style={{ padding: '8px 10px', fontSize: 12.5, lineHeight: 1.5 }}>
+                    {row.book}<br />
+                    <span style={{ opacity: 0.7 }}>{row.chapter} · {row.page}</span>
+                  </td>
+                  <td style={{ padding: '8px 10px' }}>{row.expected}</td>
+                  <td style={{ padding: '8px 10px', color: row.match ? undefined : 'var(--mystic)' }}>{row.got}</td>
+                  <td style={{ padding: '8px 10px', fontSize: 12.5 }}>{row.method}</td>
+                  <td style={{ padding: '8px 10px', color: row.match ? 'var(--gold)' : 'var(--mystic)', whiteSpace: 'nowrap' }}>
+                    {row.match ? '일치' : '불일치'}
+                  </td>
+                  <td style={{ padding: '8px 10px', fontSize: 12.5, opacity: 0.7, whiteSpace: 'nowrap' }}>v{row.engine}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ lineHeight: 1.8, marginTop: 12, fontSize: 13.5, color: 'var(--text-mute)' }}>
+          불일치가 남아 있는 케이스는 &lsquo;아직 못 고친 것&rsquo;이 맞습니다. 다만 한 건을 맞히려고 그 한 건에만
+          맞는 규칙을 넣지는 않습니다 — 같은 조건의 원전 사례가 여러 건 모여 규칙으로 확인될 때 반영합니다.
+          (지금 보류 중인 가설: 겨울의 습토·동토가 금을 생하는 힘)
         </p>
       </div>
 
@@ -153,6 +209,8 @@ export default function AccuracyPage() {
           <li><b>v3</b> — 격국 취용을 자평진전 원칙(월지 본기 우선)대로 교정 → 격국 일치율 80%→100%</li>
           <li><b>v4</b> — 억부용신 중화 구간을 적천수천미 원전 집계에 맞춰 교정 → 용신 일치율 50%→67%</li>
           <li><b>v5</b> — 신살 길흉반전: 같은 살도 용신 글자에 앉으면 길하게, 기신 글자면 흉하게 — 사주마다 다르게 판정</li>
+          <li><b>v6</b> — 용신을 &lsquo;후보 평가&rsquo;로: 원국에 실제로 쓸 수 있는 기운인지(뿌리·투출·합·극) 따져
+            하나씩 지워 나가는 방식으로 교체 → 용신 원전 재현율 67%→{r.pct}%</li>
         </ul>
       </div>
 
