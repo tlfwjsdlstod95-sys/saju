@@ -1,6 +1,6 @@
 // 오행 분석 · 십신 판정 · 일간 강약
 import {
-  GAN_OHAENG, GAN_EUMYANG, JI_OHAENG, SAENG, GEUK,
+  GAN_OHAENG, GAN_EUMYANG, JI_OHAENG, SAENG, GEUK, JIJANGGAN,
   type Ohaeng, type Sipsin, CHEONGAN,
 } from './constants';
 import type { OhaengCount, Pillar } from './types';
@@ -46,6 +46,32 @@ export function countOhaeng(pillars: (Pillar | null)[]): OhaengCount {
 }
 
 /** 일간 강약 지표 0~1 (득령·득지·득세 가중) */
+// ── 통근(通根) ─────────────────────────────────────────────
+// 천간은 지지에 뿌리가 있어야 힘을 쓴다. 뿌리 없이 떠 있는 글자(무근)는
+// 글자 수로는 하나지만 실제 세력은 거의 없다.
+//
+// 왜 지장간 기준인가
+//   십이운성으로 등급을 매기는 방식도 있으나 가중치가 결국 취향이 된다.
+//   지장간은 **데이터가 정해준다** — 그 지지 속에 같은 오행이 실제로 들어 있는지만 보면 된다.
+//   정기(본기)에 있으면 깊은 뿌리, 중기·여기면 얕은 뿌리다.
+const ROOT_JEONGGI = 0.8;
+const ROOT_JUNGGI = 0.4;
+const ROOT_YEOGI = 0.25;
+const ROOT_NONE = 0.15;   // 무근이어도 글자가 존재하긴 하므로 완전 0으로 두지는 않는다
+
+/** 천간 하나가 네 지지에 내린 뿌리의 깊이 (0.15 ~ 1.0) */
+export function rootPower(gan: number, jis: number[]): number {
+  const o = GAN_OHAENG[gan];
+  let p = 0;
+  for (const ji of jis) {
+    const jjg = JIJANGGAN[ji];
+    if (GAN_OHAENG[jjg.jeonggi.gan] === o) p += ROOT_JEONGGI;
+    else if (jjg.junggi && GAN_OHAENG[jjg.junggi.gan] === o) p += ROOT_JUNGGI;
+    else if (GAN_OHAENG[jjg.yeogi.gan] === o) p += ROOT_YEOGI;
+  }
+  return p > 0 ? Math.min(1, p) : ROOT_NONE;
+}
+
 export function dayMasterStrength(
   dayGan: number,
   pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
@@ -58,9 +84,18 @@ export function dayMasterStrength(
   // 득지: 일지가 일간을 돕는가
   const ji = helps(JI_OHAENG[pillars.day.ji]) ? 1 : 0;
 
-  // 득세: 일간을 '제외한' 나머지 글자 중 일간을 돕는 비율
+  // 득세: 일간을 '제외한' 나머지 글자 중 일간을 돕는 **세력의 비율**
   // ※ 일간 자신은 정의상 항상 같은 오행이라, 포함하면 모든 사주가 신강 쪽으로 편향된다.
   //   정통 명리도 일간을 뺀 나머지 7글자(시주 미상이면 5글자)의 세력으로 강약을 본다.
+  //
+  // ⚠️ 2026-09-01 통근 가중 합산을 시도했다가 **되돌렸다.** 같은 실수를 반복하지 않도록 기록한다.
+  //   시도: 천간을 rootPower(무근 0.15 ~ 정기통근 1.0)로 가중해 득세를 계산.
+  //   결과: 골든 강약 4/6 → 4/6 (변화 없음). 무근 하한을 1.0까지 올려도 동일.
+  //         반면 baseline 20,000건에서 **종격이 3.06% → 6.95% 로 폭증**했다.
+  //   원인: 무근 천간이 분모에서도 빠져 세력 '비율'이 극단으로 간다.
+  //         (지지 4개가 다 돕고 천간이 모두 무근이면 4/7=0.57 이던 값이 4/4.45=0.90 이 된다)
+  //   → 측정 가능한 이득 없이 종격만 늘어나므로 채택하지 않는다.
+  //      rootPower() 함수 자체는 나중에 다른 방식으로 쓸 수 있으니 남겨 둔다.
   const all: (Pillar | null)[] = [pillars.year, pillars.month, pillars.day, pillars.hour];
   let helpCount = 0, totalChars = 0;
   for (const p of all) {
@@ -74,6 +109,22 @@ export function dayMasterStrength(
   }
   const se = totalChars ? helpCount / totalChars : 0;
 
+  // ⚠️ 2026-09-01 통근(通根)을 강약에 넣는 안을 시도했다가 **되돌렸다.** (두 번째 실패 기록)
+  //   시도: 득지(일지 정기)를 빼고, 네 지지의 지장간 중 일간 오행이 있는 자리 수(rootCount/4)를
+  //         0.4 가중으로 넣음 → 0.4*통근 + 0.2*득령 + 0.4*득세.
+  //   근거로 삼았던 것: 자평진전 제6장 「論十干得時不旺, 失時不弱」 (월령만 보지 말고 뿌리를 보라).
+  //   결과: 골든 강약 45.5%(10/22) → 54.5%(12/22) 로 올랐지만
+  //         **골든 용신이 37.5%(3/8) → 12.5%(1/8) 로 무너졌다.** (JCS-005·JCS-009 이탈)
+  //         용신은 강약에서 파생되므로, 강약을 흔들면 용신이 같이 흔들린다.
+  //   원인(중요): 골든 강약 22건이 **학파가 섞여 있다.**
+  //         자평진전은 印重이어도 身輕이라 부르고(JPJ-013 「此身輕印重也」),
+  //         적천수는 같은 배치를 신강으로 보고 식상을 용신으로 쓴다(JCS-009 용신 화).
+  //         통근 가중은 '印은 뿌리가 아니다'는 자평진전 쪽으로 엔진을 끌고 갔고,
+  //         그래서 자평진전 강약은 올랐지만 적천수 용신이 깨졌다.
+  //   → 우리 엔진의 용신은 억부(적천수)다. 강약도 적천수 기준을 따라야 한다.
+  //      그런데 적천수 계열 강약 표본은 아직 5건뿐이라 재설계 근거가 못 된다.
+  //      test-golden.ts 가 이제 강약을 학파별로 나눠 출력하니, 적천수 표본이 20건쯤
+  //      모이면 그때 다시 본다. (자평진전 표본 16건은 늘려도 이 문제를 못 푼다)
   const strength = 0.35 * ryeong + 0.25 * ji + 0.4 * se;
   return Math.max(0, Math.min(1, strength));
 }

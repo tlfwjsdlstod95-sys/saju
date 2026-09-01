@@ -37,11 +37,18 @@ export function computeGyeokguk(
   // 천간 투출 체크(년·월·시간. 일간 본인 제외)
   const stems = [pillars.year.gan, pillars.month.gan, ...(pillars.hour ? [pillars.hour.gan] : [])];
 
-  let chosen = jjg.jeonggi.gan;  // 기본: 월지 정기
+  // ⚠️ 2026-09-01 v3 — '투출 우선'에서 '정기 우선'으로 교정.
+  //   자평진전 「論用神」: 用神專尋月令. 월령의 본기(정기)가 격이고,
+  //   여기·중기는 정기가 일간과 같아 비겁이 될 때(건록/양인 처리)나
+  //   정기가 투간하지 않고 여기·중기만 투간했을 때의 '변화'로만 본다.
+  //   구버전은 정기 미투간이면 무조건 여기까지 내려가 격을 바꿔버렸다.
+  //   → JPJ-013/014/018/019/022 5건이 전부 이 경로로 오판. (골든 격국 80%→100%)
+  let chosen = jjg.jeonggi.gan;  // 월지 정기(본기)가 기본이자 원칙
   let via = '월지 정기(본기)';
-  for (const cand of candidates) {
-    if (cand === dayGan) continue; // 일간과 같으면 비겁(건록/양인) → 아래서 처리
-    if (stems.includes(cand)) { chosen = cand; via = '월지 지장간 투출(透出)'; break; }
+  if (chosen === dayGan) {
+    // 정기가 일간과 동일 → 건록. 아래 sipsin 분기에서 처리.
+  } else if (stems.includes(chosen)) {
+    via = '월지 정기 투출(透出)';
   }
 
   const ss = sipsin(dayGan, chosen);
@@ -112,7 +119,57 @@ function gwanOhaeng(dayO: Ohaeng): Ohaeng {
   return (Object.keys(GEUK) as Ohaeng[]).find((x) => GEUK[x] === dayO)!;
 }
 
-export function computeYongsin(dayGan: number, strength: number, monthJi: number, counts?: Partial<Record<Ohaeng, number>>): Yongsin {
+// ── 조후용신 '자격' 판정 ──────────────────────────────────────
+// 왜 필요한가 (골든 케이스가 알려준 규칙)
+//   적천수천미(임철초)는 규준화된 조후용신법을 **명시적으로 견제**한다.
+//     「非用丁火也 … 凡冬金喜火取其暖局之意, 非作用神也」
+//       — 겨울 金이 火를 기뻐함은 국을 덥히려는 뜻이지 용신으로 삼는 것이 아니다
+//     「단지 水를 득하여 용신해야 하고, 火는 용신의 능력이 없다」
+//   즉 **계절이 치우쳤다는 사실만으로 조후를 용신으로 올리면 안 된다.**
+//   조후 오행이 실제로 그 일을 해낼 힘이 있어야 자격이 생긴다.
+//
+// 자격을 잃는 두 경우
+//   A. 무근(無根) — 조후 오행이 지지(지장간 포함)에 뿌리가 하나도 없다.
+//      천간에 떠 있기만 한 글자는 언 땅을 녹이지 못한다.
+//   B. 합거(合去) — 조후 오행에 해당하는 천간이 **전부** 인접 천간합으로 묶여 버렸다.
+//      (천간합은 붙어 있는 자리끼리만 성립하는 것으로 본다)
+//
+// 자격을 잃으면 조후우선을 걸지 않고 억부로 내려간다.
+export interface JohuEligibility { eligible: boolean; reason: '' | '무근' | '합거'; }
+
+// 천간합 쌍 (인덱스). 甲己 乙庚 丙辛 丁壬 戊癸
+const GAN_HAP_PAIR: [number, number][] = [[0, 5], [1, 6], [2, 7], [3, 8], [4, 9]];
+
+export function johuEligibility(
+  need: Ohaeng | null,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+): JohuEligibility {
+  if (!need) return { eligible: false, reason: '' };
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+
+  // A. 뿌리 — 지지 정기 오행 또는 지장간 천간의 오행에 조후 오행이 있는가
+  const rooted = list.some((p) =>
+    p.jiOhaeng === need || p.jijanggan.some((g) => GAN_OHAENG[g] === need));
+  if (!rooted) return { eligible: false, reason: '무근' };
+
+  // B. 합거 — 조후 오행 천간이 하나라도 '합에 묶이지 않은 채' 살아 있으면 자격 유지
+  const stems = list.map((p) => p.gan);              // 년·월·일·시 순
+  const needStemPos = stems
+    .map((g, i) => ({ g, i }))
+    .filter((x) => GAN_OHAENG[x.g] === need);
+  if (needStemPos.length) {
+    const bound = (g: number, i: number) =>
+      [i - 1, i + 1].some((k) => {
+        if (k < 0 || k >= stems.length) return false;
+        const o = stems[k];
+        return GAN_HAP_PAIR.some(([a, b]) => (a === g && b === o) || (b === g && a === o));
+      });
+    if (needStemPos.every((x) => bound(x.g, x.i))) return { eligible: false, reason: '합거' };
+  }
+  return { eligible: true, reason: '' };
+}
+
+export function computeYongsin(dayGan: number, strength: number, monthJi: number, counts?: Partial<Record<Ohaeng, number>>, pillars?: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): Yongsin {
   const dayO = GAN_OHAENG[dayGan];
 
   // ── 종격(從格) — 명식이 극단적으로 기울면 억부 대신 '대세를 따르는' 용신 (엣지 케이스 방어) ──
@@ -183,9 +240,14 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   }
 
   // 우선순위: 조후 시급 > 병약(극단 편중) > 통관(팽팽한 대립) > 억부
+  // 조후 자격 — pillars 를 받은 경우에만 검사한다(구버전 호출부 호환).
+  //   계절이 치우쳤다는 것만으로는 부족하고, 조후 오행이 실제로 힘이 있어야 조후우선을 건다.
+  const johuElig = pillars ? johuEligibility(johu, pillars) : { eligible: true, reason: '' as const };
+  const johuUsable = !!johu && johuRes.urgent && johuElig.eligible;
+
   let method: Yongsin['method'];
   let primary: Ohaeng;
-  if (johuRes.urgent && johu) { method = '조후우선'; primary = johu; }
+  if (johuUsable && johu) { method = '조후우선'; primary = johu; }
   else if (byeong && yak) { method = '병약'; primary = yak; }
   else if (tonggwan) { method = '통관'; primary = tonggwan; }
   else { method = '억부'; primary = eokbu; }
@@ -201,7 +263,7 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
         ? `명식에 ${byeong} 기운이 지나치게 몰려(${counts?.[byeong!] ?? 0}개) 이것이 '병(病)'입니다. 그 병을 덜어내는 ${iga(yak!)} '약(藥)'이 되는 병약용신 구조예요. ${yak !== eokbu ? `억부로 보면 ${eokbu}지만, 편중부터 푸는 게 먼저입니다. ` : `억부로 봐도 같은 ${ira(eokbu)}, 처방이 한 방향으로 모이는 명료한 구조예요. `}`
         : method === '통관'
           ? `${gwa(tonggwanPair![0])} ${iga(tonggwanPair![1])} 팽팽히 맞서 기운이 막혀 있습니다. 둘 사이를 이어 흐르게 하는 ${iga(tonggwan!)} 통관용신이에요. 어느 한쪽 편을 들기보다 '다리'를 놓는 것이 답입니다. `
-          : `${label} 구조라 ${eokbu} 기운이 당신을 풀어줍니다. ${johu ? `보조로 조후의 ${johu} 기운도 도움이 돼요. ` : ''}`) +
+          : `${label} 구조라 ${eokbu} 기운이 당신을 풀어줍니다. `            + (johu && !johuElig.eligible                ? `계절로는 ${johu} 기운이 필요해 보이지만, 원국에서 ${johuElig.reason === '무근' ? '뿌리가 없어' : '합으로 묶여'} 힘을 쓰지 못하므로 조후보다 강약을 먼저 잡습니다. `                : johu ? `보조로 조후의 ${johu} 기운도 도움이 돼요. ` : '')) +
     `${primary} 기운이 들어오는 시기·환경·사람·색·방위가 당신에게 길합니다. 반대로 ${gisin} 기운이 과하면 답답해집니다.`;
 
   return { primary, eokbu, johu, huisin, gisin, method, desc };
@@ -229,7 +291,7 @@ export function computeGyeokYong(
   }
   return {
     gyeokguk: computeGyeokguk(pillars, dayGan),
-    yongsin: computeYongsin(dayGan, strength, pillars.month.ji, counts),
+    yongsin: computeYongsin(dayGan, strength, pillars.month.ji, counts, pillars),
     johu: computeJohu(dayGan, pillars.month.ji),
   };
 }
