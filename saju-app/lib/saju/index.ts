@@ -165,8 +165,9 @@ export function computeSaju(input: BirthInput): SajuResult {
   });
 
   // --- 10) 명식 고도화 + 선배 톤 풀이 ---
-  const advanced = computeAdvanced(pillars, dayGan, dayIndex);
   const gyeokYong = computeGyeokYong(pillars, dayGan, strength);
+  // 신살 길흉반전(v5): 용신 판정을 먼저 구해 신살 tone 에 반영한다
+  const advanced = computeAdvanced(pillars, dayGan, dayIndex, gyeokYong.yongsin);
   const age = nowYear - year;
   const thisYear = luck.sewoon[0];
   const curDaewoon = [...luck.daewoon].reverse().find((d) => age >= d.age) ?? luck.daewoon[0];

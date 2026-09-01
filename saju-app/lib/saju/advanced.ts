@@ -1,5 +1,5 @@
 // 명식 고도화: 십이운성(十二運星) · 공망(空亡) · 신살(神殺) · 귀인(貴人)
-import { JIJI, JIJI_HANJA } from './constants';
+import { JIJI, JIJI_HANJA, JI_OHAENG, SAENG, type Ohaeng } from './constants';
 import type { Pillar } from './types';
 
 // ── 십이운성 ──
@@ -30,11 +30,70 @@ const YANGIN: Record<number, number> = { 0: 3, 2: 6, 4: 6, 6: 9, 8: 0 }; // 양�
 const GWAEGANG: [number, number][] = [[6, 4], [8, 4], [6, 10], [4, 10]]; // 경진 임진 경술 무술
 const BAEKHO: [number, number][] = [[0, 4], [1, 7], [2, 10], [3, 1], [4, 4], [8, 10], [9, 1]];
 
-export interface Sinsal { name: string; targets: string; desc: string; tone: 'good' | 'neutral' | 'caution'; }
+export interface Sinsal { name: string; targets: string; desc: string; tone: 'good' | 'neutral' | 'caution'; bias?: 'positive' | 'negative'; }
+
+// ── 신살 길흉 반전(용신 종속) ──
+// 정통 원칙: 신살의 길흉은 그 살이 앉은 글자가 용신 편인지 기신 편인지에 종속된다.
+//  - 용신·희신 글자에 앉은 살 → 장점 쪽으로 발현(positive): tone 한 단계 상향
+//  - 기신·구신 글자에 앉은 살 → 단점 쪽으로 발현(negative): tone 한 단계 하향
+//  - 한신 글자이거나 길·흉 글자가 섞이면 반전하지 않는다.
+// desc 끝에 근거 문장을 덧붙여 UI와 AI 프롬프트에 그대로 전달된다. (engine v5)
+export interface YongsinLite { primary: Ohaeng; huisin: Ohaeng; gisin: Ohaeng; }
+type Tone = 'good' | 'neutral' | 'caution';
+const TONE_UP: Record<Tone, Tone> = { caution: 'neutral', neutral: 'good', good: 'good' };
+const TONE_DOWN: Record<Tone, Tone> = { good: 'neutral', neutral: 'caution', caution: 'caution' };
+const gusinOf = (gisin: Ohaeng): Ohaeng => (Object.keys(SAENG) as Ohaeng[]).find((x) => SAENG[x] === gisin)!;
+// 은/는 조사(받침 유무)
+const eunNeun = (w: string) => { const c = w.charCodeAt(w.length - 1); return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0 ? '은' : '는'; };
+
+function yongLabel(o: Ohaeng, y: YongsinLite): string {
+  if (o === y.primary) return '용신';
+  if (o === y.huisin) return '희신';
+  if (o === y.gisin) return '기신';
+  if (o === gusinOf(y.gisin)) return '구신';
+  return '한신';
+}
+
+/** 살이 앉은 지지들로 반전 방향 판정. 길(용신·희신)만 있으면 positive, 흉(기신·구신)만 있으면 negative. */
+function sinsalBias(jis: number[], y: YongsinLite): { bias: 'positive' | 'negative'; ji: number } | null {
+  const gusin = gusinOf(y.gisin);
+  let fav: number | null = null, unfav: number | null = null;
+  for (const ji of jis) {
+    const o = JI_OHAENG[ji];
+    if (fav === null && (o === y.primary || o === y.huisin)) fav = ji;
+    if (unfav === null && (o === y.gisin || o === gusin)) unfav = ji;
+  }
+  if (fav !== null && unfav === null) return { bias: 'positive', ji: fav };
+  if (unfav !== null && fav === null) return { bias: 'negative', ji: unfav };
+  return null;
+}
+
+function applyBias<T extends { tone: Tone; desc: string; bias?: 'positive' | 'negative' }>(hit: T, jis: number[], y?: YongsinLite): T {
+  if (!y || !jis.length) return hit;
+  const b = sinsalBias(jis, y);
+  if (!b) return hit;
+  const o = JI_OHAENG[b.ji];
+  const spot = `${JIJI[b.ji]}(${o})${eunNeun(o)}`;
+  const label = yongLabel(o, y);
+  if (b.bias === 'positive') {
+    hit.desc += hit.tone === 'caution'
+      ? ` ※ 이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 거친 기운이 실력·추진력 같은 장점 쪽으로 발현되기 쉽습니다.`
+      : ` ※ 이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 좋은 기운이 한층 힘 있게 발휘됩니다.`;
+    hit.tone = TONE_UP[hit.tone];
+  } else {
+    hit.desc += hit.tone === 'good'
+      ? ` ※ 다만 이 길성이 앉은 ${spot} 이 사주의 ${label} 글자 — 복이 온전히 발휘되기 어렵고 반감될 수 있습니다.`
+      : ` ※ 이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 장점보다 주의할 면이 먼저 드러나기 쉬워 관리가 필요합니다.`;
+    hit.tone = TONE_DOWN[hit.tone];
+  }
+  hit.bias = b.bias;
+  return hit;
+}
 
 export function computeSinsal(
   pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
   dayGan: number,
+  yong?: YongsinLite,
 ): Sinsal[] {
   const list: Sinsal[] = [];
   const branches = [pillars.year.ji, pillars.month.ji, pillars.day.ji, ...(pillars.hour ? [pillars.hour.ji] : [])];
@@ -44,22 +103,22 @@ export function computeSinsal(
 
   const ce = CHEONEUL[dayGan] ?? [];
   const ceFound = ce.flatMap((t) => found(t));
-  if (ceFound.length) list.push({ name: '천을귀인', targets: ceFound.join('·'), tone: 'good', desc: '최고의 길성. 위기에 귀인이 나타나 돕고, 평생 흉이 길로 바뀌는 복을 타고났습니다.' });
+  if (ceFound.length) list.push(applyBias({ name: '천을귀인', targets: ceFound.join('·'), tone: 'good', desc: '최고의 길성. 위기에 귀인이 나타나 돕고, 평생 흉이 길로 바뀌는 복을 타고났습니다.' }, ce.filter((t) => branches.includes(t)), yong));
 
   const mc = found(MUNCHANG[dayGan]);
-  if (mc.length) list.push({ name: '문창귀인', targets: `${JIJI[MUNCHANG[dayGan]]}(${mc.join('·')})`, tone: 'good', desc: '학문·시험·문서의 귀인. 머리가 총명하고 글·자격·전문 분야에 강합니다.' });
+  if (mc.length) list.push(applyBias({ name: '문창귀인', targets: `${JIJI[MUNCHANG[dayGan]]}(${mc.join('·')})`, tone: 'good', desc: '학문·시험·문서의 귀인. 머리가 총명하고 글·자격·전문 분야에 강합니다.' }, [MUNCHANG[dayGan]], yong));
 
   if (YANGIN[dayGan] !== undefined) {
     const yi = found(YANGIN[dayGan]);
-    if (yi.length) list.push({ name: '양인살', targets: `${JIJI[YANGIN[dayGan]]}(${yi.join('·')})`, tone: 'caution', desc: '강한 추진력과 결단의 칼. 전문직·기술직에 유리하나 과하면 다툼·사고 주의.' });
+    if (yi.length) list.push(applyBias({ name: '양인살', targets: `${JIJI[YANGIN[dayGan]]}(${yi.join('·')})`, tone: 'caution', desc: '강한 추진력과 결단의 칼. 전문직·기술직에 유리하나 과하면 다툼·사고 주의.' }, [YANGIN[dayGan]], yong));
   }
 
   if (GWAEGANG.some(([gn, jn]) => dayGan === gn && pillars.day.ji === jn))
-    list.push({ name: '괴강살', targets: '일주', tone: 'caution', desc: '극과 극의 카리스마. 큰 인물의 그릇이나 기복이 커 리더십으로 다스려야 합니다.' });
+    list.push(applyBias({ name: '괴강살', targets: '일주', tone: 'caution', desc: '극과 극의 카리스마. 큰 인물의 그릇이나 기복이 커 리더십으로 다스려야 합니다.' }, [pillars.day.ji], yong));
   if (BAEKHO.some(([gn, jn]) => dayGan === gn && pillars.day.ji === jn))
-    list.push({ name: '백호살', targets: '일주', tone: 'caution', desc: '강렬한 에너지와 추진력. 의료·법·무관 등 생사를 다루는 분야에서 대성합니다.' });
+    list.push(applyBias({ name: '백호살', targets: '일주', tone: 'caution', desc: '강렬한 에너지와 추진력. 의료·법·무관 등 생사를 다루는 분야에서 대성합니다.' }, [pillars.day.ji], yong));
 
-  // 원진·귀문 — 지지 쌍 관계 (모든 기둥 조합 스캔)
+  // 원진·귀문 — 지지 쌍 관계 (모든 기둥 조합 스캔). 두 글자의 '관계'에서 오는 살이라 길흉반전은 적용하지 않는다.
   const WONJIN: [number, number][] = [[0, 7], [1, 6], [2, 9], [3, 8], [4, 11], [5, 10]]; // 子未 丑午 寅酉 卯申 辰亥 巳戌
   const GWIMUN: [number, number][] = [[0, 9], [1, 6], [2, 7], [3, 8], [4, 11], [5, 10]]; // 子酉 丑午 寅未 卯申 辰亥 巳戌
   const pairHit = (pairs: [number, number][]) => {
@@ -115,12 +174,13 @@ export function sin12Map(baseJi: number): Sin12[] {
   return map;
 }
 
-export interface Sin12Hit { name: Sin12; alias?: string; ji: string; at: string[]; tone: 'good' | 'neutral' | 'caution'; desc: string; }
+export interface Sin12Hit { name: Sin12; alias?: string; ji: string; at: string[]; tone: 'good' | 'neutral' | 'caution'; desc: string; bias?: 'positive' | 'negative'; }
 
 /** 명식 네 기둥에 실제로 걸린 12신살 목록 (기준: 년지 또는 일지) */
 export function computeSin12(
   pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
   base: 'year' | 'day',
+  yong?: YongsinLite,
 ): Sin12Hit[] {
   const baseJi = base === 'year' ? pillars.year.ji : pillars.day.ji;
   const map = sin12Map(baseJi);
@@ -129,15 +189,20 @@ export function computeSin12(
     ...(pillars.hour ? [[pillars.hour.ji, '시지'] as [number, string]] : []),
   ];
   const byName = new Map<Sin12, Sin12Hit>();
+  const jiIdx = new Map<Sin12, number>(); // 길흉반전용 — 살이 앉은 지지 인덱스
   for (const [ji, pos] of slots) {
     const name = map[ji];
     const info = SIN12_INFO[name];
     const cur = byName.get(name);
     if (cur) { cur.at.push(pos); }
-    else byName.set(name, { name, alias: info.alias, ji: `${JIJI[ji]}(${JIJI_HANJA[ji]})`, at: [pos], tone: info.tone, desc: info.desc });
+    else { byName.set(name, { name, alias: info.alias, ji: `${JIJI[ji]}(${JIJI_HANJA[ji]})`, at: [pos], tone: info.tone, desc: info.desc }); jiIdx.set(name, ji); }
   }
-  return Array.from(byName.values()).sort((a, b) => SIN12_ORDER.indexOf(a.name) - SIN12_ORDER.indexOf(b.name));
+  // 명식 순서(년→시)대로 정렬 + 길흉반전
+  return Array.from(byName.values())
+    .map((h) => applyBias(h, [jiIdx.get(h.name)!], yong))
+    .sort((a, b) => SIN12_ORDER.indexOf(a.name) - SIN12_ORDER.indexOf(b.name));
 }
+
 export interface AdvancedMyeongsik {
   unseong: { year: string; month: string; day: string; hour: string | null };
   gongmang: { branches: string[]; pillars: { year: boolean; month: boolean; day: boolean; hour: boolean } };
@@ -150,6 +215,7 @@ export function computeAdvanced(
   pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
   dayGan: number,
   dayIndex: number,
+  yong?: YongsinLite,
 ): AdvancedMyeongsik {
   const gm = gongmangOf(dayIndex);
   return {
@@ -168,7 +234,7 @@ export function computeAdvanced(
         hour: pillars.hour ? gm.includes(pillars.hour.ji) : false,
       },
     },
-    sinsal: computeSinsal(pillars, dayGan),
-    sin12: { byYear: computeSin12(pillars, 'year'), byDay: computeSin12(pillars, 'day') },
+    sinsal: computeSinsal(pillars, dayGan, yong),
+    sin12: { byYear: computeSin12(pillars, 'year', yong), byDay: computeSin12(pillars, 'day', yong) },
   };
 }
