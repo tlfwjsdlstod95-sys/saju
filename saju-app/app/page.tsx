@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { chartId } from '@/lib/chartId';
 import type { SajuResult, Pillar, LuckPillar } from '@/lib/saju/types';
 import { parseReadingStream } from '@/lib/saju/readingMeta';
+import { ENGINE_VERSION } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
 import { computeHapchung } from '@/lib/saju/hapchung';
@@ -513,6 +514,14 @@ export default function Home() {
               <GzCell pos="月" p={result.pillars.month} />
               <GzCell pos="年" p={result.pillars.year} />
             </div>
+            <Link href="/accuracy" className="verify-strip">
+              <span className="vs-ic">🔎</span>
+              <span className="vs-txt">
+                이 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산했어요 — 진태양시·균시차·야자시 보정,
+                절기 오차 평균 6.8초(NASA JPL 행성력 대비)
+              </span>
+              <span className="vs-go">이렇게 검증했어요 →</span>
+            </Link>
             {result.warnings.map((w, i) => <div className="warn" key={i}>⚠️ {w}</div>)}
             <div className="adv">
               <div className="adv-row"><span className="adv-k">십이운성</span>
@@ -649,6 +658,10 @@ export default function Home() {
               <li>🗓️ {new Date().getFullYear()}~{new Date().getFullYear() + 1} 신년운세 — 월별 길흉 캘린더</li>
               <li>🍀 나만의 개운법 · 결혼·이직·이사 택일</li>
             </ul>
+            <p className="prem-verify">
+              🔎 이 리포트가 읽는 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산합니다.{' '}
+              <Link href="/accuracy">검증 방법과 숫자 보기 →</Link>
+            </p>
             {premium
               ? <>
                   <div className="prem-unlocked">✓ 이 사주의 리포트를 구매하셨어요. 계정에 저장되어 언제든 다시 열람할 수 있습니다.</div>
