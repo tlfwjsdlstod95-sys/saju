@@ -280,6 +280,40 @@ export function hapguk(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: P
   return best;
 }
 
+/** 그 오행의 국(局)에 실제로 참여한 지지들. 국에 흡수된 지지는 다른 오행의 '뿌리'로 세지 않는다. */
+function hapgukJis(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): number[] {
+  const jis = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean).map((p) => (p as Pillar).ji);
+  for (const [set, oh] of SAMHAP) {
+    if (oh !== o) continue;
+    const hit = set.filter((j) => jis.includes(j));
+    if (hit.length >= 3) return hit;
+  }
+  for (const [set, oh] of BANGHAP) {
+    if (oh !== o) continue;
+    if (set.every((j) => jis.includes(j))) return [...set];
+  }
+  return [];
+}
+
+/**
+ * 從旺格에서 洩(식상)을 쓸 수 있는가.
+ *   원전(卷三 六親論 從象 p.92) 「從旺者 … 要行比刦印綬則吉, **如局中印輕, 行傷食亦佳**」.
+ *   조건 둘: ①印이 가볍다(인성이 지지 정기 뿌리가 없다) ②식상이 지지 정기 뿌리를 가졌다.
+ *   ②에서 **일간 오행의 국에 흡수된 지지는 빼고** 센다 —
+ *   巳午未 화국의 未를 '토 뿌리'로 세면 從火 명식이 從土로 뒤집힌다(JCS-006 실측).
+ */
+function jongwangPrimary(
+  dayO: Ohaeng,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+): Ohaeng {
+  const inO = inseongOhaeng(dayO), sikO = SAENG[dayO];
+  if (presence(inO, pillars).jeonggi > 0) return dayO;   // 印이 뿌리를 가졌으면 印綬가 낫다
+  const absorbed = new Set(hapgukJis(dayO, pillars));
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  const sikRooted = list.some((p) => p.jiOhaeng === sikO && !absorbed.has(p.ji));
+  return sikRooted ? sikO : dayO;
+}
+
 /** 그 오행의 천간이 전부 합으로 묶여 있는가(= 쓸 수 없다) */
 function allStemsBound(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): boolean {
   const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
@@ -430,21 +464,62 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
     ? (presence(gwanO, pillars).jeonggi > 0 || hapguk(gwanO, pillars) > 0)
     : true;
   if (dayHapguk === 2 && strength >= 0.70 && !gwanRooted) {
-    const huisin = inseongOhaeng(dayO), gisin = gwanO;
-    return { primary: dayO, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+    const gisin = gwanO;
+    // v7 — 從旺格의 용신은 늘 일간 오행이 아니다. 원전이 단서를 달아 놨다(卷三 六親論 從象 p.92):
+    //   「從旺者, 四柱皆比刦, 無官殺之制, 有印綬之生, 旺之極者, 從其旺神也.
+    //     要行比刦印綬則吉, **如局中印輕, 行傷食亦佳**.」
+    //   즉 印이 가벼우면 洩(식상)이 낫다. 「全賴卯木洩其精英」(JCS-060)이 바로 그 경우다.
+    //   단 식상이 지지 정기로 뿌리를 가졌을 때만 — 지장간에만 있으면 洩할 힘이 없다(JCS-048 火 유지).
+    const inO2 = inseongOhaeng(dayO), sikO2 = SAENG[dayO];
+    const jong = pillars ? jongwangPrimary(dayO, pillars) : dayO;
+    // 희신·기신은 '채택한 용신' 기준으로 잡는다(용신이 식상으로 바뀌면 희·기도 따라 바뀐다).
+    const huisinJ = inseongOhaeng(jong), gisinJ = gwanOhaeng(jong);
+    const jongNote = jong === dayO
+      ? `지지가 ${dayO} 국(局)을 이루고 이를 거스를 ${gwanO} 기운이 뿌리 없이 떠 있어, 대세를 따르는 종왕격으로 봅니다.`
+      : `지지가 ${dayO} 국(局)을 이룬 종왕격인데 ${inO2}(인성)이 가벼워, 왕한 기운을 눌러 담기보다 ${sikO2}으로 흘려보내는 편이 낫습니다(原典 「如局中印輕, 行傷食亦佳」).`;
+    return { primary: jong, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin: huisinJ, gisin: gisinJ, method: '종격',
       bases: [
-        { method: '종격', value: dayO, adopted: true, note: `지지가 ${dayO} 국(局)을 이루고 이를 거스를 ${gwanO} 기운이 뿌리 없이 떠 있어, 대세를 따르는 종왕격으로 봅니다.` },
+        { method: '종격', value: jong, adopted: true, note: jongNote },
         { method: '억부', value: SAENG[dayO], adopted: false, note: '판이 한쪽으로 완성돼 균형(억부)을 논할 자리가 아닙니다.' },
       ],
       conflict: false, eokbuCandidates: [],
-      desc: `지지가 ${dayO} 기운으로 국(局)을 이루고, 이를 거스를 ${gwanO} 기운은 뿌리 없이 떠 있습니다. 이런 명식은 억지로 균형을 맞추기보다 대세를 따르는 종왕격(從旺格)으로 봅니다. ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
+      desc: `지지가 ${dayO} 기운으로 국(局)을 이루고, 이를 거스를 ${gwanO} 기운은 뿌리 없이 떠 있습니다. 이런 명식은 억지로 균형을 맞추기보다 대세를 따르는 종왕격(從旺格)으로 봅니다. ${jong}·${huisinJ} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisinJ} 기운이 오히려 탈이 됩니다.` };
+  }
+
+  // ── 從氣格 — 지지가 한 기세로 국을 이루고 일간이 거기 기댈 곳이 없을 때 ──
+  //   원전(卷三 六親論 從象 p.92): 「從氣者, 不論財官印綬食傷之類,
+  //     如氣勢在木火, 要行木火運, 氣勢在金水, 要行金水運, 反此必凶.」
+  //   從旺·從勢와 달리 '무엇을 따르느냐'를 십신으로 묻지 않는다 — 판을 덮은 기세를 따를 뿐이다.
+  //   근거 사례 「支全巳午未, 燥烈極矣 … 天干金水無根 … 只可順其氣勢也」(JCS-045).
+  //   ⚠️ 넓게 잡으면 종격이 폭증한다. 3자 완성 국(방합·삼합) + 일간 무근(지지 정기)
+  //     + 일간을 돕는 천간이 없거나 무근일 때로 좁힌다.
+  if (pillars) {
+    const OHS: Ohaeng[] = ['목', '화', '토', '금', '수'];
+    const inO3 = inseongOhaeng(dayO);
+    const dayRooted = presence(dayO, pillars).jeonggi > 0 || hapguk(dayO, pillars) > 0;
+    const helperRooted = presence(inO3, pillars).jeonggi > 0 || hapguk(inO3, pillars) > 0;
+    if (!dayRooted && !helperRooted) {
+      const flow = OHS.find((o) => o !== dayO && o !== inO3 && hapguk(o, pillars) === 2);
+      if (flow) {
+        const huisin = inseongOhaeng(flow), gisin = gwanOhaeng(flow);
+        return { primary: flow, eokbu: inseongOhaeng(dayO), johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+          bases: [
+            { method: '종격', value: flow, adopted: true, note: `지지가 ${flow} 기세로 국(局)을 이뤘는데 일간 ${dayO}은 뿌리도 도와줄 인성도 없어, 기세를 따르는 종기격(從氣格)으로 봅니다.` },
+            { method: '억부', value: inseongOhaeng(dayO), adopted: false, note: '기댈 뿌리가 없어 균형(억부)을 논할 자리가 아닙니다.' },
+          ],
+          conflict: false, eokbuCandidates: [],
+          desc: `지지가 ${flow} 기세로 국(局)을 이루고, 일간 ${dayO}은 지지에 뿌리도 없고 도와줄 ${inO3} 기운도 뿌리가 없습니다. 이런 명식은 억지로 나를 세우지 않고 판을 덮은 기세를 따르는 종기격(從氣格)으로 봅니다 — 원전도 「기세가 어디에 있느냐만 보라」고 합니다. ${flow} 기운의 시기·환경이 약이고, 그 기세를 정면으로 거스르는 ${gisin} 기운이 탈이 됩니다.` };
+      }
+    }
   }
   if (strength >= 0.90) {
-    // 종왕격(전왕): 일간 세력이 판을 지배 → 왕한 기운을 따름
-    const huisin = inseongOhaeng(dayO), gisin = gwanOhaeng(dayO);
-    return { primary: dayO, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
+    // 종왕격(전왕): 일간 세력이 판을 지배 → 왕한 기운을 따름.
+    //   v7 — 여기서도 「如局中印輕, 行傷食亦佳」가 적용된다(JCS-060 「全賴卯木洩其精英」).
+    const jong90 = pillars ? jongwangPrimary(dayO, pillars) : dayO;
+    const huisin = inseongOhaeng(jong90), gisin = gwanOhaeng(jong90);
+    return { primary: jong90, eokbu: SAENG[dayO], johu: computeJohu(dayGan, monthJi).need, huisin, gisin, method: '종격',
       bases: [
-        { method: '종격', value: dayO, adopted: true, note: '일간 세력이 판을 지배해 대세를 따릅니다(종왕격).' },
+        { method: '종격', value: jong90, adopted: true, note: jong90 === dayO ? '일간 세력이 판을 지배해 대세를 따릅니다(종왕격).' : `일간 세력이 판을 지배하는 종왕격인데 ${inseongOhaeng(dayO)}(인성)이 가벼워, ${SAENG[dayO]}으로 흘려보내는 편이 낫습니다(原典 「如局中印輕, 行傷食亦佳」).` },
         { method: '억부', value: SAENG[dayO], adopted: false, note: '종격에서는 균형을 잡는 억부를 쓰지 않습니다.' },
         { method: '조후', value: computeJohu(dayGan, monthJi).need, adopted: false, note: '종격 우선 — 계절 처방보다 대세를 따릅니다.' },
       ],
