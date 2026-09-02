@@ -31,7 +31,7 @@ interface GoldenCase {
   school: 'jeokcheonsu' | 'japyeong' | 'gungtong';
   pillars?: { year: string; month: string; day: string; hour?: string };
   birth?: any;
-  expect: { strength?: string; yongsin?: string; gyeokguk?: string; johu?: string };
+  expect: { strength?: string; yongsin?: string; yongsinNot?: string; gyeokguk?: string; johu?: string };
   source: { book: string; chapter?: string; page?: string };
   note?: string;
 }
@@ -64,7 +64,7 @@ function toPillar(gj: string, dayGan: number, isDay = false): Pillar {
 }
 
 const label = (s: number) => (s <= 0.38 ? '신약' : s >= 0.55 ? '신강' : '중화');
-const S = { strength: [0, 0], yongsin: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
+const S = { strength: [0, 0], yongsin: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
 // 학파별 강약 — 적천수(억부)와 자평진전(격국)은 '신강'의 정의가 다르다.
 //   자평진전은 印重이어도 身輕이라 부르고(JPJ-013 身輕印重),
 //   적천수는 같은 배치에서 印重→신강으로 보고 식상을 용신으로 쓴다(JCS-009 용신 화).
@@ -113,6 +113,16 @@ for (const c of cases) {
       else misses.push(`[${c.school === 'gungtong' ? '용신·궁통' : '용신'}] ${c.id} 문헌 ${c.expect.yongsin} / 엔진 ${got}(${gy.yongsin.method}) ${src}`);
     }
   }
+  // 부정 사례 — 원문이 "이 오행은 用神이 아니다"라고만 못 박은 경우.
+  //   예) 寒暖 p.126 後造 「寒甚而暖無氣, 反以無暖爲美」 — 뿌리 없는 조후 火 를 쓰지 않는다.
+  //   용신 오행을 하나로 확정하지 않으므로 일반 채점에 넣지 않고 별도로 센다.
+  if (c.expect.yongsinNot && c.school !== 'japyeong') {
+    S.yongsinNot[1]++;
+    const got = gy.yongsin.primary;
+    if (got !== c.expect.yongsinNot) S.yongsinNot[0]++;
+    else misses.push(`[용신·반례] ${c.id} 문헌 "${c.expect.yongsinNot} 아님" / 엔진 ${got}(${gy.yongsin.method}) ${src}`);
+  }
+
   if (c.expect.gyeokguk) {
     S.gyeokguk[1]++; const got = gy.gyeokguk.key;
     if (got === c.expect.gyeokguk) S.gyeokguk[0]++;
@@ -133,6 +143,7 @@ console.log(`  ├ 자평진전계  ${rate(SS.japyeong)}   ※ 격국 체계 —
 console.log(`  └ 궁통보감    ${rate(SS.gungtong)}   ※ 참고용`);
 console.log(`  용신 일치율  ${rate(S.yongsin)}   ※ 적천수 계열 — 우리 엔진과 같은 억부·조후 체계${skipped ? ` (자평진전 ${skipped}건 제외)` : ''}`);
 console.log(`  └ 궁통 참고  ${rate(S.gungtong)}   ※ 궁통보감은 월별 조후 처방표라 체계가 다름. 참고용`);
+console.log(`  용신 반례    ${rate(S.yongsinNot)}   ※ 원문이 "이 오행은 用神이 아니다"라고만 밝힌 사례`);
 console.log(`  격국 일치율  ${rate(S.gyeokguk)}`);
 console.log(`  조후 일치율  ${rate(S.johu)}`);
 if (misses.length) { console.log('\n불일치 상세:'); misses.forEach((m) => console.log('  ' + m)); }
