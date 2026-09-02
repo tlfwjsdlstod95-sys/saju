@@ -64,7 +64,7 @@ function toPillar(gj: string, dayGan: number, isDay = false): Pillar {
 }
 
 const label = (s: number) => (s <= 0.38 ? '신약' : s >= 0.55 ? '신강' : '중화');
-const S = { strength: [0, 0], yongsin: [0, 0], yongsinNew: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
+const S = { strength: [0, 0], yongsin: [0, 0], yongsinNew: [0, 0], yongsinUnseen: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
 // 학파별 강약 — 적천수(억부)와 자평진전(격국)은 '신강'의 정의가 다르다.
 //   자평진전은 印重이어도 身輕이라 부르고(JPJ-013 身輕印重),
 //   적천수는 같은 배치에서 印重→신강으로 보고 식상을 용신으로 쓴다(JCS-009 용신 화).
@@ -119,6 +119,12 @@ for (const c of cases) {
         S.yongsinNew[1]++;
         if (hit) S.yongsinNew[0]++;
       }
+      // v7 을 확정한 뒤에 캔 표본(JCS-071~). 규칙을 만들 때 존재하지도 않았으므로
+      //   '아직 아무 규칙도 이 케이스를 본 적이 없다'는 뜻 — 가장 엄격한 일반화 지표다.
+      if (c.school === 'jeokcheonsu' && c.id.startsWith('JCS-') && n >= 71) {
+        S.yongsinUnseen[1]++;
+        if (hit) S.yongsinUnseen[0]++;
+      }
     }
   }
   // 부정 사례 — 원문이 "이 오행은 用神이 아니다"라고만 못 박은 경우.
@@ -152,6 +158,7 @@ console.log(`  └ 궁통보감    ${rate(SS.gungtong)}   ※ 참고용`);
 console.log(`  용신 일치율  ${rate(S.yongsin)}   ※ 적천수 계열 — 우리 엔진과 같은 억부·조후 체계${skipped ? ` (자평진전 ${skipped}건 제외)` : ''}`);
 console.log(`  └ 궁통 참고  ${rate(S.gungtong)}   ※ 궁통보감은 월별 조후 처방표라 체계가 다름. 참고용`);
 console.log(`  └ 신규표본  ${rate(S.yongsinNew)}   ※ 튜닝 뒤 원전에서 캔 것만 — 일반화 성능의 지표`);
+console.log(`  └ 미확인    ${rate(S.yongsinUnseen)}   ※ v7 확정 뒤에 캔 것만 — 어떤 규칙도 본 적 없는 세트`);
 console.log(`  용신 반례    ${rate(S.yongsinNot)}   ※ 원문이 "이 오행은 用神이 아니다"라고만 밝힌 사례`);
 console.log(`  격국 일치율  ${rate(S.gyeokguk)}`);
 console.log(`  조후 일치율  ${rate(S.johu)}`);
