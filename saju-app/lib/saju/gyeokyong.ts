@@ -781,10 +781,21 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   const tooWeakForJohu = strength <= 0.15;
   const johuUsable = !!johu && johuRes.urgent && johuElig.eligible && !tooWeakForJohu;
 
+  // ⚠️ v8.1 — **통관을 억부 뒤로 내렸다.**
+  //   우리는 서낙오 『자평수언』의 5용신 정법(억부·조후·병약·통관·전왕)을 따라
+  //   '대립하는 두 세력의 다리 오행'을 통관용신으로 채택해 왔다. 그런데
+  //   ① 적천수 골든에서 통관으로 결정된 3건이 **전부 오답**이었고(JCS-070·084·091),
+  //   ② 원전 「通關」편(卷二 通神論 通關 p.57)을 읽어 보니 임철초는 통관을
+  //      **'기운이 막히지 않고 흐르는가'라는 상태 평가**로 쓰지, 다리 오행을 用神으로 삼지 않는다 —
+  //      「一來一去, 何等情協. 一往一會, **通關無阻**, 所以科甲聯登」 처럼 흐름을 말하고
+  //      用神은 따로(印 등) 잡는다.
+  //   우리 용신 채점 기준이 적천수인 이상, 적천수가 안 쓰는 방식을 우선순위 상단에 둘 이유가 없다.
+  //   통관 값 자체는 `bases`에 계속 남겨 '기준별 결론'에 보이게 한다 — 지우는 게 아니라 순위를 내린다.
   let method: Yongsin['method'];
   let primary: Ohaeng;
   if (johuUsable && johu) { method = '조후우선'; primary = johu; }
   else if (byeong && yak) { method = '병약'; primary = yak; }
+  else if (eokbuTop) { method = '억부'; primary = eokbu; }
   else if (tonggwan) { method = '통관'; primary = tonggwan; }
   else { method = '억부'; primary = eokbu; }
   const huisin = inseongOhaeng(primary);     // 용신을 생하는 오행
