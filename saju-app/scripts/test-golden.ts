@@ -109,15 +109,16 @@ for (const c of cases) {
     else {
       const bucket = c.school === 'gungtong' ? S.gungtong : S.yongsin;
       bucket[1]++; const got = gy.yongsin.primary;
-      if (got === c.expect.yongsin) bucket[0]++;
+      const hit = got === c.expect.yongsin;
+      if (hit) bucket[0]++;
+      else misses.push(`[${c.school === 'gungtong' ? '용신·궁통' : '용신'}] ${c.id} 문헌 ${c.expect.yongsin} / 엔진 ${got}(${gy.yongsin.method}) ${src}`);
       // 튜닝 이후 원전에서 새로 캔 표본(JCS-042~)만 따로 센다.
       //   엔진 규칙은 JCS-041 까지의 표본으로 맞췄으므로, 그 뒤 케이스가 **진짜 일반화 성능**에 가깝다.
       const n = Number((c.id.match(/(\d+)$/) ?? [])[1] ?? 0);
       if (c.school === 'jeokcheonsu' && c.id.startsWith('JCS-') && n >= 42) {
         S.yongsinNew[1]++;
-        if (got === c.expect.yongsin) S.yongsinNew[0]++;
+        if (hit) S.yongsinNew[0]++;
       }
-      else misses.push(`[${c.school === 'gungtong' ? '용신·궁통' : '용신'}] ${c.id} 문헌 ${c.expect.yongsin} / 엔진 ${got}(${gy.yongsin.method}) ${src}`);
     }
   }
   // 부정 사례 — 원문이 "이 오행은 用神이 아니다"라고만 못 박은 경우.
