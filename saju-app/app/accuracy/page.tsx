@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
-import { yongsinRows, rate, newSampleRows } from '@/lib/goldenReport';
+import { yongsinRows, rate, newSampleRows, totalCases } from '@/lib/goldenReport';
 
 export const metadata: Metadata = {
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
@@ -17,6 +17,7 @@ const row = { display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap'
 const num = { color: 'var(--gold)', fontWeight: 700 as const };
 
 export default function AccuracyPage() {
+  const nCases = totalCases();
   // 표는 손으로 쓰지 않는다 — 지금 배포된 엔진으로 원전 명식을 다시 판정해 만든다.
   const rows = yongsinRows();
   const r = rate(rows);
@@ -44,7 +45,7 @@ export default function AccuracyPage() {
           <div style={statLabel}>만세력 교차검증 일치<br />(1900~2100 전 일자, 독립 구현 대조)</div>
         </div>
         <div style={stat}>
-          <div style={statNum}>고전 59命 대조</div>
+          <div style={statNum}>고전 {nCases}命 대조</div>
           <div style={statLabel}>『자평진전』·『적천수천미』 원전 명식으로<br />판정 로직을 채점·공개</div>
         </div>
       </div>
@@ -105,7 +106,7 @@ export default function AccuracyPage() {
         <p style={{ lineHeight: 1.8 }}>
           계산과 달리 해석에는 &lsquo;하나의 정답&rsquo;이 없습니다. 학파마다 강약·용신을 다르게 봅니다.
           그래서 헤아림은 명리학의 고전 — <b>『자평진전(子平眞詮)』</b>과 <b>『적천수천미(滴天髓闡微)』</b>
-          1947년 간행본 원문 — 에 실린 실제 명식 <b style={num}>59건</b>으로 판정 로직을 채점하고,
+          1947년 간행본 원문 — 에 실린 실제 명식 <b style={num}>{nCases}건</b>으로 판정 로직을 채점하고,
           일치율을 숨기지 않고 공개합니다.
         </p>
         <div style={{ overflowX: 'auto', marginTop: 12 }}>
@@ -201,7 +202,8 @@ export default function AccuracyPage() {
         <p style={{ lineHeight: 1.8, marginTop: 12, fontSize: 13.5, color: 'var(--text-mute)' }}>
           불일치가 남아 있는 케이스는 &lsquo;아직 못 고친 것&rsquo;이 맞습니다. 다만 한 건을 맞히려고 그 한 건에만
           맞는 규칙을 넣지는 않습니다 — 같은 조건의 원전 사례가 여러 건 모여 규칙으로 확인될 때 반영합니다.
-          (지금 보류 중인 가설: 겨울의 습토·동토가 금을 생하는 힘)
+          (지금 보류 중인 가설: <b>상관격의 하위 갈래 구분</b> — 원전은 상관격을 用財·用官·佩印 등으로
+          나눠 놓았는데 엔진은 아직 한 덩어리로 봅니다. 원전 근거 7건을 모았고, 다음 버전 후보입니다.)
         </p>
       </div>
 
@@ -217,7 +219,9 @@ export default function AccuracyPage() {
           <li><b>v4</b> — 억부용신 중화 구간을 적천수천미 원전 집계에 맞춰 교정 → 용신 일치율 50%→67%</li>
           <li><b>v5</b> — 신살 길흉반전: 같은 살도 용신 글자에 앉으면 길하게, 기신 글자면 흉하게 — 사주마다 다르게 판정</li>
           <li><b>v6</b> — 용신을 &lsquo;후보 평가&rsquo;로: 원국에 실제로 쓸 수 있는 기운인지(뿌리·투출·합·극) 따져
-            하나씩 지워 나가는 방식으로 교체 → 용신 원전 재현율 67%→{r.pct}%</li>
+            하나씩 지워 나가는 방식으로 교체 → 규칙을 맞출 때 쓴 18건에서 67%→94.4%.
+            그 뒤 원전에서 표본을 계속 캐 {r.total}건까지 늘리자 {r.pct}%가 됐습니다 —
+            숫자가 내려간 건 표본이 늘어 어려워졌다는 뜻이라, 올라간 숫자만 남기지 않고 그대로 적습니다.</li>
         </ul>
       </div>
 
