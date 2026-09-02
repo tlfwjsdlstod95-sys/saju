@@ -229,6 +229,10 @@ export interface EokbuCandidate {
   score: number;
   usable: boolean;
   reason: string;
+  /** 구조적 뿌리 — 지지 정기·지장간·합국에 실제로 존재하는가 */
+  structuralRoot: '정기' | '합국' | '지장간' | '없음';
+  /** 관계적 뿌리 — 이 오행을 생해 주는 세력이 원국에서 힘을 쓰는가(財滋弱殺 류). 아직 판정에 반영하지 않는다. */
+  relationalRoot: boolean;
 }
 
 /** 원국에서 그 오행이 어떻게 존재하는가 (일간 자신의 천간은 세지 않는다 — 강약 계산과 같은 원칙) */
@@ -343,9 +347,22 @@ function scoreCandidate(
 ): EokbuCandidate {
   const pr = presence(value, pillars);
   if (!pr.present) {
-    return { group, value, score: -Infinity, usable: false, reason: `원국에 ${value} 기운이 아예 없어 쓸 수 없습니다.` };
+    return { group, value, score: -Infinity, usable: false, structuralRoot: '없음', relationalRoot: false, reason: `원국에 ${value} 기운이 아예 없어 쓸 수 없습니다.` };
   }
   const hg = hapguk(value, pillars);
+  // ── 뿌리를 두 층으로 나눠 기록한다(v7.1) ────────────────────────────
+  //  구조적 뿌리(Self-Rooting): 지지 정기 > 합국 > 지장간 순으로 실제 존재 여부.
+  //  관계적 뿌리(Source-Feeding): 이 오행을 **생해 주는 세력**이 지지 정기로 서 있는가.
+  //    원전 근거 「若無寅木則丙火無根, 必要用財滋殺」(官殺 p.61) ·
+  //             「無財則官亦無根 … 官星並透, 以官爲用」(傷官 p.90).
+  //  ⚠️ **아직 점수에 반영하지 않는다(가중치 0).** 표시·기록 전용이다.
+  //    같은 논리인데 원전이 어떤 곳에서는 財를, 어떤 곳에서는 官을 用으로 지목한다
+  //    (JCS-071·072 → 財 / JCS-058 → 官). 어느 쪽인지 가르는 조건이 아직 없다.
+  //    강약·종격·지지 뿌리 계산에는 **절대** 섞지 않는다 — 섞으면 JCS-048 류가 깨진다.
+  const sRoot: EokbuCandidate['structuralRoot'] =
+    pr.jeonggi > 0 ? '정기' : hg > 0 ? '합국' : pr.hidden > 0 ? '지장간' : '없음';
+  const feeder = (Object.keys(SAENG) as Ohaeng[]).find((x) => SAENG[x] === value);
+  const relRoot = sRoot !== '정기' && !!feeder && presence(feeder, pillars).jeonggi > 0;
   let score = base + pr.stems * W.stem + pr.jeonggi * W.jeonggi + pr.hidden * W.hidden + hg * W.hapguk;
   const why: string[] = [];
   if (pr.stems) why.push('천간에 드러남');
@@ -354,7 +371,7 @@ function scoreCandidate(
 
   // 합으로 묶였는데 지지 정기 뿌리마저 없으면 못 쓴다 — 「用官則被庚金合壞」(JCS-034).
   if (allStemsBound(value, pillars) && pr.jeonggi === 0 && hg === 0) {
-    return { group, value, score: -Infinity, usable: false, reason: `${value} 천간이 합으로 묶이고 지지 뿌리도 없어 쓸 수 없습니다.` };
+    return { group, value, score: -Infinity, usable: false, structuralRoot: sRoot, relationalRoot: relRoot, reason: `${value} 천간이 합으로 묶이고 지지 뿌리도 없어 쓸 수 없습니다.` };
   }
   // 지장간에만 숨어 있으면 크게 깎는다. 다만 **탈락은 아니다** —
   //   원전에도 「四柱無土, 取巳中藏戊」(JCS-001)처럼 달리 쓸 게 없으면 지장간을 취하는 예가 있다.
@@ -371,7 +388,7 @@ function scoreCandidate(
     //   ※ 반대로 冬金은 원전이 火를 用神에서 명시 부정한다(JCS-003/007) — 그건 억부 후보가 아니라
     //     조후우선 분기에서 걸러진다.
     if (pr.jeonggi === 0 && hg === 0 && value !== johuNeed) {
-      return { group, value, score: -Infinity, usable: false, reason: `${hostile} 세력이 판을 덮어 뿌리 없는 ${value}는 빼앗깁니다.` };
+      return { group, value, score: -Infinity, usable: false, structuralRoot: sRoot, relationalRoot: relRoot, reason: `${hostile} 세력이 판을 덮어 뿌리 없는 ${value}는 빼앗깁니다.` };
     }
     // 傷官用財에서는 일간이 財를 剋하는 것이 흠이 아니라 **用의 조건**이다 —
     //   「日主旺, 傷官亦旺, 宜用財」(傷官 p.78). 왕한 일주라야 財를 감당(能任財)한다.
@@ -380,7 +397,7 @@ function scoreCandidate(
       why.push(`${hostile} 세력에 눌려 온전치 못함`);
     }
   }
-  return { group, value, score, usable: true, reason: why.join(' · ') || '쓸 수 있음' };
+  return { group, value, score, usable: true, structuralRoot: sRoot, relationalRoot: relRoot, reason: why.join(' · ') || '쓸 수 있음' };
 }
 
 /**
