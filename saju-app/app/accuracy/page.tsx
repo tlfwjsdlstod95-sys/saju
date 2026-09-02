@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
-import { yongsinRows, rate } from '@/lib/goldenReport';
+import { yongsinRows, rate, newSampleRows } from '@/lib/goldenReport';
 
 export const metadata: Metadata = {
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
@@ -20,6 +20,8 @@ export default function AccuracyPage() {
   // 표는 손으로 쓰지 않는다 — 지금 배포된 엔진으로 원전 명식을 다시 판정해 만든다.
   const rows = yongsinRows();
   const r = rate(rows);
+  // 엔진을 맞출 때 쓴 표본과, 그 뒤 원전에서 새로 캔 표본을 나눠 본다.
+  const rNew = rate(newSampleRows(rows));
   return (
     <main className="wrap">
       <div className="hero" style={{ paddingTop: 40 }}>
@@ -148,6 +150,11 @@ export default function AccuracyPage() {
           ⚠️ 이 숫자는 <b>&lsquo;원전 재현율&rsquo;</b>입니다 — 고전에 실린 <b>{r.total}건</b>의 명식에서 원문이
           지목한 용신을 엔진이 다시 짚어내는 비율이고, 세상 모든 사주에 대한 &lsquo;정확도&rsquo;가 아닙니다.
           표본이 작다는 점을 그대로 밝히고, 표본은 계속 늘리는 중입니다.
+          {rNew.total > 0 && (
+            <> 그중 <b>엔진을 고친 뒤에 원전에서 새로 캔 {rNew.total}건</b>만 따로 보면{' '}
+            <b>{rNew.pct}%</b>({rNew.hit}/{rNew.total})입니다 — 규칙을 맞출 때 쓰지 않은 명식이라,
+            이 숫자가 실제 성능에 더 가깝습니다. 낮아 보여도 이렇게 나눠 적는 편이 정직합니다.</>
+          )}
         </p>
       </div>
 
