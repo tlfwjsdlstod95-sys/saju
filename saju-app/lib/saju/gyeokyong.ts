@@ -223,8 +223,9 @@ export interface GwansalFlags {
   salin: boolean;  // 二曰 殺重用印 (+ 五曰 官殺混雜)
   sikje: boolean;  // 三曰 食神制殺
   jesal: boolean;  // 六曰 制殺太過
+  heo: boolean;    // 虛用 — 원국에 없는 오행을 用神 후보로 허용(六曰이 켜졌을 때만 의미가 있다)
 }
-export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true };
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true };
 /**
  * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
  *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
@@ -233,7 +234,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -332,6 +333,26 @@ function presence(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar
   return { stems, jeonggi, hidden, present: stems + jeonggi + hidden > 0 };
 }
 
+/**
+ * 그 오행의 '글자 수' — 지장간까지 세어 넣는다.
+ *   임철초는 制殺太過 대목에서 개수를 **직접 센다**:
+ *     「時逢獨殺, 四食相制」(p.75) · 「此亦一殺逢四制」(p.75) ·
+ *     「此殺逢四制」(p.76) · 「此造五殺逢五制」(p.76)
+ *   이 산술은 천간·지지 정기만으로는 맞지 않는다(JCS-090 에서 制가 2로 세어진다).
+ *   지장간을 한 기둥당 1로 세면 네 사례가 전부 「四制」·「五制」와 맞아떨어진다.
+ *   ※ 강약·후보 점수에는 쓰지 않는다. 이 갈래의 발동 조건 전용이다.
+ */
+function deepCount(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): number {
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  let n = 0;
+  for (const p of list) {
+    if (p !== pillars.day && GAN_OHAENG[p.gan] === o) n++;
+    if (p.jiOhaeng === o) n++;
+    else if (p.jijanggan.some((g) => GAN_OHAENG[g] === o)) n++;
+  }
+  return n;
+}
+
 // 지지 합국(合局) — 삼합(三合)·방합(方合).
 //   「支拱寅戌 … 必以丙火爲用」(JCS-040) 처럼, 지지가 국을 이루면 천간의 글자가 뿌리를 얻는다.
 //   완전(3자)은 강하게, 반합(2자)은 약하게 인정한다.
@@ -419,7 +440,9 @@ function allStemsBound(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: P
 // 가중치. 계열 기본값(base)이 크고 사용성 보정이 작은 '사전확률 + 소거' 구조다.
 //   기본 선택은 원전 빈도(신약→인성 / 그 외→식상)를 따르되,
 //   그 후보가 **실제로 못 쓰는 상태**일 때만 다음 후보로 내려간다.
-const W = { stem: 0.6, jeonggi: 0.8, hidden: 0.2, hapguk: 1.2, hiddenOnly: -3.5, hostile: -2.0 };
+// absent — 원국에 아예 없는 기운을 허용할 때의 감점. 지장간(-3.5)보다 더 깎아,
+//   원국에 실재하는 후보가 하나라도 쓸 만하면 그쪽이 반드시 이기게 둔다.
+const W = { stem: 0.6, jeonggi: 0.8, hidden: 0.2, hapguk: 1.2, hiddenOnly: -3.5, hostile: -2.0, absent: -4.5 };
 
 /** 후보 하나를 채점한다 */
 function scoreCandidate(
@@ -428,10 +451,22 @@ function scoreCandidate(
   counts: Partial<Record<Ohaeng, number>> | undefined,
   johuNeed: Ohaeng | null,
   waiveHostile = false,
+  allowAbsent = false,
 ): EokbuCandidate {
   const pr = presence(value, pillars);
   if (!pr.present) {
-    return { group, value, score: -Infinity, usable: false, structuralRoot: '없음', relationalRoot: false, reason: `원국에 ${value} 기운이 아예 없어 쓸 수 없습니다.` };
+    // 원칙: 원국에 없는 기운은 쓸 수 없다(v6 후보소거의 기둥).
+    //   단 하나의 예외를 **호출부가 명시적으로 열어 줄 때만** 허용한다(allowAbsent).
+    //   원전 근거 — 임철초는 「없어서 흠인 글자」를 用으로 지목하고 대운에서 그것이 올 때 발복한다고 본다.
+    //     「柱中印雖不見 … 至酉運合去辰土, 財星滋殺, 發甲」(官殺 p.76 / JCS-090)
+    //     「壬水雖通根身庫, 總之無金滋助, 清枯之象」(官殺 p.68 · 임철초 自造 / JCS-092)
+    //     「至壬申運, 日主逢生, 沖去寅木, 名登桂籍 … 接連癸酉二十年」(官殺 p.76 / JCS-091)
+    //   이때 用神은 '원국에 있는 것 중 최선'이 아니라 **판에 비어 있는 그 글자**다.
+    if (!allowAbsent) {
+      return { group, value, score: -Infinity, usable: false, structuralRoot: '없음', relationalRoot: false, reason: `원국에 ${value} 기운이 아예 없어 쓸 수 없습니다.` };
+    }
+    return { group, value, score: base + W.absent, usable: true, structuralRoot: '없음', relationalRoot: false,
+      reason: `원국에 ${value} 기운이 없습니다 — 판에 비어 있는 그 자리가 곧 필요한 것이라, 이 기운이 오는 시기·환경이 약이 됩니다.` };
   }
   const hg = hapguk(value, pillars);
   // ── 뿌리를 두 층으로 나눠 기록한다(v7.1) ────────────────────────────
@@ -522,6 +557,7 @@ export function evaluateEokbu(
   const c = (o: Ohaeng) => counts?.[o] ?? 0;
   let inAdd = 0, biAdd = 0, sikAdd = 0, jaeAdd = 0, gwanAdd = 0;
   const extra: [EokbuCandidate['group'], Ohaeng, number][] = [];
+  const heoCand: Ohaeng[] = [];  // 虛用 후보 — 원국에 없는 오행. 六曰 갈래에서만 채워진다.
   if (sanggwan) {
     if (weak) {
       // 日主弱 + 傷官旺 → 用印. 단 印이 없으면 用比刦(三曰 傷官用刦格).
@@ -578,18 +614,39 @@ export function evaluateEokbu(
 
     // 六曰 制殺太過 — 食傷이 殺의 두 배를 넘으면 殺이 죽는다.
     //   印이 있으면 印으로 衞殺(JCS-088), 印이 없으면 財로 滋殺(JCS-090 「柱中印雖不見 … 財星滋殺」).
-    if (GS.jesal && c(gwanO2) > 0 && c(sangO) >= c(gwanO2) * 2) {
+    //  ⚠️ 발동 조건을 **비율에서 절대 개수로** 바꿨다(2026-09-03).
+    //    이전 조건 `식상 >= 관살*2` 는 원전의 네 사례에 하나도 맞지 않으면서
+    //    (JCS-090·091 에서는 아예 발동조차 하지 않는다) 관살이 한 글자뿐인 판에서 잘못 발동해
+    //    JCS-033·063 을 깨뜨렸다. 「이득 0·손해 2」의 진짜 원인이 조건식 자체였다.
+    //    임철초가 세는 방식(制가 넷 이상)을 그대로 옮긴다 — 「四食相制」·「四制」·「五制」.
+    //    지장간 포함 制 개수: 원전 4사례 = 5·4·4·5 / 오발동 2건 = 3·3. 경계가 깨끗하다.
+    if (GS.jesal && c(gwanO2) > 0 && deepCount(sangO, pillars) >= 4) {
       if (c(inO) > 0) { if (weak) inAdd += 2.5; else extra.push(['인성', inO, 7.5]); }
       else jaeAdd += 4.0;
+      // 虛用 — 衞殺·滋殺을 맡을 글자가 **원국에 아예 없을 때**.
+      //   임철초는 이 자리에서 '있는 것 중 차선'으로 옮겨 가지 않는다. 없는 그 글자를 그대로 用으로 둔다.
+      //   「柱中印雖不見 … 財星滋殺, 發甲」(p.76) — 印이 없으니 財, 그 財(金)도 원국엔 없다.
+      //   ⚠️ 이 예외는 여기서만 연다. 다른 갈래로 퍼뜨리면 '없는 오행'이 아무 데서나 후보가 된다.
+      if (GS.heo) {
+        const rescue = presence(inO, pillars).present ? inO : jaeO;
+        if (!presence(rescue, pillars).present) heoCand.push(rescue);
+      }
     }
   }
 
   const defs: [EokbuCandidate['group'], Ohaeng, number][] = weak
     ? [['인성', inseongOhaeng(dayO), 6.0 + inBonus + inAdd], ['비겁', dayO, 2.0 + bigeopBonus + biAdd], ...extra]
     : [['식상', SAENG[dayO], 6.0 + sikAdd], ['재성', jaeO, 2.5 + jaeAdd], ['관살', gwanO2, 2.0 + gwanAdd], ...extra];
-  return defs
-    .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed, g === '재성' && jaeAdd > 0))
-    .sort((a, b) => b.score - a.score);
+  const scored = defs
+    .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed, g === '재성' && jaeAdd > 0));
+  // 虛用 후보는 **살아 있는 후보가 하나도 없을 때에만** 얹는다.
+  //   원국에 쓸 것이 남아 있으면 그걸 쓰는 게 원전의 기본이다(「置之不用」은 없는 걸 쓰라는 뜻이 아니다).
+  for (const v of heoCand) {
+    if (scored.some((x) => x.usable)) break;
+    const g: EokbuCandidate['group'] = v === inO ? '인성' : v === jaeO ? '재성' : v === sangO ? '식상' : v === gwanO2 ? '관살' : '비겁';
+    scored.push(scoreCandidate(g, v, 7.5, pillars, counts, johuNeed, false, true));
+  }
+  return scored.sort((a, b) => b.score - a.score);
 }
 
 export function computeYongsin(dayGan: number, strength: number, monthJi: number, counts?: Partial<Record<Ohaeng, number>>, pillars?: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): Yongsin {
