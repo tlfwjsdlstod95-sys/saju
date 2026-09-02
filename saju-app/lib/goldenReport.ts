@@ -29,6 +29,8 @@ interface RawCase {
   pillars?: { year: string; month: string; day: string; hour?: string };
   expect?: { yongsin?: string; strength?: string; gyeokguk?: string; johu?: string };
   source: { book: string; chapter?: string; page?: string };
+  /** 같은 명식이 다른 출전으로 한 번 더 실려 있을 때, 정본(1차 사료) 케이스의 id. 채점에서 뺀다. */
+  dupOf?: string;
 }
 
 /** 적천수 계열 용신 케이스 전부(일치·불일치 모두). 우리 용신 체계와 같은 학파만 채점한다. */
@@ -37,6 +39,10 @@ export function yongsinRows(): GoldenRow[] {
   const rows: GoldenRow[] = [];
   for (const c of cases) {
     if (c.school !== 'jeokcheonsu' || !c.expect?.yongsin || !c.pillars) continue;
+    // 같은 사주가 두 출전으로 실려 있으면 한 번만 센다.
+    //   논문 재인용과 원전이 같은 명식을 싣는 경우가 있는데, 둘 다 채점하면
+    //   그 한 사주의 정오답이 재현율에 두 번 반영돼 숫자가 부풀거나 깎인다.
+    if (c.dupOf) continue;
     try {
       const { dayGan, pillars } = chartFromGanji(c.pillars);
       const strength = dayMasterStrength(dayGan, pillars);
@@ -79,7 +85,7 @@ export function rate(rows: GoldenRow[]): { hit: number; total: number; pct: stri
 
 /** 골든 케이스 총 건수(학파·채점축 무관). 페이지 문구의 '몇 건으로 채점했나'에 쓴다. */
 export function totalCases(): number {
-  return ((goldenRaw as { cases: unknown[] }).cases ?? []).length;
+  return ((goldenRaw as { cases: { dupOf?: string }[] }).cases ?? []).filter((c) => !c.dupOf).length;
 }
 
 /**
