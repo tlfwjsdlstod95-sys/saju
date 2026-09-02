@@ -200,6 +200,90 @@ export function johuEligibility(
   return { eligible: true, reason: '' };
 }
 
+// ── 官殺 파이프라인 — v8 ──────────────────────────────────────────────
+//
+// 원전(卷二 通神論 官殺, p.61~76)이 관살을 **여섯 갈래**로 나눠 놓았다.
+//   一曰 財滋弱殺格 (p.61~62)  殺이 약하다        → 財로 살린다
+//   二曰 殺重用印格 (p.63~65)  殺이 무겁다        → 印으로 化한다  「眾殺橫行, 一仁可化」
+//   三曰 食神制殺格 (p.65~67)  殺이 강하다        → 食傷으로 制한다「一將當關, 羣凶自伏」
+//   四曰 合官留殺格 (p.67~71)  官殺 혼잡 + 합     → 합거 뒤 남은 쪽을 쓴다
+//   五曰 官殺混雜格 (p.73~75)  혼잡 + 합 없음     → 印으로 化한다
+//   六曰 制殺太過格 (p.75~76)  食傷이 과해 殺이 죽음 → 印으로 衞殺, 印이 없으면 財로 滋殺
+//
+// **설계 원칙 세 가지**
+//  ① 합거 정리는 용신 후보 가중치가 아니라 **명식 전처리**다.
+//     먼저 정리하지 않으면 뒤의 인성·식상 후보가 잘못된 입력을 받는다.
+//  ② 강약(내부 체력)과 **관살 위협도(외부 압력)를 독립 변수로** 본다.
+//     원전은 일간이 중화라도 殺이 횡행하면 즉시 印·食으로 막는다. 강약만 보면 도달 불가.
+//  ③ **갈래별 플래그로 분리**한다. 전체를 한 번에 켜고 좋아졌다고 끝내면,
+//     다음 원전 편에서 오답이 났을 때 네 규칙을 동시에 의심해야 한다.
+export interface GwansalFlags {
+  hap: boolean;    // 四曰 合官留殺 — 혼잡 + 합거 정리
+  jaeja: boolean;  // 一曰 財滋弱殺
+  salin: boolean;  // 二曰 殺重用印 (+ 五曰 官殺混雜)
+  sikje: boolean;  // 三曰 食神制殺
+  jesal: boolean;  // 六曰 制殺太過
+}
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true };
+/**
+ * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
+ *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
+ *   (JCS-033·063 — 관살이 한 글자뿐이라 애초에 '制殺'의 판이 아닌데 규칙이 발동한다).
+ *   「殺을 쓰려던 판에서 食이 과했다」를 가려낼 조건을 못 찾았으므로, 근거가 있어도 켜지 않는다.
+ *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
+ *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
+ */
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false };
+let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
+/** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
+export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
+export function getGwansalFlags(): GwansalFlags { return { ...GS }; }
+
+export interface GwansalState {
+  /** 관살 세력이 일간을 위협하는 수준인가 — 강약과 **독립**으로 본다 */
+  threat: boolean;
+  /** 官(정관)과 殺(편관)이 천간에 함께 떠 있는가 */
+  mixed: boolean;
+  /** 혼잡 중 한쪽이 인접 천간합으로 묶여 정리됐는가(合官留殺·合殺留官) */
+  resolvedByHap: boolean;
+}
+
+export function analyzeGwansal(
+  dayGan: number,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+  counts?: Partial<Record<Ohaeng, number>>,
+): GwansalState {
+  const dayO = GAN_OHAENG[dayGan];
+  const gwanO = gwanOhaeng(dayO);
+  const n = counts?.[gwanO] ?? 0;
+  // 위협도 — 세력 셋 이상, 또는 둘 이상이면서 월령을 잡았을 때.
+  //   「殺逢祿旺」「乘權秉令」이 원전이 위험하다고 말하는 자리다.
+  const monthIsGwan = pillars.month.jiOhaeng === gwanO;
+  const threat = n >= 3 || (n >= 2 && monthIsGwan);
+
+  // 혼잡 — 일간 기준 정관과 편관이 **둘 다** 천간(일간 제외)에 있는가.
+  //   음양이 다르면 정관, 같으면 편관. 오행은 같으므로 음양으로 가른다.
+  const stems: { g: number; i: number }[] = [];
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  list.forEach((p, i) => { if (p !== pillars.day) stems.push({ g: p.gan, i }); });
+  const gwanStems = stems.filter((x) => GAN_OHAENG[x.g] === gwanO);
+  const isJeong = (g: number) => (g % 2) !== (dayGan % 2);
+  const mixed = gwanStems.some((x) => isJeong(x.g)) && gwanStems.some((x) => !isJeong(x.g));
+
+  // 합거 — 혼잡 상태에서 관살 천간 중 **일부만** 인접 천간합으로 묶였다면 정리된 것으로 본다.
+  //   「喜其合殺留官, 官星坐祿」(JCS-084) · 「丙辛一合, 丁火獨清」(JCS-085)
+  const allStems = list.map((p) => p.gan);
+  const boundAt = (g: number, i: number) => [i - 1, i + 1].some((k) => {
+    if (k < 0 || k >= allStems.length) return false;
+    const o = allStems[k];
+    return GAN_HAP_PAIR.some(([a, b]) => (a === g && b === o) || (b === g && a === o));
+  });
+  const boundCnt = gwanStems.filter((x) => boundAt(x.g, x.i)).length;
+  const resolvedByHap = mixed && boundCnt > 0 && boundCnt < gwanStems.length;
+
+  return { threat, mixed, resolvedByHap };
+}
+
 // ── 억부 후보 평가(候補評價) — v6 ─────────────────────────────────────
 //
 // 왜 만들었나 (2026-09-02)
@@ -410,6 +494,7 @@ export function evaluateEokbu(
   counts?: Partial<Record<Ohaeng, number>>,
   johuNeed: Ohaeng | null = null,
   sanggwan = false,
+  gs: GwansalState | null = null,
 ): EokbuCandidate[] {
   const weak = strength <= 0.38;
   //  기본 가중은 적천수천미 원전 18건에서 임철초가 고른 십신 빈도다.
@@ -458,9 +543,50 @@ export function evaluateEokbu(
       if (c(dayO) >= 3 && c(jaeO) <= 1 && c(sangO) <= 1) gwanAdd += 4.0;
     }
   }
+  // ── v8 官殺 파이프라인 — 갈래별로 분리해 적용한다 ──────────────────
+  //  ⚠️ 여기서 하는 일은 **후보를 열고 가점하는 것**뿐이다.
+  //    v6 소거(무근·합거·탈취)는 그대로 먼저 걸린다 — 죽은 후보는 가점으로 살아나지 않는다.
+  if (gs) {
+    // 四曰 合官留殺 — 혼잡이 합으로 정리되면 남은 관살이 '깨끗해져' 쓸 수 있다.
+    //   「喜其合殺留官, 官星坐祿」(JCS-084) · 「丁火獨清 … 無刦奪官有生扶」(JCS-085)
+    if (GS.hap && gs.resolvedByHap) gwanAdd += 4.5;
+
+    // 一曰 財滋弱殺 — 殺이 제 뿌리가 없고 財가 지지 정기로 서 있으면 財를 쓴다.
+    //   「若無寅木則丙火無根, 必要用財滋殺」(JCS-071) · 「用財滋殺明矣」(JCS-072)
+    if (GS.jaeja && !gs.threat) {
+      const gwanPr = presence(gwanO2, pillars), jaePr = presence(jaeO, pillars);
+      if (gwanPr.stems > 0 && gwanPr.jeonggi === 0 && hapguk(gwanO2, pillars) === 0 && jaePr.jeonggi > 0) jaeAdd += 4.5;
+    }
+
+    // 二曰 殺重用印 / 五曰 官殺混雜 — 殺이 횡행하면 **강약을 묻지 않고** 印을 방어 후보로 연다.
+    //   「眾殺橫行, 一仁可化」(p.63) · 「寅能納水化殺生身 … 印星得用」(p.73)
+    //   ⚠️ 신강(≥0.55)이면 열지 않는다. 이미 몸이 든든하면 원전은 印이 아니라 食으로 설한다 —
+    //     印을 더 얹으면 「水多木漂」가 된다(JCS-009 실측으로 깨졌다).
+    if (GS.salin && gs.threat && c(inO) > 0 && !weak && strength < 0.55) extra.push(['인성', inO, 7.0]);
+
+    // 三曰 食神制殺 — 印이 지지에 서 있지 않으면 食傷으로 때려잡는다.
+    //   「一將當關, 羣凶自伏」(p.65) · 「丙火獨透, 制殺扶身」(p.66)
+    //   ⚠️ 두 가지를 먼저 막는다(둘 다 실측으로 깨져서 넣은 조건이다).
+    //     ① 印이 천간에라도 있으면 印이 먼저다 — 制보다 化가 낫다(JCS-037).
+    //     ② 식상이 **조후를 거스르면** 열지 않는다. 冬金에 水를 더하면 얼어붙는다 —
+    //        원전이 冬金의 用神에서 火를 부정하고 扶身을 택한 그 자리다(JCS-003 「全賴酉時扶身」).
+    if (GS.sikje && gs.threat && c(sangO) > 0 && weak) {
+      const inPr = presence(inO, pillars);
+      const sikBreaksJohu = !!johuNeed && GEUK[sangO] === johuNeed;
+      if (inPr.jeonggi === 0 && inPr.stems === 0 && !sikBreaksJohu) extra.push(['식상', sangO, 7.0]);
+    }
+
+    // 六曰 制殺太過 — 食傷이 殺의 두 배를 넘으면 殺이 죽는다.
+    //   印이 있으면 印으로 衞殺(JCS-088), 印이 없으면 財로 滋殺(JCS-090 「柱中印雖不見 … 財星滋殺」).
+    if (GS.jesal && c(gwanO2) > 0 && c(sangO) >= c(gwanO2) * 2) {
+      if (c(inO) > 0) { if (weak) inAdd += 2.5; else extra.push(['인성', inO, 7.5]); }
+      else jaeAdd += 4.0;
+    }
+  }
+
   const defs: [EokbuCandidate['group'], Ohaeng, number][] = weak
     ? [['인성', inseongOhaeng(dayO), 6.0 + inBonus + inAdd], ['비겁', dayO, 2.0 + bigeopBonus + biAdd], ...extra]
-    : [['식상', SAENG[dayO], 6.0 + sikAdd], ['재성', jaeO, 2.5 + jaeAdd], ['관살', gwanO2, 2.0 + gwanAdd]];
+    : [['식상', SAENG[dayO], 6.0 + sikAdd], ['재성', jaeO, 2.5 + jaeAdd], ['관살', gwanO2, 2.0 + gwanAdd], ...extra];
   return defs
     .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed, g === '재성' && jaeAdd > 0))
     .sort((a, b) => b.score - a.score);
@@ -586,7 +712,8 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   //  v6 — 고정 매핑에서 '후보 평가'로. pillars 없는 구버전 호출부는 옛 매핑으로 폴백한다.
   const johuPre = computeJohu(dayGan, monthJi);
   const isSanggwan = pillars ? computeGyeokguk(pillars, dayGan).key === '상관' : false;
-  const eokbuCandidates = pillars ? evaluateEokbu(dayO, strength, pillars, counts, johuPre.need, isSanggwan) : [];
+  const gsState = pillars ? analyzeGwansal(dayGan, pillars, counts) : null;
+  const eokbuCandidates = pillars ? evaluateEokbu(dayO, strength, pillars, counts, johuPre.need, isSanggwan, gsState) : [];
   const eokbuTop = eokbuCandidates.find((c) => c.usable);
   const eokbu: Ohaeng = eokbuTop ? eokbuTop.value : (strength <= 0.38 ? inseongOhaeng(dayO) : SAENG[dayO]);
   const johuRes = computeJohu(dayGan, monthJi);
