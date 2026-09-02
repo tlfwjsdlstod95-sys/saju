@@ -736,12 +736,17 @@ export default function Home() {
               {result.gyeokYong.yongsin.eokbuCandidates?.some((c) => c.structuralRoot) && (
                 <details className="cand-box">
                   <summary>억부 후보를 어떻게 추렸는지 보기 ({result.gyeokYong.yongsin.eokbuCandidates.length}개)</summary>
+                  <div className="cand-notice">참고 정보 — <b>현재 용신 판정에는 미반영</b></div>
                   <div className="cand-legend">
-                    <b>구조적 뿌리</b> — 그 기운이 지지에 실제로 서 있는가(정기 · 합국 · 지장간).
-                    {' '}<b>관계적 뿌리</b> — 그 기운을 <i>생해 주는</i> 세력이 지지에 서 있는가.
+                    아래 <b>관계적 뿌리</b>는 <b>점수에 들어가지 않습니다.</b> 어떤 후보가 채택됐는지와 무관하게,
+                    {' '}판단에 쓸 수 있을지 검토 중인 값을 있는 그대로 보여드리는 칸입니다.
+                    {' '}<br />
+                    <b>구조적 뿌리</b> — 그 기운이 지지에 실제로 서 있는가(정기 · 합국 · 지장간). <b>이 층만 판정에 씁니다.</b>
+                    {' '}<br />
+                    <b>관계적 뿌리</b> — 그 기운을 <i>생해 주는</i> 세력이 지지에 서 있는가.
                     {' '}원전이 「無財則官亦無根」(재성이 없으면 관성도 뿌리가 없다)이라 한 층입니다.
-                    {' '}<u>관계적 뿌리는 아직 판정에 반영하지 않고 기록만 합니다</u> — 같은 논리에서
-                    {' '}원전이 어떤 곳은 재성을, 어떤 곳은 관성을 용신으로 지목해 가르는 조건이 확정되지 않았습니다.
+                    {' '}같은 논리에서 원전이 어떤 곳은 재성을, 어떤 곳은 관성을 용신으로 지목해
+                    {' '}가르는 조건이 확정되지 않아, 확인될 때까지 기록만 합니다.
                   </div>
                   {result.gyeokYong.yongsin.eokbuCandidates.map((c) => (
                     <div className="cand-row" key={c.group}>

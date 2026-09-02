@@ -750,3 +750,5 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .cand-root.r-정기 { border-color: rgba(230,200,120,0.45); color: var(--gold); }
 .cand-root.on { border-color: rgba(230,200,120,0.45); color: var(--gold); }
 .cand-n { flex: 1 1 240px; color: var(--text-mute); }
+.cand-notice { margin: 10px 0 2px; font-size: 12px; letter-spacing: .01em; color: var(--text-dim); border: 1px dashed rgba(230,200,120,0.35); border-radius: 8px; padding: 6px 10px; display: inline-block; }
+.cand-notice b { color: var(--gold); }
