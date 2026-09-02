@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
-import { yongsinRows, rate, newSampleRows, totalCases } from '@/lib/goldenReport';
+import { yongsinRows, rate, newSampleRows, unseenRows, totalCases } from '@/lib/goldenReport';
 
 export const metadata: Metadata = {
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
@@ -23,6 +23,7 @@ export default function AccuracyPage() {
   const r = rate(rows);
   // 엔진을 맞출 때 쓴 표본과, 그 뒤 원전에서 새로 캔 표본을 나눠 본다.
   const rNew = rate(newSampleRows(rows));
+  const rUnseen = rate(unseenRows(rows));
   return (
     <main className="wrap">
       <div className="hero" style={{ paddingTop: 40 }}>
@@ -157,6 +158,14 @@ export default function AccuracyPage() {
             이 숫자가 실제 성능에 더 가깝습니다. 낮아 보여도 이렇게 나눠 적는 편이 정직합니다.</>
           )}
         </p>
+        {rUnseen.total > 0 && (
+          <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
+            더 엄격하게, <b>지금 엔진(v{ENGINE_VERSION})을 확정한 뒤에 원전에서 캔 {rUnseen.total}건</b>만 보면{' '}
+            <b>{rUnseen.pct}%</b>({rUnseen.hit}/{rUnseen.total})입니다. 규칙을 만들 때 이 명식들은 존재하지도 않았으니,
+            어떤 규칙도 이 케이스를 본 적이 없다는 뜻입니다. <b>{rUnseen.total}건뿐이라 비율로 읽을 숫자는 아니지만</b>,
+            다음에 손댈 곳이 어디인지 알려주는 값이라 그대로 적습니다.
+          </p>
+        )}
       </div>
 
       <div className="card">
