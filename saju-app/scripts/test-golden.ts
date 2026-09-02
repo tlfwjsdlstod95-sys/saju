@@ -64,7 +64,7 @@ function toPillar(gj: string, dayGan: number, isDay = false): Pillar {
 }
 
 const label = (s: number) => (s <= 0.38 ? '신약' : s >= 0.55 ? '신강' : '중화');
-const S = { strength: [0, 0], yongsin: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
+const S = { strength: [0, 0], yongsin: [0, 0], yongsinNew: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
 // 학파별 강약 — 적천수(억부)와 자평진전(격국)은 '신강'의 정의가 다르다.
 //   자평진전은 印重이어도 身輕이라 부르고(JPJ-013 身輕印重),
 //   적천수는 같은 배치에서 印重→신강으로 보고 식상을 용신으로 쓴다(JCS-009 용신 화).
@@ -110,6 +110,13 @@ for (const c of cases) {
       const bucket = c.school === 'gungtong' ? S.gungtong : S.yongsin;
       bucket[1]++; const got = gy.yongsin.primary;
       if (got === c.expect.yongsin) bucket[0]++;
+      // 튜닝 이후 원전에서 새로 캔 표본(JCS-042~)만 따로 센다.
+      //   엔진 규칙은 JCS-041 까지의 표본으로 맞췄으므로, 그 뒤 케이스가 **진짜 일반화 성능**에 가깝다.
+      const n = Number((c.id.match(/(\d+)$/) ?? [])[1] ?? 0);
+      if (c.school === 'jeokcheonsu' && c.id.startsWith('JCS-') && n >= 42) {
+        S.yongsinNew[1]++;
+        if (got === c.expect.yongsin) S.yongsinNew[0]++;
+      }
       else misses.push(`[${c.school === 'gungtong' ? '용신·궁통' : '용신'}] ${c.id} 문헌 ${c.expect.yongsin} / 엔진 ${got}(${gy.yongsin.method}) ${src}`);
     }
   }
@@ -143,6 +150,7 @@ console.log(`  ├ 자평진전계  ${rate(SS.japyeong)}   ※ 격국 체계 —
 console.log(`  └ 궁통보감    ${rate(SS.gungtong)}   ※ 참고용`);
 console.log(`  용신 일치율  ${rate(S.yongsin)}   ※ 적천수 계열 — 우리 엔진과 같은 억부·조후 체계${skipped ? ` (자평진전 ${skipped}건 제외)` : ''}`);
 console.log(`  └ 궁통 참고  ${rate(S.gungtong)}   ※ 궁통보감은 월별 조후 처방표라 체계가 다름. 참고용`);
+console.log(`  └ 신규표본  ${rate(S.yongsinNew)}   ※ 튜닝 뒤 원전에서 캔 것만 — 일반화 성능의 지표`);
 console.log(`  용신 반례    ${rate(S.yongsinNot)}   ※ 원문이 "이 오행은 用神이 아니다"라고만 밝힌 사례`);
 console.log(`  격국 일치율  ${rate(S.gyeokguk)}`);
 console.log(`  조후 일치율  ${rate(S.johu)}`);
