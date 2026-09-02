@@ -76,3 +76,8 @@ export function rate(rows: GoldenRow[]): { hit: number; total: number; pct: stri
   const total = rows.length;
   return { hit, total, pct: total ? ((hit / total) * 100).toFixed(1) : '0.0' };
 }
+
+/** 골든 케이스 총 건수(학파·채점축 무관). 페이지 문구의 '몇 건으로 채점했나'에 쓴다. */
+export function totalCases(): number {
+  return ((goldenRaw as { cases: unknown[] }).cases ?? []).length;
+}
