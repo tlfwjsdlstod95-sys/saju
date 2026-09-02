@@ -34,6 +34,10 @@ interface GoldenCase {
   expect: { strength?: string; yongsin?: string; yongsinNot?: string; gyeokguk?: string; johu?: string };
   source: { book: string; chapter?: string; page?: string };
   note?: string;
+  /** 같은 명식이 다른 출전으로 한 번 더 실려 있을 때, 정본(1차 사료) 케이스의 id.
+   *  ⚠️ 채점에서 **제외한다.** 같은 사주를 두 번 세면 재현율이 그만큼 부풀려진다.
+   *  케이스 자체는 남겨 둔다 — 논문 재인용과 원전이 같은 판정을 내렸다는 전사 교차검증이기 때문이다. */
+  dupOf?: string;
 }
 
 const raw = JSON.parse(readFileSync(join(__dirname, 'golden-cases.json'), 'utf8'));
@@ -71,7 +75,7 @@ const S = { strength: [0, 0], yongsin: [0, 0], yongsinNew: [0, 0], yongsinUnseen
 //   섞어서 한 지표로 쓰면 어느 쪽으로 고쳐도 다른 쪽이 깨진다. 반드시 나눠서 본다.
 const SS: Record<string, number[]> = { jeokcheonsu: [0, 0], japyeong: [0, 0], gungtong: [0, 0] };
 const misses: string[] = [];
-let bad = 0, skipped = 0;
+let bad = 0, skipped = 0, dup = 0;
 
 for (const c of cases) {
   let strength: number, gy: ReturnType<typeof computeGyeokYong>;
@@ -94,6 +98,16 @@ for (const c of cases) {
   } catch (e: any) { bad++; misses.push(`[입력오류] ${c.id} — ${e.message}`); continue; }
 
   const src = `《${c.source.book}》`;
+  // 중복 명식은 채점하지 않는다. 대신 정본과 기대값이 어긋나면 즉시 드러나게 한다.
+  if (c.dupOf) {
+    const canon = cases.find((x) => x.id === c.dupOf);
+    for (const k of ['yongsin', 'strength', 'gyeokguk', 'johu'] as const) {
+      const a = (c.expect as any)[k], b = (canon?.expect as any)?.[k];
+      if (a && b && a !== b) misses.push(`[중복불일치] ${c.id} vs ${c.dupOf} — ${k}: ${a} / ${b}`);
+    }
+    dup++;
+    continue;
+  }
   if (c.expect.strength) {
     S.strength[1]++; const got = label(strength);
     const sk = (SS[c.school] ??= [0, 0]); sk[1]++;
@@ -150,7 +164,7 @@ for (const c of cases) {
 }
 
 const rate = ([a, b]: number[]) => (b ? `${((a / b) * 100).toFixed(1).padStart(5)}%  (${a}/${b})` : '     —');
-console.log(`골든 케이스 회귀 (engine v${ENGINE_VERSION})  총 ${cases.length}건${bad ? `, 입력오류 ${bad}건` : ''}\n`);
+console.log(`골든 케이스 회귀 (engine v${ENGINE_VERSION})  총 ${cases.length}건${bad ? `, 입력오류 ${bad}건` : ''}${dup ? `, 중복 명식 ${dup}건 채점 제외` : ''}\n`);
 console.log(`  강약 일치율  ${rate(S.strength)}`);
 console.log(`  ├ 적천수계    ${rate(SS.jeokcheonsu)}   ※ 억부 체계 — 우리 엔진이 따라야 할 기준`);
 console.log(`  ├ 자평진전계  ${rate(SS.japyeong)}   ※ 격국 체계 — 印重=身輕. 참고용`);

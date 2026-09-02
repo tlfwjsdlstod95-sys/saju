@@ -28,7 +28,7 @@ function run(): Map<string, boolean> {
   return m;
 }
 
-const OFF: GwansalFlags = { hap: false, jaeja: false, salin: false, sikje: false, jesal: false };
+const OFF: GwansalFlags = { hap: false, jaeja: false, salin: false, sikje: false, jesal: false, heo: false };
 const COMBOS: [string, GwansalFlags][] = [
   ['v7 (전부 끔)', OFF],
   ['+ 一曰 財滋弱殺', { ...OFF, jaeja: true }],
@@ -36,8 +36,11 @@ const COMBOS: [string, GwansalFlags][] = [
   ['+ 三曰 食神制殺', { ...OFF, sikje: true }],
   ['+ 四曰 合官留殺', { ...OFF, hap: true }],
   ['+ 六曰 制殺太過', { ...OFF, jesal: true }],
-  ['+ 一二三四 (六曰 제외)', { hap: true, jaeja: true, salin: true, sikje: true, jesal: false }],
-  ['+ 전체', GWANSAL_ALL],
+  ['+ 六曰 + 虛用', { ...OFF, jesal: true, heo: true }],
+  ['+ 虛用만', { ...OFF, heo: true }],
+  ['+ 一二三四 (현재 배포)', { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false }],
+  ['+ 一二三四六', { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: false }],
+  ['+ 一二三四六 + 虛用', GWANSAL_ALL],
 ];
 
 const isUnseen = (id: string) => Number((id.match(/(\d+)$/) ?? [])[1] ?? 0) >= 71 && id.startsWith('JCS-');
