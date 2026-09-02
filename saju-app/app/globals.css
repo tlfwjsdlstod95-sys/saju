@@ -737,3 +737,16 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .review-done { display: flex; flex-direction: column; gap: 6px; }
 .review-actions { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
 .review-actions .btn { text-decoration: none; display: inline-block; width: auto; padding: 10px 20px; }
+
+/* 억부 후보 판정 로그 — 구조적 뿌리 / 관계적 뿌리를 분리해 보여준다 */
+.cand-box { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+.cand-box > summary { cursor: pointer; font-size: 13px; color: var(--text-dim); }
+.cand-box > summary:hover { color: var(--gold); }
+.cand-legend { margin: 10px 0 8px; font-size: 12px; line-height: 1.7; color: var(--text-mute); }
+.cand-row { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; padding: 6px 0; border-top: 1px dashed var(--border); font-size: 12.5px; }
+.cand-g { min-width: 42px; color: var(--text-dim); }
+.cand-v { color: var(--gold); font-weight: 700; }
+.cand-root { border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; font-size: 11.5px; color: var(--text-mute); }
+.cand-root.r-정기 { border-color: rgba(230,200,120,0.45); color: var(--gold); }
+.cand-root.on { border-color: rgba(230,200,120,0.45); color: var(--gold); }
+.cand-n { flex: 1 1 240px; color: var(--text-mute); }

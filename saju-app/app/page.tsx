@@ -733,6 +733,27 @@ export default function Home() {
                   <span className="basis-n">{b.note}</span>
                 </div>
               ))}
+              {result.gyeokYong.yongsin.eokbuCandidates?.length > 0 && (
+                <details className="cand-box">
+                  <summary>억부 후보를 어떻게 추렸는지 보기 ({result.gyeokYong.yongsin.eokbuCandidates.length}개)</summary>
+                  <div className="cand-legend">
+                    <b>구조적 뿌리</b> — 그 기운이 지지에 실제로 서 있는가(정기 · 합국 · 지장간).
+                    {' '}<b>관계적 뿌리</b> — 그 기운을 <i>생해 주는</i> 세력이 지지에 서 있는가.
+                    {' '}원전이 「無財則官亦無根」(재성이 없으면 관성도 뿌리가 없다)이라 한 층입니다.
+                    {' '}<u>관계적 뿌리는 아직 판정에 반영하지 않고 기록만 합니다</u> — 같은 논리에서
+                    {' '}원전이 어떤 곳은 재성을, 어떤 곳은 관성을 용신으로 지목해 가르는 조건이 확정되지 않았습니다.
+                  </div>
+                  {result.gyeokYong.yongsin.eokbuCandidates.map((c) => (
+                    <div className="cand-row" key={c.group}>
+                      <span className="cand-g">{c.group}</span>
+                      <span className="cand-v">{c.value}</span>
+                      <span className={`cand-root r-${c.structuralRoot}`}>구조 {c.structuralRoot}</span>
+                      <span className={`cand-root${c.relationalRoot ? ' on' : ''}`}>관계 {c.relationalRoot ? '있음' : '없음'}</span>
+                      <span className="cand-n">{c.reason}</span>
+                    </div>
+                  ))}
+                </details>
+              )}
               <div className="basis-sum">
                 종합 — <b>{result.gyeokYong.yongsin.primary}</b>({result.gyeokYong.yongsin.method} 기준 채택)
                 {result.gyeokYong.yongsin.conflict && <span> · 다른 만세력에서 용신이 다르게 나온다면, 대개 계산이 아니라 <b>어느 기준을 먼저 쓰느냐</b>의 차이입니다.</span>}
