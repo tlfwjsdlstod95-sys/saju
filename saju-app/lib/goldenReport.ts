@@ -59,6 +59,18 @@ export function yongsinRows(): GoldenRow[] {
   return rows.sort((a, b) => a.id.localeCompare(b.id));
 }
 
+/**
+ * 튜닝 뒤에 원전에서 새로 캔 표본만 추린다(JCS-042 이후).
+ * 엔진 규칙은 JCS-041 까지의 표본으로 맞췄으므로, 그 뒤 케이스의 성적이 **일반화 성능**에 가깝다.
+ * 이 둘을 나눠 보여주는 게 정직하다 — 같은 표본으로 맞추고 같은 표본으로 채점하면 숫자가 부풀기 때문.
+ */
+export function newSampleRows(rows: GoldenRow[]): GoldenRow[] {
+  return rows.filter((r) => {
+    const n = Number((r.id.match(/(\d+)$/) ?? [])[1] ?? 0);
+    return r.id.startsWith('JCS-') && n >= 42;
+  });
+}
+
 export function rate(rows: GoldenRow[]): { hit: number; total: number; pct: string } {
   const hit = rows.filter((r) => r.match).length;
   const total = rows.length;
