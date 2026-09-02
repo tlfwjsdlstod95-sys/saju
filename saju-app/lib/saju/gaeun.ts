@@ -1,6 +1,11 @@
 // 개운법(改運法) — 용신/부족·과다 오행 기반 맞춤 생활 처방. 규칙 기반, 외부 의존 0.
 import { SAENG, GEUK, type Ohaeng } from './constants';
+import { luckyOhaeng } from './luckyElement';
 import type { SajuResult } from './types';
+
+// ⚠️ 이 모듈은 **결제자 전용 콘텐츠**다. 클라이언트 컴포넌트에서 import 하지 말 것
+//    (번들에 실리면 잠금 화면이 무의미해진다). 서버 라우트(/api/premium)에서만 호출한다.
+//    색·방위처럼 무료 화면도 필요한 최소 정보는 `luckyElement.ts` 에 있다.
 
 interface OhaengReco {
   color: string; colorHex: string; direction: string;
@@ -55,21 +60,14 @@ export interface GaeunResult {
   cautionText: string | null;
 }
 
-function yongsinElement(dayO: Ohaeng, strength: number): Ohaeng {
-  const generator = (Object.keys(SAENG) as Ohaeng[]).find((o) => SAENG[o] === dayO)!; // 인성
-  const output = SAENG[dayO];   // 식상
-  const wealth = GEUK[dayO];    // 재성
-  if (strength < 0.45) return generator;
-  if (strength > 0.55) return output;
-  return wealth;
-}
+// 보완 오행 배정은 luckyElement.luckyOhaeng 하나만 쓴다(무료 부적 카드와 같은 값이어야 한다).
 
 export function computeGaeun(r: SajuResult): GaeunResult {
   const dayO = r.dayMaster.ohaeng;
   const strength = r.dayMasterStrength;
   const counts = r.ohaeng;
 
-  const yongsin = yongsinElement(dayO, strength);
+  const yongsin = luckyOhaeng(dayO, strength);
   const order = (['목', '화', '토', '금', '수'] as Ohaeng[]).sort((a, b) => (counts as any)[a] - (counts as any)[b]);
   const secondary = order.find((o) => o !== yongsin) ?? order[0];
 
