@@ -1,32 +1,41 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { SajuResult } from '@/lib/saju/types';
-import { pickAuspicious, topAuspicious, PURPOSES, type Purpose } from '@/lib/saju/auspicious';
+import type { AuspiciousDay, Purpose } from '@/lib/saju/auspicious';  // 타입만(번들 미포함)
+import { usePremiumData } from './usePremiumData';
+
+// 목적 라벨은 화면용이라 여기 둔다. 계산 모듈(auspicious.ts)을 import 하면
+// 길일 산출 로직이 통째로 클라이언트 번들에 실려 잠금이 무의미해진다.
+const PURPOSE_UI: { key: Purpose; label: string; emoji: string }[] = [
+  { key: 'wedding', label: '결혼·예식', emoji: '💒' },
+  { key: 'moving', label: '이사·입주', emoji: '📦' },
+  { key: 'contract', label: '계약·개업', emoji: '📝' },
+  { key: 'travel', label: '여행·출발', emoji: '✈️' },
+  { key: 'decision', label: '중요한 결정', emoji: '🎯' },
+];
 
 function barColor(s: number) { return s >= 80 ? '#22c55e' : s >= 65 ? '#86c33a' : '#eab308'; }
 
 export default function AuspiciousDates({
-  result, premium, onLocked,
+  result, premium, onLocked, reqBody,
 }: {
-  result: SajuResult; premium: boolean; onLocked: () => void;
+  result: SajuResult; premium: boolean; onLocked: () => void; reqBody: () => any;
 }) {
   const now = new Date();
   const [purpose, setPurpose] = useState<Purpose>('wedding');
   const [offset, setOffset] = useState(0); // 0=이번달,1,2
 
-  const { top, avoided, label, ty, tm } = useMemo(() => {
-    const base = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-    const ty = base.getFullYear(), tm = base.getMonth() + 1;
-    let all = pickAuspicious(result, purpose, ty, tm);
-    if (offset === 0) all = all.filter((d) => d.day >= now.getDate()); // 지난 날 제외
-    const top = topAuspicious(all, 6);
-    const avoided = all.filter((d) => d.warn);
-    const label = PURPOSES.find((p) => p.key === purpose)!.label;
-    return { top, avoided, label, ty, tm };
-  }, [result, purpose, offset]); // eslint-disable-line
+  const base = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  const ty = base.getFullYear(), tm = base.getMonth() + 1;
+  const label = PURPOSE_UI.find((p) => p.key === purpose)!.label;
 
-  if (!premium) {
+  const { data, loading, locked, err } = usePremiumData<{ top: AuspiciousDay[]; avoided: number[] }>(
+    premium, 'auspicious',
+    premium ? { ...reqBody(), purpose, targetYear: ty, targetMonth: tm } : null,
+  );
+
+  if (!premium || locked) {
     return (
       <div className="card yearly-locked">
         <h2>📅 좋은 날 택일(擇日) <span className="lock-tag">프리미엄</span></h2>
@@ -38,6 +47,9 @@ export default function AuspiciousDates({
       </div>
     );
   }
+
+  const top = data?.top ?? [];
+  const avoided = data?.avoided ?? [];
 
   return (
     <div className="card yearly-card">
@@ -52,7 +64,7 @@ export default function AuspiciousDates({
       </div>
 
       <div className="ausp-purposes">
-        {PURPOSES.map((p) => (
+        {PURPOSE_UI.map((p) => (
           <button key={p.key} className={`ausp-chip ${purpose === p.key ? 'on' : ''}`} onClick={() => setPurpose(p.key)}>
             {p.emoji} {p.label}
           </button>
@@ -61,7 +73,11 @@ export default function AuspiciousDates({
 
       <div className="meta" style={{ margin: '4px 0 14px' }}>{ty}년 {tm}월 · <b>{label}</b>에 좋은 날 (점수 높은 순)</div>
 
-      {top.length === 0 ? (
+      {loading ? (
+        <p className="meta">길일을 고르는 중이에요…</p>
+      ) : err ? (
+        <p className="meta">{err}</p>
+      ) : top.length === 0 ? (
         <p className="meta">이 달에는 추천할 만한 길일이 마땅치 않아요. 다른 달을 확인해 보세요.</p>
       ) : (
         <div className="ausp-list">
@@ -81,7 +97,7 @@ export default function AuspiciousDates({
       )}
 
       {avoided.length > 0 && (
-        <div className="ausp-avoid">⚠️ 피하면 좋은 날: {avoided.map((d) => `${d.day}일`).join(' · ')} <span>(일지와 충, 변동·마찰)</span></div>
+        <div className="ausp-avoid">⚠️ 피하면 좋은 날: {avoided.map((d) => `${d}일`).join(' · ')} <span>(일지와 충, 변동·마찰)</span></div>
       )}
       <p className="daily-foot">일진(日辰)을 당신 일간에 대입해 합충·손없는날까지 반영한 결과입니다. 큰 결정의 참고로 활용하세요.</p>
     </div>

@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { SajuResult } from '@/lib/saju/types';
-import { computeYearlyFortune } from '@/lib/saju/yearly';
+// ⚠️ 계산 모듈(yearly.ts)은 import 하지 않는다 — 유료 콘텐츠라 서버(/api/premium)에서만 계산한다.
+import type { YearlyFortune as YearlyData } from '@/lib/saju/yearly';   // 타입만(번들 미포함)
+import { usePremiumData } from './usePremiumData';
 
 const GRADE_COLOR: Record<string, string> = {
   대길: '#22c55e', 길: '#86c33a', 평: '#eab308', 주의: '#ef8a4d',
@@ -15,8 +17,10 @@ export default function YearlyFortune({
 }) {
   const thisYear = new Date().getFullYear();
   const [year, setYear] = useState(thisYear);
-  const y = useMemo(() => computeYearlyFortune(result, year), [result, year]);
   const name = result.input.name;
+  const { data: y, loading, locked, err } = usePremiumData<YearlyData>(
+    premium, 'yearly', premium ? { ...reqBody(), year2: year } : null,
+  );
 
   // 연도별 AI 총평 캐시
   const [comments, setComments] = useState<Record<number, string>>({});
@@ -56,7 +60,7 @@ export default function YearlyFortune({
     }
   }
 
-  if (!premium) {
+  if (!premium || locked) {
     return (
       <div className="card yearly-locked">
         <h2>🗓️ {thisYear}·{thisYear + 1} 신년운세 <span className="lock-tag">프리미엄</span></h2>
@@ -69,6 +73,15 @@ export default function YearlyFortune({
           ))}
         </div>
         <button className="btn" onClick={onLocked} style={{ marginTop: 20 }}>🔒 잠금 해제하고 신년운세 보기</button>
+      </div>
+    );
+  }
+
+  if (loading || !y) {
+    return (
+      <div className="card yearly-card">
+        <h2 style={{ margin: 0 }}>🗓️ 신년운세 · 월별 길흉</h2>
+        <p className="meta" style={{ marginTop: 10 }}>{err || `${year}년 흐름을 계산하는 중이에요…`}</p>
       </div>
     );
   }

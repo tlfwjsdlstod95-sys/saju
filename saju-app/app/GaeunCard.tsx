@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
 import type { SajuResult } from '@/lib/saju/types';
-import { computeGaeun } from '@/lib/saju/gaeun';
-
+import type { GaeunResult } from '@/lib/saju/gaeun';   // 타입만 — 빌드 시 지워져 번들에 안 실린다
+// 계산은 서버에서만 한다(/api/premium). 여기서 계산하면 잠금이 '화면 가리기'에 그친다.
+// 같은 데이터를 가이드북 PDF 도 쓰므로, 요청은 페이지에서 한 번만 하고 결과를 내려받는다.
 export default function GaeunCard({
-  result, premium, onLocked,
+  result, premium, onLocked, gaeun,
 }: {
   result: SajuResult; premium: boolean; onLocked: () => void;
+  gaeun: { data: GaeunResult | null; loading: boolean; locked: boolean; err: string };
 }) {
-  const g = useMemo(() => computeGaeun(result), [result]);
   const name = result.input.name;
+  const { data: g, loading, locked, err } = gaeun;
 
-  if (!premium) {
+  if (!premium || locked) {
     return (
       <div className="card yearly-locked">
         <h2>🍀 나만의 개운법 <span className="lock-tag">프리미엄</span></h2>
@@ -20,6 +21,15 @@ export default function GaeunCard({
           당신 사주에 부족한 기운을 채우는 <b>맞춤 생활 처방</b> — 행운의 색·방위·음식·취미·어울리는 일·소품까지.
         </p>
         <button className="btn" onClick={onLocked}>🔒 잠금 해제하고 개운법 보기</button>
+      </div>
+    );
+  }
+
+  if (loading || !g) {
+    return (
+      <div className="card gaeun-card">
+        <h2>🍀 {name ? `${name}님 ` : ''}맞춤 개운법</h2>
+        <p className="meta">{err || '처방을 불러오는 중이에요…'}</p>
       </div>
     );
   }

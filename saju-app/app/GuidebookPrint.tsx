@@ -2,7 +2,8 @@
 
 import type { SajuResult, Pillar } from '@/lib/saju/types';
 import { computeHapchung } from '@/lib/saju/hapchung';
-import { computeGaeun } from '@/lib/saju/gaeun';
+// ⚠️ 유료 처방 계산(gaeun.ts)은 여기서 하지 않는다 — 서버에서 받아 prop 으로 내려받는다.
+import type { GaeunResult } from '@/lib/saju/gaeun';   // 타입만(번들 미포함)
 
 interface Section { key: string; icon: string; label: string; title: string; body: string }
 
@@ -21,7 +22,12 @@ function Cell({ pos, p }: { pos: string; p: Pillar | null }) {
   );
 }
 
-export default function GuidebookPrint({ result, ai }: { result: SajuResult; ai: { lead: string; sections: Section[] } | null }) {
+export default function GuidebookPrint({ result, ai, gaeun }: {
+  result: SajuResult;
+  ai: { lead: string; sections: Section[] } | null;
+  /** /api/premium 에서 받아온 개운법. 미구매(또는 로딩 중)면 null — 그 절만 빠진다. */
+  gaeun: GaeunResult | null;
+}) {
   const r = result;
   const name = r.input.name || '당신';
   const nowYear = new Date().getFullYear();
@@ -34,7 +40,6 @@ export default function GuidebookPrint({ result, ai }: { result: SajuResult; ai:
   const strengthPct = Math.round(r.dayMasterStrength * 100);
   const strengthLabel = r.dayMasterStrength >= 0.55 ? '신강(주관·추진형)' : r.dayMasterStrength <= 0.38 ? '신약(관계·환경 활용형)' : '중화(균형형)';
   const hapchung = computeHapchung(r.pillars);
-  const gaeun = computeGaeun(r);
 
   return (
     <div className="guidebook-print">
@@ -133,7 +138,8 @@ export default function GuidebookPrint({ result, ai }: { result: SajuResult; ai:
         </section>
       )}
 
-      {/* 개운법 */}
+      {/* 개운법 — 구매자에게만 데이터가 내려온다 */}
+      {gaeun && (
       <section className="gb-sec">
         <h2 className="gb-h2">{hapchung.length > 0 ? 'Ⅴ' : 'Ⅳ'}. 나만의 개운법</h2>
         <p className="gb-read-p">{gaeun.reason}</p>
@@ -146,6 +152,7 @@ export default function GuidebookPrint({ result, ai }: { result: SajuResult; ai:
         </ul>
         {gaeun.cautionText && <p className="gb-fine">※ {gaeun.cautionText}</p>}
       </section>
+      )}
 
       <section className="gb-sec gb-outro">
         <p className="gb-read-p">이 가이드북은 한국천문연구원(KASI) 기준으로 검증된 정밀 만세력 엔진(진태양시·균시차·경도·야자시 보정)으로 도출한 명식을 바탕으로 작성되었습니다.</p>

@@ -22,6 +22,8 @@ import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium } from './Paywall';
 import ReportShelf from './ReportShelf';
+import { usePremiumData } from './usePremiumData';
+import type { GaeunResult } from '@/lib/saju/gaeun';
 import Reviews from './Reviews';
 import ReviewPrompt from './ReviewPrompt';
 import { CITY_GROUPS, CITIES } from './cities';
@@ -210,6 +212,12 @@ export default function Home() {
     longitude: CITIES[form.city],
     sex: form.sex,
   });
+
+  // 유료 콘텐츠(개운법·택일·신년운세)는 서버에서만 계산한다(/api/premium).
+  //   요청 본문은 **분석 시점의 명식**이어야 한다 — 결과를 본 뒤 폼을 만지작거려도
+  //   결제한 명식과 어긋나지 않게. 개운법은 카드와 가이드북 PDF 가 같이 쓰므로 여기서 한 번만 받는다.
+  const premiumBody = () => (analyzed ?? reqBody());
+  const gaeunQ = usePremiumData<GaeunResult>(premium && !!analyzed, 'gaeun', analyzed ?? null);
 
   // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
   const chartKey = (b: any, tier: string, tn: string) =>
@@ -504,9 +512,9 @@ export default function Home() {
 
           <DailyFortune result={result} />
 
-          <YearlyFortune result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={reqBody} />
+          <YearlyFortune result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
 
-          <AuspiciousDates result={result} premium={premium} onLocked={() => setPayOpen(true)} />
+          <AuspiciousDates result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
 
           <div className="card">
             <h2>사주 명식 (四柱)</h2>
@@ -755,7 +763,7 @@ export default function Home() {
 
           <NamingCard result={result} />
 
-          <GaeunCard result={result} premium={premium} onLocked={() => setPayOpen(true)} />
+          <GaeunCard result={result} premium={premium} onLocked={() => setPayOpen(true)} gaeun={gaeunQ} />
 
           <ShareCard result={result} />
 
@@ -792,7 +800,7 @@ export default function Home() {
             </div>
           </div>
 
-          <GuidebookPrint result={result} ai={ai} />
+          <GuidebookPrint result={result} ai={ai} gaeun={gaeunQ.data} />
 
           <ReviewPrompt chart={chart} premium={premium} />
         </>

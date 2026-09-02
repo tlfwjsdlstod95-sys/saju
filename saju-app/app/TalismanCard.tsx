@@ -4,7 +4,15 @@
 // 힙한 미니멀 타로 컨셉. computeGaeun(용신)에서 컬러/방위/아이템 도출.
 import { useEffect, useRef, useState } from 'react';
 import type { SajuResult } from '@/lib/saju/types';
-import { computeGaeun } from '@/lib/saju/gaeun';
+// ⚠️ 유료 처방(gaeun.ts)을 여기서 import 하면 클라이언트 번들에 실려 잠금이 무의미해진다.
+//    부적은 무료 카드이므로 '어떤 오행이 필요한지 + 그 색·방위'만 쓰는 최소 모듈을 쓴다.
+import { luckyOhaeng, OHAENG_LOOK } from '@/lib/saju/luckyElement';
+
+/** 부적이 필요로 하는 최소 정보(오행 + 색·방위) */
+function luckyLook(r: SajuResult) {
+  const yongsin = luckyOhaeng(r.dayMaster.ohaeng, r.dayMasterStrength);
+  return { yongsin, primary: OHAENG_LOOK[yongsin] };
+}
 import { BIZ } from './biz';
 
 const W = 1080, H = 1920;
@@ -33,7 +41,7 @@ function hexA(hex: string, a: number): string {
 function draw(canvas: HTMLCanvasElement, r: SajuResult) {
   const ctx = canvas.getContext('2d')!;
   canvas.width = W; canvas.height = H;
-  const g = computeGaeun(r);
+  const g = luckyLook(r);
   const t = TALISMAN[g.yongsin];
   const lucky = g.primary.colorHex;
   const name = r.input.name ? `${r.input.name}님` : '당신';
@@ -148,7 +156,7 @@ function draw(canvas: HTMLCanvasElement, r: SajuResult) {
 export default function TalismanCard({ result }: { result: SajuResult }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [toast, setToast] = useState('');
-  const gaeun = computeGaeun(result);
+  const gaeun = luckyLook(result);
   const t = TALISMAN[gaeun.yongsin];
 
   useEffect(() => {
