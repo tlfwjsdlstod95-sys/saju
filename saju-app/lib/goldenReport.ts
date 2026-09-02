@@ -81,3 +81,23 @@ export function rate(rows: GoldenRow[]): { hit: number; total: number; pct: stri
 export function totalCases(): number {
   return ((goldenRaw as { cases: unknown[] }).cases ?? []).length;
 }
+
+/**
+ * v7 을 확정한 **뒤에** 원전에서 캔 표본(JCS-071~).
+ * 규칙을 만들 때 이 명식들은 존재하지도 않았다 — 어떤 규칙도 이 케이스를 본 적이 없다는 뜻이라
+ * 표본은 작지만 가장 엄격한 일반화 지표다. 고정 세트(JCS-001~070)와 반드시 나눠 읽는다.
+ */
+export function unseenRows(rows: GoldenRow[]): GoldenRow[] {
+  return rows.filter((r) => {
+    const n = Number((r.id.match(/(\d+)$/) ?? [])[1] ?? 0);
+    return r.id.startsWith('JCS-') && n >= 71;
+  });
+}
+
+/** v7 을 만들 때 쓴 고정 세트(JCS-001~070). 여기 숫자는 부풀 수 있다는 전제로 읽어야 한다. */
+export function fixedRows(rows: GoldenRow[]): GoldenRow[] {
+  return rows.filter((r) => {
+    const n = Number((r.id.match(/(\d+)$/) ?? [])[1] ?? 0);
+    return !(r.id.startsWith('JCS-') && n >= 71);
+  });
+}
