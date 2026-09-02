@@ -163,14 +163,17 @@ section('용신(computeYongsin)');
     const dayO = r.dayMaster.ohaeng as Ohaeng;
     const s = r.dayMasterStrength;
     const inseong = OHS.find((x) => SAENG[x] === dayO)!;
+    // v7 — 상관격에서 印重(인성 ≥2 이며 식상보다 무거움)이면 신약이어도 식상이 후보에 들어간다.
+    //   원전 근거: 「地支印星並旺 … 必以寅木爲用」(JCS-051) · 「必以卯木爲用」(JCS-050) — 母慈滅子 계열.
+    //   그래서 '강약 방향'의 정의 자체가 v7에서 한 칸 넓어졌다. 불변식도 같이 넓힌다.
     const allowed = s <= 0.38
-      ? [inseong, dayO]
+      ? [inseong, dayO, SAENG[dayO]]
       : [SAENG[dayO], GEUK[dayO], OHS.find((x) => GEUK[x] === dayO)!];
     if (!allowed.includes(y.primary)) eokbuOk = false;
     const cands = (y as any).eokbuCandidates as { value: string }[] | undefined;
     if (cands && cands.length && !cands.some((c) => c.value === y.primary)) eokbuOk = false;
   }
-  ok('억부 용신은 강약 방향의 후보 안에서 나온다', eokbuOk, `표본 ${eokbuN}건`);
+  ok('억부 용신은 강약 방향의 후보 안에서 나온다(v7: 상관격 印重이면 식상 포함)', eokbuOk, `표본 ${eokbuN}건`);
 
   // 경계 안정성: strength 를 아주 조금 흔들었을 때 용신이 요동치지 않아야 한다
   // (임계 근처를 제외하면 ±0.005 로는 바뀌면 안 된다)
