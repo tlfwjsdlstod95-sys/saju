@@ -170,9 +170,17 @@ export function johuEligibility(
   if (!need) return { eligible: false, reason: '' };
   const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
 
-  // A. 뿌리 — 지지 정기 오행 또는 지장간 천간의 오행에 조후 오행이 있는가
-  const rooted = list.some((p) =>
-    p.jiOhaeng === need || p.jijanggan.some((g) => GAN_OHAENG[g] === need));
+  // A. 뿌리 — 지지 정기(본기)에 있으면 뿌리다.
+  //    v7 — 지장간에만 숨어 있는 경우는 **천간에 같은 오행이 투출했을 때만** 뿌리로 친다.
+  //    근거: 「寒甚而暖無氣, 反以無暖爲美」(寒暖 p.116, JCS-043) — 氣가 없는 조후는 쓰지 않는다.
+  //      지장간에만 있고 천간에도 없으면 그 기운은 '드러나지 않은' 것이라 局을 덥히지 못한다.
+  //      반대로 천간에 떠 있어도 지장간이 받쳐 주면 쓸 수 있다 —
+  //      「若非寅時, 則年木火無根, 不能作用矣」(JCS-042 丙 투출 + 寅중 丙) ·
+  //      「丑乃北方濕土, 能生金晦火而蓄水」(JCS-047 壬 투출 + 辰·丑중 癸).
+  const jeonggiRoot = list.some((p) => p.jiOhaeng === need);
+  const hiddenRoot = list.some((p) => p.jijanggan.some((g) => GAN_OHAENG[g] === need));
+  const stemPresent = list.some((p) => GAN_OHAENG[p.gan] === need);
+  const rooted = jeonggiRoot || (hiddenRoot && stemPresent);
   if (!rooted) return { eligible: false, reason: '무근' };
 
   // B. 합거 — 조후 오행 천간이 하나라도 '합에 묶이지 않은 채' 살아 있으면 자격 유지
@@ -297,6 +305,7 @@ function scoreCandidate(
   pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
   counts: Partial<Record<Ohaeng, number>> | undefined,
   johuNeed: Ohaeng | null,
+  waiveHostile = false,
 ): EokbuCandidate {
   const pr = presence(value, pillars);
   if (!pr.present) {
@@ -330,8 +339,12 @@ function scoreCandidate(
     if (pr.jeonggi === 0 && hg === 0 && value !== johuNeed) {
       return { group, value, score: -Infinity, usable: false, reason: `${hostile} 세력이 판을 덮어 뿌리 없는 ${value}는 빼앗깁니다.` };
     }
-    score += W.hostile;
-    why.push(`${hostile} 세력에 눌려 온전치 못함`);
+    // 傷官用財에서는 일간이 財를 剋하는 것이 흠이 아니라 **用의 조건**이다 —
+    //   「日主旺, 傷官亦旺, 宜用財」(傷官 p.78). 왕한 일주라야 財를 감당(能任財)한다.
+    if (!waiveHostile) {
+      score += W.hostile;
+      why.push(`${hostile} 세력에 눌려 온전치 못함`);
+    }
   }
   return { group, value, score, usable: true, reason: why.join(' · ') || '쓸 수 있음' };
 }
@@ -345,6 +358,7 @@ export function evaluateEokbu(
   pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
   counts?: Partial<Record<Ohaeng, number>>,
   johuNeed: Ohaeng | null = null,
+  sanggwan = false,
 ): EokbuCandidate[] {
   const weak = strength <= 0.38;
   //  기본 가중은 적천수천미 원전 18건에서 임철초가 고른 십신 빈도다.
@@ -356,11 +370,48 @@ export function evaluateEokbu(
   const gwanCnt = counts?.[gwanOhaeng(dayO)] ?? 0;
   const inBonus = seolCnt >= 3 ? 1.5 : 0;
   const bigeopBonus = gwanCnt >= 3 ? 1.5 : 0;
+  // ── v7 상관격 분기 — 임철초가 직접 써 놓은 표를 그대로 옮긴다 ──
+  //  『滴天髓闡微』卷二 通神論 傷官 p.78 任氏曰:
+  //    「有傷官用印, 傷官用財, 傷官用刦, 傷官用傷官, 傷官用官, 其間作用種種不同, 不可執一而論也.
+  //      若傷官用財者, 日主旺, 傷官亦旺, 宜用財, 有比刦而可見官, 無比刦有印綬, 不可見官.
+  //      日主弱, 傷官旺, 宜用印, 可見官而不可見財.
+  //      日主弱, 傷官旺, 無印綬, 宜用比刦, 喜見刦印, 忌見財官.
+  //      日主旺, 無財官, 宜用傷官, 喜見財傷, 忌見官印.
+  //      日主旺, 比刦多, 財星衰, 傷官輕, 宜用官, 喜見財官, 忌見傷印.」
+  //  즉 상관격은 한 갈래가 아니라 다섯 갈래고, 어느 갈래인지가 용신을 정한다.
+  //  v6까지는 '신강이면 식상' 한 줄이라 財·官 갈래에 도달할 수 없었다.
+  //  ※ 여기서 주는 것은 **가점**이지 확정이 아니다. 무근·합거로 이미 소거된 후보는
+  //    가점을 받아도 살아나지 않는다(JCS-052 「土金無根, 置之不用」이 그 안전장치다).
+  const sangO = SAENG[dayO], jaeO = GEUK[dayO], gwanO2 = gwanOhaeng(dayO), inO = inseongOhaeng(dayO);
+  const c = (o: Ohaeng) => counts?.[o] ?? 0;
+  let inAdd = 0, biAdd = 0, sikAdd = 0, jaeAdd = 0, gwanAdd = 0;
+  const extra: [EokbuCandidate['group'], Ohaeng, number][] = [];
+  if (sanggwan) {
+    if (weak) {
+      // 日主弱 + 傷官旺 → 用印. 단 印이 없으면 用比刦(三曰 傷官用刦格).
+      //   ※ '無印綬' 만으로는 부족하다. 用刦은 刦財(재물을 나눠 갖는 것)라
+      //     원국에 나눌 財가 있어야 성립한다 — 「財星太重 … 幸喜未時刦財通根爲用」(JCS-069).
+      //     財가 아예 없이 설기만 심한 명식은 도리어 印으로 制傷한다 —
+      //     「傷官太旺, 過於洩氣, 用神在土」(JCS-001). 이 둘을 財 세력으로 가른다.
+      if (c(inO) === 0 && c(jaeO) >= 2) biAdd += 3.0;
+      // 印이 도리어 무거우면 印을 더 보태는 게 아니라 洩한다 —
+      //   「地支印星並旺, 酉丑拱金, 必以寅木爲用」(JCS-051) · 「必以卯木爲用」(JCS-050)
+      //   방향은 '무엇이 더 무거운가'로 가른다.
+      //     식상 > 인성 → 설기가 문제 → 印으로 制傷生身 「必須用己土之印, 使其止水生金」(JCS-038)
+      //     인성 > 식상 → 印이 문제 → 傷官으로 洩 「必以卯木爲用」(JCS-050)·「必以寅木爲用」(JCS-051)
+      if (c(inO) >= 2 && c(inO) > c(sangO)) extra.push(['식상', sangO, 6.5]);
+    } else {
+      // 日主旺 + 傷官亦旺 + 財 있음 → 用財 (二曰 傷官用財格)
+      if (c(sangO) >= 2 && c(jaeO) >= 1) jaeAdd += 5.5;
+      // 日主旺 + 比刦多 + 財星衰 + 傷官輕 → 用官
+      if (c(dayO) >= 3 && c(jaeO) <= 1 && c(sangO) <= 1) gwanAdd += 4.0;
+    }
+  }
   const defs: [EokbuCandidate['group'], Ohaeng, number][] = weak
-    ? [['인성', inseongOhaeng(dayO), 6.0 + inBonus], ['비겁', dayO, 2.0 + bigeopBonus]]
-    : [['식상', SAENG[dayO], 6.0], ['재성', GEUK[dayO], 2.5], ['관살', gwanOhaeng(dayO), 2.0]];
+    ? [['인성', inseongOhaeng(dayO), 6.0 + inBonus + inAdd], ['비겁', dayO, 2.0 + bigeopBonus + biAdd], ...extra]
+    : [['식상', SAENG[dayO], 6.0 + sikAdd], ['재성', jaeO, 2.5 + jaeAdd], ['관살', gwanO2, 2.0 + gwanAdd]];
   return defs
-    .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed))
+    .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed, g === '재성' && jaeAdd > 0))
     .sort((a, b) => b.score - a.score);
 }
 
@@ -442,7 +493,8 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   //     이걸 구현하려면 3분기가 아니라 '후보 평가 → 탈락 사유' 구조가 필요하다. (로드맵 참조)
   //  v6 — 고정 매핑에서 '후보 평가'로. pillars 없는 구버전 호출부는 옛 매핑으로 폴백한다.
   const johuPre = computeJohu(dayGan, monthJi);
-  const eokbuCandidates = pillars ? evaluateEokbu(dayO, strength, pillars, counts, johuPre.need) : [];
+  const isSanggwan = pillars ? computeGyeokguk(pillars, dayGan).key === '상관' : false;
+  const eokbuCandidates = pillars ? evaluateEokbu(dayO, strength, pillars, counts, johuPre.need, isSanggwan) : [];
   const eokbuTop = eokbuCandidates.find((c) => c.usable);
   const eokbu: Ohaeng = eokbuTop ? eokbuTop.value : (strength <= 0.38 ? inseongOhaeng(dayO) : SAENG[dayO]);
   const johuRes = computeJohu(dayGan, monthJi);
