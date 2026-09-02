@@ -733,7 +733,7 @@ export default function Home() {
                   <span className="basis-n">{b.note}</span>
                 </div>
               ))}
-              {result.gyeokYong.yongsin.eokbuCandidates?.length > 0 && (
+              {result.gyeokYong.yongsin.eokbuCandidates?.some((c) => c.structuralRoot) && (
                 <details className="cand-box">
                   <summary>억부 후보를 어떻게 추렸는지 보기 ({result.gyeokYong.yongsin.eokbuCandidates.length}개)</summary>
                   <div className="cand-legend">
@@ -747,7 +747,7 @@ export default function Home() {
                     <div className="cand-row" key={c.group}>
                       <span className="cand-g">{c.group}</span>
                       <span className="cand-v">{c.value}</span>
-                      <span className={`cand-root r-${c.structuralRoot}`}>구조 {c.structuralRoot}</span>
+                      <span className={`cand-root r-${c.structuralRoot ?? '없음'}`}>구조 {c.structuralRoot ?? '—'}</span>
                       <span className={`cand-root${c.relationalRoot ? ' on' : ''}`}>관계 {c.relationalRoot ? '있음' : '없음'}</span>
                       <span className="cand-n">{c.reason}</span>
                     </div>
