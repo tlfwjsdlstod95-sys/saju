@@ -18,6 +18,7 @@ const num = { color: 'var(--gold)', fontWeight: 700 as const };
 
 export default function AccuracyPage() {
   const nCases = totalCases();
+  const rPrev = '75.0';  // v9 재현율 — 변경 폭을 그대로 보여주기 위한 고정값
   // 표는 손으로 쓰지 않는다 — 지금 배포된 엔진으로 원전 명식을 다시 판정해 만든다.
   const rows = yongsinRows();
   const r = rate(rows);
@@ -180,6 +181,25 @@ export default function AccuracyPage() {
           명식인지까지 적습니다. 이 표는 손으로 쓴 게 아니라 <b>지금 배포된 엔진이 원전 명식을 다시 판정해</b>
           만든 것이라, 엔진이 바뀌면 이 표도 함께 바뀝니다.
         </p>
+        <div className="acc-gist">
+          <span>고전 명식 <b>{r.total}건</b></span>
+          <span>엔진이 같은 답 <b>{r.hit}건</b></span>
+          <span>다른 답 <b>{r.total - r.hit}건</b></span>
+          <span>재현율 <b>{r.pct}%</b></span>
+        </div>
+        <div className="acc-plain">
+          <b>쉽게 말하면</b> — 100년 전 명리학 고전에는 실제 사주와, 그 사주를 저자가 어떻게 풀었는지가
+          함께 실려 있습니다. 그 <b>{r.total}건</b>을 헤아림 엔진에 그대로 넣어 보고,
+          저자와 같은 결론이 나오는지 한 건씩 대조한 결과가 아래 표입니다.
+          <br />
+          <span style={{ opacity: 0.85 }}>
+            ※ <b>용신(用神)</b>은 그 사주에 가장 필요한 기운 한 가지를 말합니다.
+            운의 좋고 나쁨을 읽는 기준점이라, 여기가 어긋나면 풀이 전체가 어긋납니다.
+          </span>
+        </div>
+        <details className="acc-fold">
+          <summary>케이스 {r.total}건 전부 펼쳐 보기</summary>
+          <div className="acc-fold-body">
         <div style={{ overflowX: 'auto', marginTop: 14 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 600 }}>
             <thead>
@@ -216,9 +236,11 @@ export default function AccuracyPage() {
         <p style={{ lineHeight: 1.8, marginTop: 12, fontSize: 13.5, color: 'var(--text-mute)' }}>
           불일치가 남아 있는 케이스는 &lsquo;아직 못 고친 것&rsquo;이 맞습니다. 다만 한 건을 맞히려고 그 한 건에만
           맞는 규칙을 넣지는 않습니다 — 같은 조건의 원전 사례가 여러 건 모여 규칙으로 확인될 때 반영합니다.
-          (지금 보류 중인 가설: <b>종격(從格) 문턱 재보정</b> — 대세를 따라야 할 명식을 안 따르기도 하고,
-          따르지 말아야 할 명식을 따르기도 합니다. 양방향 사례를 모으는 중입니다.)
+          (직전에 보류해 두었던 <b>종격(從格) 문턱</b> 가설은 원전에서 근거 3건이 모여 v10에 반영했습니다.
+          지금 보류 중인 것: 원문이 &lsquo;작용하지 않는다&rsquo;고 못 박은 지지 속 기운을 세지 않는 기준.)
         </p>
+          </div>
+        </details>
       </div>
 
       <div className="card">
@@ -227,6 +249,15 @@ export default function AccuracyPage() {
           해석 로직을 고치면 같은 사주의 풀이가 달라질 수 있습니다. 헤아림은 판정 엔진에
           버전 번호를 붙여 모든 리포트에 어떤 기준으로 쓰였는지 기록합니다. 현재 <b style={num}>v{ENGINE_VERSION}</b>.
         </p>
+        <div className="acc-plain">
+          <b>쉽게 말하면</b> — 판정 규칙을 고칠 때마다 번호를 하나씩 올립니다.
+          예전에 받은 리포트에는 그때의 번호가 찍혀 있어서, <b>어떤 기준으로 쓰인 풀이인지</b> 나중에도 알 수 있고
+          기준이 바뀌면 &lsquo;리포트함&rsquo;에 표시가 뜹니다. 아래는 지금까지 무엇을 왜 고쳤는지의 전체 기록입니다 —
+          <b>읽지 않으셔도 됩니다.</b> 고친 내역을 감추지 않는다는 것 자체가 요점입니다.
+        </div>
+        <details className="acc-fold">
+          <summary>고친 내역 전체 보기 (v2 ~ v{ENGINE_VERSION})</summary>
+          <div className="acc-fold-body">
         <ul style={{ margin: '10px 0 0', paddingLeft: 20, fontSize: 14, lineHeight: 1.9, opacity: 0.85 }}>
           <li><b>v2</b> — 조후용신 자격 규칙: 원국에 뿌리 없는 조후는 억부로 전환</li>
           <li><b>v3</b> — 격국 취용을 자평진전 원칙(월지 본기 우선)대로 교정 → 격국 일치율 80%→100%</li>
@@ -266,7 +297,16 @@ export default function AccuracyPage() {
             그중 <b>중화 구간</b>의 1건만 못 맞히고 있었습니다(억부가 중화·신강에서 인성 후보를 만들지 않아서)
             → 용신 원전 재현율 {r.pct}%, 그중 신규 표본은 {rNew.pct}%.
             무작위 2만 건에서 이 규칙이 켜지는 비율은 5.4%로, 기본값이 아니라 예외입니다.</li>
+          <li><b>v10</b> — <b>&lsquo;대세를 따르는 사주(종격)&rsquo;로 보지 <u>않는</u> 조건</b>을 원전에서 옮겼습니다.
+            일간이 아무 데도 기댈 곳이 없을 때만 대세를 따르는 건데, 저희 엔진은 지지 속에 희미하게 남은
+            뿌리를 못 보고 너무 쉽게 &lsquo;따른다&rsquo;고 판정하고 있었습니다.
+            원전은 세 자리에서 <b>따르지 않는 이유를 직접</b> 밝힙니다 — 「通根身庫」·「火有餘氣」.
+            무엇이 그 셋을 가르는지는 지지 속 기운의 <b>깊이</b>가 정해 줬습니다
+            → 용신 원전 재현율 {rPrev}%→{r.pct}%, <b>가장 엄격한 &lsquo;미확인 세트&rsquo;는 59.1%→{rUnseen.pct}%</b>.
+            강약 판정은 한 자리도 건드리지 않았습니다.</li>
         </ul>
+          </div>
+        </details>
       </div>
 
       <div className="card">
