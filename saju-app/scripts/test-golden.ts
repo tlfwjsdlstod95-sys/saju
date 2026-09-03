@@ -31,7 +31,7 @@ interface GoldenCase {
   school: 'jeokcheonsu' | 'japyeong' | 'gungtong';
   pillars?: { year: string; month: string; day: string; hour?: string };
   birth?: any;
-  expect: { strength?: string; yongsin?: string; yongsinNot?: string; gyeokguk?: string; johu?: string };
+  expect: { strength?: string; yongsin?: string; yongsinNot?: string; gyeokguk?: string; johu?: string; lacking?: string; lackingNot?: string };
   source: { book: string; chapter?: string; page?: string };
   note?: string;
   /** 같은 명식이 다른 출전으로 한 번 더 실려 있을 때, 정본(1차 사료) 케이스의 id.
@@ -68,7 +68,7 @@ function toPillar(gj: string, dayGan: number, isDay = false): Pillar {
 }
 
 const label = (s: number) => (s <= 0.38 ? '신약' : s >= 0.55 ? '신강' : '중화');
-const S = { strength: [0, 0], yongsin: [0, 0], yongsinNew: [0, 0], yongsinUnseen: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
+const S = { lacking: [0, 0], strength: [0, 0], yongsin: [0, 0], yongsinNew: [0, 0], yongsinUnseen: [0, 0], yongsinNot: [0, 0], gungtong: [0, 0], gyeokguk: [0, 0], johu: [0, 0] };
 // 학파별 강약 — 적천수(억부)와 자평진전(격국)은 '신강'의 정의가 다르다.
 //   자평진전은 印重이어도 身輕이라 부르고(JPJ-013 身輕印重),
 //   적천수는 같은 배치에서 印重→신강으로 보고 식상을 용신으로 쓴다(JCS-009 용신 화).
@@ -141,6 +141,17 @@ for (const c of cases) {
       }
     }
   }
+  // 결손(淸枯) 진단 — 원문이 「없어서 運에서 와야 한다」고 지목한 오행.
+  //   ⚠️ `yongsin`과 **별개 축**이다. 원문은 「원국에서 쓸 것」과 「없는 것」을 둘 다 말하는데,
+  //     우리는 그동안 앞의 것만 채점하면서 뒤의 것을 '오답'으로 세고 있었다.
+  //     그렇다고 `expect.yongsin`을 고쳐 점수를 올리지는 않는다 — 축을 하나 더 만들 뿐이다.
+  if (c.expect.lacking || c.expect.lackingNot) {
+    S.lacking[1]++;
+    const got = (gy.yongsin as any).lacking?.value ?? null;
+    const ok2 = c.expect.lacking ? got === c.expect.lacking : got !== c.expect.lackingNot;
+    if (ok2) S.lacking[0]++;
+    else misses.push(`[결손] ${c.id} 문헌 ${c.expect.lacking ?? `"${c.expect.lackingNot} 아님"`} / 엔진 ${got ?? '없음'} ${src}`);
+  }
   // 부정 사례 — 원문이 "이 오행은 用神이 아니다"라고만 못 박은 경우.
   //   예) 寒暖 p.126 後造 「寒甚而暖無氣, 反以無暖爲美」 — 뿌리 없는 조후 火 를 쓰지 않는다.
   //   용신 오행을 하나로 확정하지 않으므로 일반 채점에 넣지 않고 별도로 센다.
@@ -173,6 +184,7 @@ console.log(`  용신 일치율  ${rate(S.yongsin)}   ※ 적천수 계열 — �
 console.log(`  └ 궁통 참고  ${rate(S.gungtong)}   ※ 궁통보감은 월별 조후 처방표라 체계가 다름. 참고용`);
 console.log(`  └ 신규표본  ${rate(S.yongsinNew)}   ※ 튜닝 뒤 원전에서 캔 것만 — 일반화 성능의 지표`);
 console.log(`  └ 미확인    ${rate(S.yongsinUnseen)}   ※ v7 확정 뒤에 캔 것만 — 어떤 규칙도 본 적 없는 세트`);
+console.log(`  결손 진단    ${rate(S.lacking)}   ※ 원문이 "없어서 運에서 와야 한다"고 지목한 오행 — 용신과 별개 축`);
 console.log(`  용신 반례    ${rate(S.yongsinNot)}   ※ 원문이 "이 오행은 用神이 아니다"라고만 밝힌 사례`);
 console.log(`  격국 일치율  ${rate(S.gyeokguk)}`);
 console.log(`  조후 일치율  ${rate(S.johu)}`);
