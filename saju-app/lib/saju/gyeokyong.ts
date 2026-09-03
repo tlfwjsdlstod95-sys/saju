@@ -261,7 +261,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false, byeokDown: true };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: false, seolin: true, jonggd: true, seupto: true, seupin: true, nanto: false, byeokDown: true };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -760,7 +760,20 @@ export function evaluateEokbu(
     //    JCS-033·063 을 깨뜨렸다. 「이득 0·손해 2」의 진짜 원인이 조건식 자체였다.
     //    임철초가 세는 방식(制가 넷 이상)을 그대로 옮긴다 — 「四食相制」·「四制」·「五制」.
     //    지장간 포함 制 개수: 원전 4사례 = 5·4·4·5 / 오발동 2건 = 3·3. 경계가 깨끗하다.
-    if (GS.jesal && c(gwanO2) > 0 && deepCount(sangO, pillars, GS.seupto) >= 4) {
+    //  ⚠️ 조건을 **세 번째로** 고쳤다. 그 과정 자체가 기록이다:
+    //    v8    `식상 >= 관살*2` (얕은 집계) — 원전 4사례 중 **둘에서 발동조차 안 했다.**
+    //    v8.2  `deepCount(식상) >= 4` (절대 개수) — 원전 4사례와 맞지만 **발동률 15.06%**로 너무 넓다.
+    //    v14   `deepCount(식상) >= deepCount(관살)*2` — **비율로 돌아가되 깊은 집계로.**
+    //  즉 v8의 '비율' 발상은 옳았고 **집계 방식이 틀렸던 것**이다. 둘을 합치니 경계가 닫힌다.
+    //  실측(원전 4사례 / 오발동 후보 전부):
+    //    ★걸림  JCS-088 食5:殺1 · JCS-089 4:1 · JCS-090 4:2
+    //    안걸림 JCS-005 1:2 · 044 1:2 · 033 3:3 · 063 3:2 (오발동 후보 **전부 제외**)
+    //           JCS-079 4:6 · 080 3:4 · 081 3:4 · 082 2:5 (三曰 '건강한 制'도 전부 제외)
+    //  ⚠️ JCS-091(食5:殺5)은 여전히 안 걸린다 — 임철초가 「**五殺逢五制**」라 한 **대등한** 판이라
+    //    비율로는 잡히지 않는다. 억지로 넓히지 않고 미해결로 남긴다.
+    if (GS.jesal && c(gwanO2) > 0
+        && deepCount(sangO, pillars, GS.seupto) >= 4
+        && deepCount(sangO, pillars, GS.seupto) >= deepCount(gwanO2, pillars, GS.seupto) * 2) {
       if (c(inO) > 0) { if (weak) inAdd += 2.5; else extra.push(['인성', inO, 7.5]); }
       else jaeAdd += 4.0;
       // 虛用 — 衞殺·滋殺을 맡을 글자가 **원국에 아예 없을 때**.
