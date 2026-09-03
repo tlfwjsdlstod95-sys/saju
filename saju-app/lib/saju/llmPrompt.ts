@@ -12,7 +12,9 @@ function structureFacts(r: SajuResult): string {
   const edge = edgeKeywordSet(r.pillars.month.jiSipsin, r.advanced.unseong.day, r.advanced.sinsal);
   const gy = r.gyeokYong;
   const s12 = r.advanced.sin12?.byYear ?? [];
-  const s12Str = s12.length ? s12.map((x) => `${x.name}${x.alias ? `(${x.alias})` : ''}`).join('·') : '';
+  const s12Str = s12.length
+    ? s12.map((x) => `${x.name}${x.alias ? `(${x.alias})` : ''}${x.flip ? `[${x.flip.dir === 'positive' ? '길로 반전' : '흉으로 굳음'}·${x.flip.label}]` : ''}`).join('·')
+    : '';
   return `- 일주 캐릭터: ${iju.name} '${iju.tag}' — ${iju.trait}
 - 격국(타고난 그릇): ${gy.gyeokguk.name} (${gy.gyeokguk.via}) — ${gy.gyeokguk.desc}
 - 용신(약이 되는 핵심 기운): ${gy.yongsin.primary}(五行) · 방식 ${gy.yongsin.method} · 희신 ${gy.yongsin.huisin} · 기신 ${gy.yongsin.gisin}. ${gy.yongsin.desc}
@@ -141,8 +143,10 @@ export function buildUser(r: SajuResult, age: number, nowYear: number): string {
   const oh = r.ohaeng;
   const ohStr = (['목', '화', '토', '금', '수'] as const)
     .map((o) => `${o} ${(oh as any)[o]}개${(oh.status as any)[o] ? `(${(oh.status as any)[o]})` : ''}`).join(', ');
+  // desc 에서 분리해 둔 길흉반전(flip)을 프롬프트에서는 다시 합친다.
+  // 이 라우트들은 서버에서 computeSaju 를 다시 돌리므로 flip 이 온전히 살아 있다.
   const sinsal = r.advanced.sinsal.length
-    ? r.advanced.sinsal.map((s) => `${s.name}(${s.desc})`).join(' / ') : '특이 신살 없음';
+    ? r.advanced.sinsal.map((s) => `${s.name}(${s.desc}${s.flip ? ` ※ ${s.flip.line}` : ''})`).join(' / ') : '특이 신살 없음';
   const thisY = r.luck.sewoon[0];
   const dw = [...r.luck.daewoon].reverse().find((d) => age >= d.age) ?? r.luck.daewoon[0];
   const strengthLabel = r.dayMasterStrength >= 0.55 ? '신강(주관·추진력 강함)'
@@ -222,8 +226,10 @@ export function buildChatSystem(r: SajuResult, age: number, nowYear: number, ton
   const oh = r.ohaeng;
   const ohStr = (['목', '화', '토', '금', '수'] as const)
     .map((o) => `${o}${(oh as any)[o]}${(oh.status as any)[o] ? `(${(oh.status as any)[o]})` : ''}`).join(' ');
+  // desc 에서 분리해 둔 길흉반전(flip)을 프롬프트에서는 다시 합친다.
+  // 이 라우트들은 서버에서 computeSaju 를 다시 돌리므로 flip 이 온전히 살아 있다.
   const sinsal = r.advanced.sinsal.length
-    ? r.advanced.sinsal.map((s) => `${s.name}(${s.desc})`).join(' / ') : '특이 신살 없음';
+    ? r.advanced.sinsal.map((s) => `${s.name}(${s.desc}${s.flip ? ` ※ ${s.flip.line}` : ''})`).join(' / ') : '특이 신살 없음';
   const thisY = r.luck.sewoon[0];
   const dw = [...r.luck.daewoon].reverse().find((d) => age >= d.age) ?? r.luck.daewoon[0];
   const strengthLabel = r.dayMasterStrength >= 0.55 ? '신강(주관·추진력 강함)'

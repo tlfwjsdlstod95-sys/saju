@@ -30,7 +30,32 @@ const YANGIN: Record<number, number> = { 0: 3, 2: 6, 4: 6, 6: 9, 8: 0 }; // 양�
 const GWAEGANG: [number, number][] = [[6, 4], [8, 4], [6, 10], [4, 10]]; // 경진 임진 경술 무술
 const BAEKHO: [number, number][] = [[0, 4], [1, 7], [2, 10], [3, 1], [4, 4], [8, 10], [9, 1]];
 
-export interface Sinsal { name: string; targets: string; desc: string; tone: 'good' | 'neutral' | 'caution'; bias?: 'positive' | 'negative'; }
+export interface Sinsal { name: string; targets: string; desc: string; tone: 'good' | 'neutral' | 'caution'; bias?: 'positive' | 'negative'; flip?: SinsalFlip; }
+
+/**
+ * 길흉반전 상세 — **유료 구간**.
+ *
+ * 살 이름·앉은 자리·기본 뜻은 띠와 지지의 룩업이라 어느 사이트에나 있다.
+ * 그런데 **그 살이 내 명식에서 길로 뒤집히는지 흉으로 굳는지**는
+ * 용신 판정이 서 있어야만 답할 수 있다 — 우리 엔진이 3개월 캐낸 그 자리다.
+ * 그래서 가리는 선을 「살 몇 개를 숨긴다」(가로)가 아니라
+ * 「모든 살의 표면은 열고, 뒤집힘만 잠근다」(세로)로 그었다.
+ *
+ * 실측(표본 3000): 명식당 12신살 평균 3.53개, 그중 **85.6%가 반전 대상**이고
+ * 방향은 positive 50.7% / negative 49.3% 로 **거의 반반**이다.
+ * 「내 건 어느 쪽인가」가 진짜 궁금증이 되는 이유.
+ */
+export interface SinsalFlip {
+  dir: 'positive' | 'negative';
+  /** 살이 앉은 지지가 용신/희신/기신/구신 중 무엇인지 */
+  label: string;
+  /** 예: '寅(목)은' */
+  spot: string;
+  /** 화면과 AI 프롬프트에 그대로 쓰는 근거 한 줄 */
+  line: string;
+  /** 반전을 적용한 뒤의 tone (무료 화면은 반전 전 tone 을 쓴다) */
+  tone: 'good' | 'neutral' | 'caution';
+}
 
 // ── 신살 길흉 반전(용신 종속) ──
 // 정통 원칙: 신살의 길흉은 그 살이 앉은 글자가 용신 편인지 기신 편인지에 종속된다.
@@ -68,25 +93,27 @@ function sinsalBias(jis: number[], y: YongsinLite): { bias: 'positive' | 'negati
   return null;
 }
 
-function applyBias<T extends { tone: Tone; desc: string; bias?: 'positive' | 'negative' }>(hit: T, jis: number[], y?: YongsinLite): T {
+// ⚠️ desc 를 더 이상 건드리지 않는다. 반전 문장을 desc 에 붙여버리면
+//    무료 응답에서 그 문장만 도려내야 하고, 한 번 놓치면 유료 판단이 그대로 새어 나간다.
+//    별도 필드(flip)로 분리해 두면 「빼는 것」이 아니라 「안 넣는 것」이 되어 실수할 여지가 없다.
+function applyBias<T extends { tone: Tone; desc: string; bias?: 'positive' | 'negative'; flip?: SinsalFlip }>(
+  hit: T, jis: number[], y?: YongsinLite,
+): T {
   if (!y || !jis.length) return hit;
   const b = sinsalBias(jis, y);
   if (!b) return hit;
   const o = JI_OHAENG[b.ji];
   const spot = `${JIJI[b.ji]}(${o})${eunNeun(o)}`;
   const label = yongLabel(o, y);
-  if (b.bias === 'positive') {
-    hit.desc += hit.tone === 'caution'
-      ? ` ※ 이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 거친 기운이 실력·추진력 같은 장점 쪽으로 발현되기 쉽습니다.`
-      : ` ※ 이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 좋은 기운이 한층 힘 있게 발휘됩니다.`;
-    hit.tone = TONE_UP[hit.tone];
-  } else {
-    hit.desc += hit.tone === 'good'
-      ? ` ※ 다만 이 길성이 앉은 ${spot} 이 사주의 ${label} 글자 — 복이 온전히 발휘되기 어렵고 반감될 수 있습니다.`
-      : ` ※ 이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 장점보다 주의할 면이 먼저 드러나기 쉬워 관리가 필요합니다.`;
-    hit.tone = TONE_DOWN[hit.tone];
-  }
+  const line = b.bias === 'positive'
+    ? (hit.tone === 'caution'
+        ? `이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 거친 기운이 실력·추진력 같은 장점 쪽으로 발현되기 쉽습니다.`
+        : `이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 좋은 기운이 한층 힘 있게 발휘됩니다.`)
+    : (hit.tone === 'good'
+        ? `다만 이 길성이 앉은 ${spot} 이 사주의 ${label} 글자 — 복이 온전히 발휘되기 어렵고 반감될 수 있습니다.`
+        : `이 살이 앉은 ${spot} 이 사주의 ${label} 글자 — 장점보다 주의할 면이 먼저 드러나기 쉬워 관리가 필요합니다.`);
   hit.bias = b.bias;
+  hit.flip = { dir: b.bias, label, spot, line, tone: b.bias === 'positive' ? TONE_UP[hit.tone] : TONE_DOWN[hit.tone] };
   return hit;
 }
 
@@ -174,7 +201,7 @@ export function sin12Map(baseJi: number): Sin12[] {
   return map;
 }
 
-export interface Sin12Hit { name: Sin12; alias?: string; ji: string; at: string[]; tone: 'good' | 'neutral' | 'caution'; desc: string; bias?: 'positive' | 'negative'; }
+export interface Sin12Hit { name: Sin12; alias?: string; ji: string; at: string[]; tone: 'good' | 'neutral' | 'caution'; desc: string; bias?: 'positive' | 'negative'; flip?: SinsalFlip; }
 
 /** 명식 네 기둥에 실제로 걸린 12신살 목록 (기준: 년지 또는 일지) */
 export function computeSin12(
@@ -237,4 +264,35 @@ export function computeAdvanced(
     sinsal: computeSinsal(pillars, dayGan, yong),
     sin12: { byYear: computeSin12(pillars, 'year', yong), byDay: computeSin12(pillars, 'day', yong) },
   };
+}
+
+// ── 무료/유료 경계 ────────────────────────────────────────────────
+//
+// 원칙: **화면에서 가리는 게 아니라 응답에서 뺀다.**
+//   `if (!premium) return <자물쇠/>` 는 번들만 열면 뚫린다.
+//   개운법·택일·신년운세를 서버로 옮긴 것과 같은 이유로, 반전 판정도 무료 응답에
+//   애초에 싣지 않는다. (`/api/reading`·`/api/premium` 은 서버에서 다시 계산하므로 영향 없음)
+
+export interface Sin12FreeSummary {
+  /** 12신살 중 반전 판정이 걸린 개수 — 개수는 알려주고 방향은 잠근다 */
+  flips: number;
+  /** 반전 대상이 된 살 이름들. "무엇이 뒤집히는지"까지는 열고 "어느 쪽인지"를 잠근다 */
+  names: string[];
+}
+
+/**
+ * 무료 응답용으로 반전 판정을 **떼어낸** 사본을 만든다.
+ * 살 이름·앉은 자리·기본 뜻은 그대로 둔다 — 이건 띠+지지 룩업이라 가려봐야
+ * 5초면 다른 사이트에서 확인된다. 가리면 인색해 보이기만 하고 지켜지는 것도 없다.
+ */
+export function stripSinsalFlips<T extends { tone: 'good' | 'neutral' | 'caution'; bias?: unknown; flip?: SinsalFlip }>(
+  list: T[],
+): { list: T[]; summary: Sin12FreeSummary } {
+  const names: string[] = [];
+  const out = list.map((h) => {
+    const { flip, bias, ...rest } = h as T & { flip?: SinsalFlip };
+    if (flip) names.push((h as unknown as { name: string }).name);
+    return rest as unknown as T;
+  });
+  return { list: out, summary: { flips: names.length, names } };
 }
