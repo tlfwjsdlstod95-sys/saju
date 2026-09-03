@@ -733,6 +733,11 @@ export default function Home() {
                   <span className="basis-n">{b.note}</span>
                 </div>
               ))}
+              {result.gyeokYong.yongsin.decisive && (
+                <div className="cand-decisive">
+                  <b>무엇이 갈랐나</b> — {result.gyeokYong.yongsin.decisive}
+                </div>
+              )}
               {result.gyeokYong.yongsin.eokbuCandidates?.some((c) => c.structuralRoot) && (
                 <details className="cand-box">
                   <summary>억부 후보를 어떻게 추렸는지 보기 ({result.gyeokYong.yongsin.eokbuCandidates.length}개)</summary>
@@ -754,7 +759,14 @@ export default function Home() {
                       <span className="cand-v">{c.value}</span>
                       <span className={`cand-root r-${c.structuralRoot ?? '없음'}`}>구조 {c.structuralRoot ?? '—'}</span>
                       <span className={`cand-root${c.relationalRoot ? ' on' : ''}`}>관계 {c.relationalRoot ? '있음' : '없음'}</span>
-                      <span className="cand-n">{c.reason}</span>
+                      <span className="cand-n">
+                        {c.reason}
+                        {c.origin && (
+                          <><br /><span className="cand-src">
+                            ↳ <b>{c.origin.branch}</b> — 원전 「{c.origin.quote}」에 따라 연 후보
+                          </span></>
+                        )}
+                      </span>
                     </div>
                   ))}
                 </details>

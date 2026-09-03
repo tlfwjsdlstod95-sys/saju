@@ -782,3 +782,16 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
   margin-top: 10px; padding: 10px 12px; border-left: 2px solid var(--border);
   font-size: 13px; line-height: 1.75; color: var(--text-mute);
 }
+
+/* ── 결과 화면: 무엇이 승부를 갈랐나 ────────────────────────────
+   후보 점수만 나열하면 사용자는 '왜 저게 이겼는지'를 못 읽는다.
+   1·2위 대조와 원전 근거를 접지 않고 보여준다 — 이 화면의 존재 이유다. */
+.cand-decisive {
+  margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+  background: rgba(212,175,55,0.07); border: 1px solid rgba(212,175,55,0.22);
+  font-size: 13.5px; line-height: 1.75;
+}
+.cand-decisive b { color: var(--gold); }
+/* 후보 줄 안의 원전 출처 */
+.cand-src { display: inline-block; margin-top: 3px; font-size: 12.5px; opacity: 0.72; }
+.cand-src b { color: var(--gold); opacity: 0.9; }
