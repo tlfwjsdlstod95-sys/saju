@@ -456,5 +456,21 @@
 
 export const ENGINE_VERSION = 14;
 
+/**
+ * 사용자가 **읽는 문장**이 바뀌면 올린다 — 판정이 그대로여도.
+ *
+ * ENGINE_VERSION 은 「판정이 바뀌었나」를 재는 눈금이라 설명문만 고치면 안 올라간다.
+ * 그런데 AI 풀이는 격국·조후 desc 를 프롬프트에 넣어 쓰므로,
+ * 설명문을 고쳐도 브라우저에 캐시된 옛 풀이는 **옛 문장으로 쓰인 채 남는다.**
+ * (v14 설명문 다양성 작업에서 발견 — 형제 동일률을 0.92%로 낮춰놓고도
+ *  재방문 사용자는 11.78% 시절 문장을 계속 볼 뻔했다.)
+ *
+ * 2 = 2026-09-03 조후 6종→120종 · 격국 10종→216종
+ */
+export const TEXT_VERSION = 2;
+
 /** 캐시 키·저장 메타에 쓰는 짧은 표기 */
 export const ENGINE_TAG = `e${ENGINE_VERSION}`;
+
+/** AI 풀이 캐시 키에 붙이는 태그 — 판정이든 문장이든 바뀌면 캐시를 버린다 */
+export const READING_TAG = `e${ENGINE_VERSION}t${TEXT_VERSION}`;
