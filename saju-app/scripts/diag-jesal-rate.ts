@@ -21,10 +21,12 @@ for (let i=0;i<20000;i++){
       if(gs.some((x:number)=>GAN_OHAENG[x]===o)){ if(skip && o==='수' && SEUPTO.has(p.ji)) continue; c++; } } } return c;};
   // 관살 존재는 얕은 집계(엔진의 counts와 같은 기준)
   let gShallow=0; for(const p of list){ if(p!==P.pillars.day && GAN_OHAENG[p.gan]===g) gShallow++; if(JI_OHAENG[p.ji]===g) gShallow++; }
-  if (gShallow>0 && cnt(sang,false)>=4) fireRaw++;
-  if (gShallow>0 && cnt(sang,true)>=4) fireSkip++;
+  // v14 비율 조건: deepCount(식상) >= deepCount(관살)*2
+  // v14: 하한선(食>=4) AND 비율(食>=殺*2) — 원전 3사례가 모두 만족(5:1 · 4:1 · 4:2)
+  if (gShallow>0 && cnt(sang,false)>=4 && cnt(sang,false) >= cnt(g,false)*2) fireRaw++;
+  if (gShallow>0 && cnt(sang,true)>=4 && cnt(sang,true) >= cnt(g,true)*2) fireSkip++;
 }
 console.log(`표본 ${n}건`);
-console.log(`  六曰 발동 (濕土 제외 없음)  ${fireRaw}건  ${(fireRaw/n*100).toFixed(2)}%`);
-console.log(`  六曰 발동 (濕土 제외 적용)  ${fireSkip}건  ${(fireSkip/n*100).toFixed(2)}%`);
+console.log(`  六曰 하한+비율 (濕土 제외 없음)  ${fireRaw}건  ${(fireRaw/n*100).toFixed(2)}%`);
+console.log(`  六曰 하한+비율 (濕土 제외 적용)  ${fireSkip}건  ${(fireSkip/n*100).toFixed(2)}%`);
 console.log(`  → 濕土 제외가 걸러내는 양   ${fireRaw-fireSkip}건  ${((fireRaw-fireSkip)/n*100).toFixed(2)}%p`);
