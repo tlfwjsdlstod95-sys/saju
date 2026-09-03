@@ -228,8 +228,9 @@ export interface GwansalFlags {
   jonggd: boolean; // 從勢 진입 가드 — 일간이 여기·묘고에 뿌리를 두면 從하지 않는다
   seupto: boolean; // 濕土 안의 水는 세력으로 세지 않는다 — 「竝無生發之意」
   seupin: boolean; // 印의 뿌리가 濕土뿐이면 印 대신 比劫으로 扶身 — 「未足幫身」
+  nanto: boolean;  // 월지 餘氣가 일간 오행이면 신약에서 比劫 가점 — 「火有餘氣」(근거 1건, 기본 OFF)
 }
-export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true, seupto: false, seupin: true };
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false };
 /**
  * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
  *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
@@ -238,7 +239,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true, seupto: false, seupin: true };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -381,6 +382,28 @@ function deepCount(
  *   從勢 가드의 여기·중기 구분과 같은 원리다.
  */
 const SEUPTO = new Set<number>([4, 1]);  // 辰(4) · 丑(1)
+
+/**
+ * 중화·신강 구간에서 **비겁이 후보로 열리는 유일한 조건**.
+ *   불변식(`test-invariants.ts`)이 허용 집합을 넓히는 대신 **이 전제를 그대로 불러 쓴다.**
+ *   허용 집합만 넓히면 「아무거나 나와도 PASS」인 종이 호랑이가 된다 —
+ *   v7·v8·v11에서 세 번 넓혔으니, 여기서 경계를 다시 좁혀 못 박는다.
+ *   ⚠️ 이 조건을 바꾸면 불변식도 자동으로 같이 움직인다. 그게 의도다.
+ */
+export function bigeopOpensInMid(
+  dayO: Ohaeng,
+  strength: number,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+  johuNeed: Ohaeng | null,
+): boolean {
+  if (!GS.seolin || !GS.seupin) return false;
+  if (strength <= 0.38 || strength >= 0.55) return false;      // 중화 구간에서만
+  if (deepCount(SAENG[dayO], pillars) < 4) return false;        // 洩重: 식상이 판을 덮을 것
+  const inO = inseongOhaeng(dayO);
+  if (!presence(inO, pillars).present) return false;            // 印이 있을 것
+  if (johuNeed && GEUK[inO] === johuNeed) return false;         // 印이 조후를 거스르면 애초에 안 열림
+  return onlySeupto(inO, pillars);                              // 그 印이 濕土뿐일 것
+}
 
 /** 그 오행의 지지 뿌리가 **濕土뿐인가** — 土에만 뜻이 있다(다른 오행이면 항상 false). */
 function onlySeupto(
@@ -610,6 +633,12 @@ export function evaluateEokbu(
       //     財가 아예 없이 설기만 심한 명식은 도리어 印으로 制傷한다 —
       //     「傷官太旺, 過於洩氣, 用神在土」(JCS-001). 이 둘을 財 세력으로 가른다.
       if (c(inO) === 0 && c(jaeO) >= 2) biAdd += 3.0;
+      // 월지 **여기(餘氣)**가 일간 오행이면 비겁에 가점 — 「生于未月, **火有餘氣**, 必以未中丁火爲用」(JCS-053).
+      //   從勢 가드(v10)가 「월지 여기 = 從을 막는 뿌리」로 이미 쓰는 바로 그 사실을,
+      //   후보 점수에도 일관되게 적용한 것이다(새 주장이 아니라 같은 사실의 일관 적용).
+      //   ⚠️ 그래도 **문헌이 비겁을 지목한 근거는 이 한 건뿐**이라 기본 OFF다. 아래 측정 참조.
+      if (GS.nanto && GAN_OHAENG[JIJANGGAN[pillars.month.ji].yeogi.gan] === dayO
+          && presence(inO, pillars).jeonggi === 0 && presence(inO, pillars).stems === 0) biAdd += 5.5;
       // 印이 도리어 무거우면 印을 더 보태는 게 아니라 洩한다 —
       //   「地支印星並旺, 酉丑拱金, 必以寅木爲用」(JCS-051) · 「必以卯木爲用」(JCS-050)
       //   방향은 '무엇이 더 무거운가'로 가른다.
@@ -920,9 +949,14 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
         // 직접 극(財破印)보다 흐름을 터주는 설(洩身)이 먼저다 — JCS-010 「淘洗」.
         const byeongIsInseong = o === inseongOhaeng(dayO);
         if (pillars) {
+          // ⚠️ **약이 병과 같은 오행일 수는 없다.** 정의상 모순이다.
+          //   식상 후보는 '병이 인성일 때 흐름을 터주는 설(洩)' 용도로 넣은 것인데(土多金埋/JCS-010),
+          //   병 자체가 식상이면 그대로 두면 「토가 병이고, 그 병을 푸는 토가 약」이라는
+          //   말이 안 되는 문장이 **결과 화면에 그대로 출력된다**(JCS-053에서 실제로 그랬다).
+          //   튜닝이 아니라 결함이므로 무조건 뺀다.
           const cands = [
             scoreCandidate('재성', geukO, byeongIsInseong ? 2.0 : 3.0, pillars, counts, null),
-            scoreCandidate('식상', seolO, byeongIsInseong ? 3.5 : 2.0, pillars, counts, null),
+            ...(seolO === o ? [] : [scoreCandidate('식상', seolO, byeongIsInseong ? 3.5 : 2.0, pillars, counts, null)]),
           ].filter((c) => c.usable).sort((a, b) => b.score - a.score);
           if (cands.length) { yak = cands[0].value; yakWhy = cands[0].reason; }
         }
