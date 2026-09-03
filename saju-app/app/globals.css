@@ -795,3 +795,14 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 /* 후보 줄 안의 원전 출처 */
 .cand-src { display: inline-block; margin-top: 3px; font-size: 12.5px; opacity: 0.72; }
 .cand-src b { color: var(--gold); opacity: 0.9; }
+
+/* ── 결과 화면: 결손 진단(淸枯) ────────────────────────────────
+   용신은 원국에서 고르고, 결손은 운에서 채운다 — 원전이 둘 다 말하는 것을 둘 다 보여준다.
+   판정에는 관여하지 않는다(표시 전용). */
+.cand-lack {
+  margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+  background: rgba(150,130,200,0.09); border: 1px solid rgba(150,130,200,0.26);
+  font-size: 13.5px; line-height: 1.75;
+}
+.cand-lack > b { color: var(--mystic, #b9a6e6); display: block; margin-bottom: 4px; }
+.cand-lack-src { margin-top: 6px; font-size: 12.5px; opacity: 0.72; }

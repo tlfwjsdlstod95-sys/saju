@@ -733,6 +733,16 @@ export default function Home() {
                   <span className="basis-n">{b.note}</span>
                 </div>
               ))}
+              {result.gyeokYong.yongsin.lacking && (
+                <div className="cand-lack">
+                  <b>결손 진단 — {result.gyeokYong.yongsin.lacking.value} 기운이 원국에 없습니다</b>
+                  <div>{result.gyeokYong.yongsin.lacking.why}</div>
+                  <div className="cand-lack-src">
+                    ↳ 원전은 이런 판을 「<b>淸枯</b>」라 부릅니다 — 「壬水雖通根身庫, 總之無金滋助, 淸枯之象」(適天髓闡微 卷二 官殺).
+                    {' '}쓸 용신은 있으나 그것을 <b>받쳐 줄 원천이 없는</b> 구조라, 그 기운이 오는 시기에 비로소 풀립니다.
+                  </div>
+                </div>
+              )}
               {result.gyeokYong.yongsin.decisive && (
                 <div className="cand-decisive">
                   <b>무엇이 갈랐나</b> — {result.gyeokYong.yongsin.decisive}
