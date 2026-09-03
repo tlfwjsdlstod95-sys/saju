@@ -28,7 +28,7 @@ function run(): Map<string, boolean> {
   return m;
 }
 
-const OFF: GwansalFlags = { hap: false, jaeja: false, salin: false, sikje: false, jesal: false, heo: false };
+const OFF: GwansalFlags = { hap: false, jaeja: false, salin: false, sikje: false, jesal: false, heo: false, seolin: false };
 const COMBOS: [string, GwansalFlags][] = [
   ['v7 (전부 끔)', OFF],
   ['+ 一曰 財滋弱殺', { ...OFF, jaeja: true }],
@@ -38,8 +38,10 @@ const COMBOS: [string, GwansalFlags][] = [
   ['+ 六曰 制殺太過', { ...OFF, jesal: true }],
   ['+ 六曰 + 虛用', { ...OFF, jesal: true, heo: true }],
   ['+ 虛用만', { ...OFF, heo: true }],
-  ['+ 一二三四 (현재 배포)', { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false }],
-  ['+ 一二三四六', { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: false }],
+  ['+ 洩重用印만', { ...OFF, seolin: true }],
+  ['+ 一二三四 (현재 배포)', { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: false }],
+  ['+ 一二三四 + 洩重用印', { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true }],
+  ['+ 一二三四六', { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: false, seolin: false }],
   ['+ 一二三四六 + 虛用', GWANSAL_ALL],
 ];
 
