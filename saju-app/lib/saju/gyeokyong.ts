@@ -110,6 +110,19 @@ export interface Yongsin {
    *   아슬아슬한 판정을 확정적인 것처럼 보이게 하지 않는 게 이 화면의 존재 이유다.
    */
   decisive?: string;
+  /**
+   * **결손 진단(淸枯)** — 채택한 용신을 *생해 줄* 오행이 원국에 아예 없을 때.
+   *   임철초는 「지금 원국에서 쓸 것」과 「없어서 運에서 와야 할 것」을 **둘 다** 말한다:
+   *     「喜其殺透食藏, **通根身庫** … 水無金滋, **至酉運** … 財星滋殺, 發甲」(官殺 p.76 / JCS-090)
+   *     「壬水雖**通根身庫**, 總之**無金滋助, 清枯之象**」(官殺 p.68 · 임철초 自造 / JCS-092)
+   *     「幸日主**兩坐庫根**, 又得**比肩匡扶** … **至壬申運** … 接連癸酉二十年」(官殺 p.76 / JCS-091)
+   *   즉 用神과 결손은 **다른 질문**이다. 용신은 원국에서 고르고, 결손은 운에서 채운다.
+   *
+   * ⚠️ 이 값은 **용신 채택에 전혀 관여하지 않는다.**
+   *   억부의 `!present → -Infinity` 가드(원국에 없는 건 못 쓴다)는 1비트도 건드리지 않았다.
+   *   조후우선의 채택값도 그대로다. 진단을 **얹기만** 한다.
+   */
+  lacking?: { value: Ohaeng; why: string };
 }
 
 /**
@@ -419,6 +432,30 @@ export function bigeopOpensInMid(
   if (!presence(inO, pillars).present) return false;            // 印이 있을 것
   if (johuNeed && GEUK[inO] === johuNeed) return false;         // 印이 조후를 거스르면 애초에 안 열림
   return onlySeupto(inO, pillars);                              // 그 印이 濕土뿐일 것
+}
+
+/**
+ * 그 오행이 **살아 있는가** — 결손(淸枯) 진단 전용.
+ *   천간·지지 정기에 있으면 산 것. **지장간에만** 있을 때가 문제다.
+ *   임철초는 자기 명식과 앞 명식을 **한 글자 차이**로 대조해 이 경계를 그어 놓았다:
+ *     「更妙年支坐**丑**, 足以晦火**養金**而蓄水」(官殺 p.67 / JCS-083) — 丑 속 辛金은 **산다**
+ *     「與前造只換**一丑字**, 天淵之隔矣 … 總之**無金**滋助, 清枯之象」(p.68 / JCS-092) — 巳 속 庚金은 **없는 것과 같다**
+ *   차이는 그 지장간을 품은 지지가 **그 오행을 극하는 자리인가**다(巳·午는 火 — 金을 녹인다).
+ *
+ * ⚠️ 진단 전용이다. 억부의 `presence()`·`!present → -Infinity` 가드는 **건드리지 않았다.**
+ *   원국에 없는 글자를 용신으로 채택하는 일은 여기서도 일어나지 않는다.
+ */
+function feederAlive(
+  o: Ohaeng,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+): boolean {
+  const pr = presence(o, pillars);
+  if (pr.stems > 0 || pr.jeonggi > 0) return true;   // 천간·정기에 있으면 산 것
+  if (pr.hidden === 0) return false;                  // 아예 없다
+  // 지장간에만 있다 — 그 글자를 품은 지지가 그 오행을 극하는 자리면 죽은 것으로 본다.
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  return list.some((p) =>
+    p.jijanggan.some((g) => GAN_OHAENG[g] === o) && GEUK[p.jiOhaeng] !== o);
 }
 
 /** 그 오행의 지지 뿌리가 **濕土뿐인가** — 土에만 뜻이 있다(다른 오행이면 항상 false). */
@@ -1111,7 +1148,19 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
         : `${src}쓸 수 있는 후보가 ${a.group}(${a.value}) 하나뿐이었습니다 — ${a.reason}.`;
     }
   }
-  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict, eokbuCandidates, decisive };
+  // 결손 진단 — 채택 용신을 생해 줄 오행이 원국에 **아예 없는가**.
+  //   있으면 「지금 쓸 수 있는 용신 + 운에서 와야 할 글자」를 함께 말해 준다.
+  let lacking: { value: Ohaeng; why: string } | undefined;
+  if (pillars) {
+    const feeder = (Object.keys(SAENG) as Ohaeng[]).find((x) => SAENG[x] === primary);
+    if (feeder && !feederAlive(feeder, pillars)) {
+      lacking = { value: feeder, why:
+        `용신 ${primary}를 받쳐 줄 ${feeder} 기운이 원국에 하나도 없습니다. ` +
+        `${primary}는 쓸 수 있지만 원천이 없어 오래 버티기 어려운 구조예요 — 원전은 이런 판을 「淸枯」라 부릅니다. ` +
+        `${feeder} 기운이 들어오는 시기·환경이 특히 중요합니다.` };
+    }
+  }
+  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict, eokbuCandidates, decisive, lacking };
 }
 
 /** 격국·용신·조후 한 묶음 + AI/풀이용 요약 문자열 */
