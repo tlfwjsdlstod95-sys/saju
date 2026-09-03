@@ -19,6 +19,7 @@ const num = { color: 'var(--gold)', fontWeight: 700 as const };
 export default function AccuracyPage() {
   const nCases = totalCases();
   const rPrev = '75.0';  // v9 재현율 — 변경 폭을 그대로 보여주기 위한 고정값
+  const rPrev10 = '78.1'; // v10 재현율
   // 표는 손으로 쓰지 않는다 — 지금 배포된 엔진으로 원전 명식을 다시 판정해 만든다.
   const rows = yongsinRows();
   const r = rate(rows);
@@ -304,6 +305,15 @@ export default function AccuracyPage() {
             무엇이 그 셋을 가르는지는 지지 속 기운의 <b>깊이</b>가 정해 줬습니다
             → 용신 원전 재현율 {rPrev}%→{r.pct}%, <b>가장 엄격한 &lsquo;미확인 세트&rsquo;는 59.1%→{rUnseen.pct}%</b>.
             강약 판정은 한 자리도 건드리지 않았습니다.</li>
+          <li><b>v11</b> — <b>같은 &lsquo;흙&rsquo;이라도 젖은 흙과 마른 흙을 구별</b>합니다.
+            원전은 진(辰)·축(丑)을 <b>습토(濕土)</b>, 미(未)·술(戌)을 <b>난토(煖土)</b>로 나눠
+            &lsquo;젖은 흙은 물을 막지 못하고 오히려 머금는다&rsquo;고 여섯 번에 걸쳐 말합니다.
+            그래서 기운이 새어 나가는 사주에서 도와줄 흙이 <b>젖은 흙뿐이면</b>,
+            흙(인성) 대신 <b>같은 편(비겁)</b>으로 몸을 세우는 쪽을 택하도록 고쳤습니다 —
+            원전이 「全賴酉時扶身」이라 한 자리입니다
+            → 용신 원전 재현율 {rPrev10}%→{r.pct}%.
+            이 구분은 저희가 정한 게 아니라 <b>지지 속 기운의 구성이 정해 줍니다</b>
+            (진·축은 물을, 미·술은 불을 품습니다).</li>
         </ul>
           </div>
         </details>
