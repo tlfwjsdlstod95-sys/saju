@@ -1,6 +1,6 @@
 // 격국(格局) · 용신(用神) · 조후(調候) — 정통 명리의 '구조 + 균형' 핵심.
 // 월지 지장간 투출로 격을 잡고, 억부 + 조후를 결합해 용신을 도출한다. 결정론, 외부 의존 0.
-import { GAN_OHAENG, JI_OHAENG, JIJANGGAN, SAENG, GEUK, JIJI, type Ohaeng, type Sipsin } from './constants';
+import { GAN_OHAENG, JI_OHAENG, JIJANGGAN, SAENG, GEUK, JIJI, CHEONGAN_HANJA, type Ohaeng, type Sipsin } from './constants';
 import { sipsin } from './elements';
 import type { Pillar } from './types';
 
@@ -52,11 +52,33 @@ export function computeGyeokguk(
   }
 
   const ss = sipsin(dayGan, chosen);
-  // 비견/겁재로 잡히면 건록격/양인격
-  if (ss === '비견') return { name: GYEOK_DESC.건록.name, key: '건록격', via: '월지=일간 오행(건록)', desc: GYEOK_DESC.건록.desc };
-  if (ss === '겁재') return { name: GYEOK_DESC.양인.name, key: '양인격', via: '월지 겁재(양인)', desc: GYEOK_DESC.양인.desc };
+
+  /**
+   * 격 설명에 **이 사람만의 유래**를 붙인다.
+   *   같은 정관격이라도 甲木이 酉月에 난 것과 庚金이 午月에 난 것은 다른 사주다.
+   *   그리고 자평진전은 **격이 천간에 드러났는가**를 실제로 구분한다 —
+   *   투출하면 뚜렷하게 드러나고, 지지에만 있으면 은근하게 작동한다.
+   *   ⚠️ 문장을 늘리려고 지어낸 게 아니다. `via`(투출 여부)는 v3부터 판정에 쓰던 값이고,
+   *     일간·월지는 명식 그 자체다. **엔진이 이미 아는 것을 말하게 한 것뿐이다.**
+   *   (형제 쌍 설명문 겹침 9.90% → 아래 측정 참조)
+   */
+  const gan = CHEONGAN_HANJA[dayGan];
+  const dayO = GAN_OHAENG[dayGan];
+  const wolji = JIJI[monthJi];
+  const origin = (label: string, tuchul: boolean) =>
+    `${gan}(${dayO}) 일간이 ${wolji}월에 나 ${label}이 됐습니다. `
+    + (tuchul
+      ? '격을 이루는 기운이 천간에 드러나 있어, 이 성향이 밖에서도 뚜렷하게 보입니다. '
+      : '격을 이루는 기운이 지지 안에 머물러, 겉으로 요란하지 않고 은근하게 작동합니다. ');
+
+  if (ss === '비견')
+    return { name: GYEOK_DESC.건록.name, key: '건록격', via: '월지=일간 오행(건록)',
+      desc: origin('건록격', false) + GYEOK_DESC.건록.desc };
+  if (ss === '겁재')
+    return { name: GYEOK_DESC.양인.name, key: '양인격', via: '월지 겁재(양인)',
+      desc: origin('양인격', false) + GYEOK_DESC.양인.desc };
   const d = GYEOK_DESC[ss];
-  return { name: d.name, key: ss, via, desc: d.desc };
+  return { name: d.name, key: ss, via, desc: origin(d.name, via.includes('투출')) + d.desc };
 }
 
 // ── 조후(調候) — 계절 한난조습 ──
@@ -67,25 +89,75 @@ const WINTER = [11, 0, 1]; // 亥子丑
 const SUMMER = [5, 6, 7];  // 巳午未
 const AUTUMN = [8, 9, 10]; // 申酉戌 — 금왕절, 한기가 돌기 시작
 
+/**
+ * 월지 열둘의 **실제 성격** — 같은 겨울이라도 亥·子·丑은 다르다.
+ *   원전이 그 차이를 계속 쓴다: 亥는 甲木을 품어 아직 기가 있고(「寒雖甚要有氣也」),
+ *   子는 물이 가장 깊으며(「崑崙之水沖奔無情」), 丑은 언 濕土라 「晦火蓄水」한다.
+ * ⚠️ 설명문을 늘리려고 지어낸 문구가 아니다 — 엔진이 이미 아는 사실을 말하게 한 것뿐이다.
+ *   (v14까지 판정에 쓰던 濕土/煖土·여기/중기 구분이 그대로 여기서도 근거가 된다)
+ */
+const MONTH_MOOD: string[] = [
+  '한겨울 한복판(子月)이라 물이 가장 깊습니다',           // 0 子
+  '늦겨울(丑月)이라 땅이 얼어 물을 머금고 있습니다',        // 1 丑
+  '이른 봄(寅月)이라 언 기운 속에 온기가 막 돌기 시작합니다', // 2 寅
+  '한봄(卯月)이라 뻗어 나가는 기운이 가장 왕합니다',        // 3 卯
+  '늦봄(辰月)이라 땅이 젖어 물을 담고 있습니다',           // 4 辰
+  '초여름(巳月)이라 불이 막 일어섭니다',                  // 5 巳
+  '한여름 한복판(午月)이라 불기운이 가장 셉니다',           // 6 午
+  '늦여름(未月)이라 땅이 메마른 채 열기를 품고 있습니다',    // 7 未
+  '초가을(申月)이라 서늘한 기운이 처음 듭니다',            // 8 申
+  '한가을(酉月)이라 서릿발 같은 기운이 가장 날카롭습니다',   // 9 酉
+  '늦가을(戌月)이라 땅이 마른 채 온기를 갈무리합니다',      // 10 戌
+  '초겨울(亥月)이라 물이 불어나기 시작합니다',             // 11 亥
+];
+
+/** 그 계절에서 **이 일간이 겪는 일** — 원전이 쓰는 표현을 그대로 옮겼다. */
+const DAY_IN_SEASON: Record<'한습' | '조열' | '서늘', Record<Ohaeng, string>> = {
+  한습: {
+    목: '겨울 나무는 얼어 웅크립니다(木凋)', 화: '겨울 불은 꺼질까 위태롭습니다',
+    토: '겨울 흙은 얼어 무엇을 기르기 어렵습니다(土寒)', 금: '겨울 쇠는 차고 물에 잠깁니다(金寒水冷)',
+    수: '겨울 물은 불어나 넘치기 쉽습니다',
+  },
+  조열: {
+    목: '여름 나무는 타들어갑니다(木焚)', 화: '여름 불은 지나치게 타오릅니다(火炎)',
+    토: '여름 흙은 갈라지고 메마릅니다(土燥)', 금: '여름 쇠는 녹아내립니다(火旺金鎔)',
+    수: '여름 물은 마릅니다(水涸)',
+  },
+  서늘: {
+    목: '가을 나무는 잎을 떨굽니다', 화: '가을 불은 힘이 줄어듭니다',
+    토: '가을 흙은 결실을 내주며 얇아집니다', 금: '가을 쇠는 날카로워지되 차가워집니다',
+    수: '가을 물은 맑아지되 서늘해집니다',
+  },
+};
+
 export function computeJohu(dayGan: number, monthJi: number): Johu {
   const dayO = GAN_OHAENG[dayGan];
+  const mood = MONTH_MOOD[monthJi];
+  const gan = CHEONGAN_HANJA[dayGan];
+
   if (WINTER.includes(monthJi)) {
-    const urgent = dayO === '금' || dayO === '수'; // 금수 일간 겨울생 = 강한 한습
+    const urgent = dayO === '금' || dayO === '수';
     return { climate: '한습', need: '화', urgent,
-      desc: `겨울에 난 ${urgent ? '금·수' : ''} 사주라 기운이 차고 습합니다. 따뜻한 불(火) 기운 — 열정·활동·양지·사람의 온기가 당신을 녹여 풀어줍니다.${urgent ? ' 조후가 시급한 구조예요.' : ''}` };
+      desc: `${mood}. ${DAY_IN_SEASON.한습[dayO]} — ${gan}(${dayO}) 일간에게 지금 필요한 건 `
+        + `따뜻한 불(火) 기운입니다. 열정·활동·양지·사람의 온기가 언 기운을 녹여 줍니다.`
+        + (urgent ? ' 금·수 일간이 겨울에 나면 한기가 특히 깊어, 조후가 시급한 구조예요.' : '') };
   }
   if (SUMMER.includes(monthJi)) {
-    const urgent = dayO === '목' || dayO === '화'; // 목화 일간 여름생 = 강한 조열
+    const urgent = dayO === '목' || dayO === '화';
     return { climate: '조열', need: '수', urgent,
-      desc: `여름에 난 ${urgent ? '목·화' : ''} 사주라 기운이 뜨겁고 메마릅니다. 시원한 물(水) 기운 — 휴식·지혜·차분함·물가가 당신을 식혀 균형을 줍니다.${urgent ? ' 조후가 시급한 구조예요.' : ''}` };
+      desc: `${mood}. ${DAY_IN_SEASON.조열[dayO]} — ${gan}(${dayO}) 일간에게 지금 필요한 건 `
+        + `시원한 물(水) 기운입니다. 휴식·지혜·차분함·물가가 열기를 식혀 균형을 줍니다.`
+        + (urgent ? ' 목·화 일간이 여름에 나면 열기가 특히 강해, 조후가 시급한 구조예요.' : '') };
   }
-  // 가을 금·수 일간: 조후론에선 서늘한 금왕절에 정화(丁火) 등 불 기운을 먼저 보는 견해가 있음 → 보조 처방으로 연결
   if (AUTUMN.includes(monthJi) && (dayO === '금' || dayO === '수')) {
     return { climate: '서늘', need: '화', urgent: false,
-      desc: '가을 금왕절에 난 금·수 사주라 서서히 한기가 돕니다. 강약 균형(억부)이 우선이지만, 조후 관점에선 따뜻한 불(火) — 표현·활동·양지의 기운이 결실을 돕는 보조 처방이에요.' };
+      desc: `${mood}. ${DAY_IN_SEASON.서늘[dayO]} — ${gan}(${dayO}) 일간이라 서서히 한기가 돕니다. `
+        + `강약 균형(억부)이 우선이지만, 조후로 보면 따뜻한 불(火) — 표현·활동·양지의 기운이 `
+        + `결실을 돕는 보조 처방이에요.` };
   }
   return { climate: '온화', need: null, urgent: false,
-    desc: '계절의 기운이 치우치지 않아, 한난조습보다 강약 균형(억부)이 더 중요한 사주입니다.' };
+    desc: `${mood}. ${gan}(${dayO}) 일간에게 계절의 치우침이 크지 않아, `
+      + `한난조습보다 강약 균형(억부)이 더 중요한 사주입니다.` };
 }
 
 // ── 용신(用神) — 억부 + 조후 결합 ──
