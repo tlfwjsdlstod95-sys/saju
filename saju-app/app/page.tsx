@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { chartId } from '@/lib/chartId';
 import type { SajuResult, Pillar, LuckPillar } from '@/lib/saju/types';
 import { parseReadingStream } from '@/lib/saju/readingMeta';
-import { ENGINE_VERSION } from '@/lib/saju/version';
+import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
 import { computeHapchung } from '@/lib/saju/hapchung';
@@ -220,8 +220,10 @@ export default function Home() {
   const gaeunQ = usePremiumData<GaeunResult>(premium && !!analyzed, 'gaeun', analyzed ?? null);
 
   // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
+  //   ⚠️ READING_TAG 를 반드시 넣는다. 판정이 바뀌거나 **설명문만 바뀌어도**
+  //      옛 문장으로 쓰인 캐시를 버려야 한다 (설명문은 프롬프트에 그대로 들어간다).
   const chartKey = (b: any, tier: string, tn: string) =>
-    `saju_ai_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}-${b.jasiMode || 'yaja'}:${tier}:${tn}`;
+    `saju_ai_${READING_TAG}:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}-${(b.name || '').trim()}-${b.jasiMode || 'yaja'}:${tier}:${tn}`;
 
   async function runAnalysis(bodyObj: any) {
     setError(''); setResult(null); setAnalyzed(null); setAi(null); setAiErr('');
