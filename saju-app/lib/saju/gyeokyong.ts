@@ -225,8 +225,9 @@ export interface GwansalFlags {
   jesal: boolean;  // 六曰 制殺太過
   heo: boolean;    // 虛用 — 원국에 없는 오행을 用神 후보로 허용(六曰이 켜졌을 때만 의미가 있다)
   seolin: boolean; // 洩重用印 — 식상이 판을 덮으면 강약 불문 印을 방어 후보로 연다
+  jonggd: boolean; // 從勢 진입 가드 — 일간이 여기·묘고에 뿌리를 두면 從하지 않는다
 }
-export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true };
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true };
 /**
  * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
  *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
@@ -235,7 +236,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -667,6 +668,40 @@ export function evaluateEokbu(
   return scored.sort((a, b) => b.score - a.score);
 }
 
+/**
+ * 從勢로 가지 **않는** 조건 — 임철초가 세 자리에서 직접 이유를 밝힌 것을 그대로 옮긴다.
+ *   ① 「生于未月, **火有餘氣**, 必以未中丁火爲用」 — 若生丑戌月爲從兒格 (傷官 p.85 / JCS-053)
+ *      같은 丙火라도 **未월이면 從하지 않고 戌·丑월이면 從한다**고 대조까지 해 놓았다.
+ *   ② 「喜支坐三辰, **通根身庫**」 (官殺 p.65 / JCS-079)
+ *   ③ 「幸而日時坐戌**通根身庫**, 更妙戊土透出」 (官殺 p.66 / JCS-081)
+ *
+ * 무엇이 ①과 ②③을 가르는가 — **지장간 테이블이 이미 답을 갖고 있다.**
+ *   未의 丁은 **여기(餘氣) 9일** — 앞 계절의 잔기라 아직 따뜻하다.
+ *   戌의 丁·辰의 癸는 **중기(中氣) 3일** — 묘고에 갇힌 기운이라 하나로는 약하다.
+ *   그래서 ①은 한 자리로 충분하고, ②③은 **겹쳐야** 한다(辰 셋 · 戌 둘).
+ *   임철초 자신이 ①에서 「戌월 하나면 從兒」라고 못 박아, 묘고 1개는 從을 막지 못함을 알려 준다.
+ *
+ * ⚠️ 이 함수는 **從勢 분기 진입만** 막는다. 강약 점수·억부 후보·통근 계산에는 손대지 않는다.
+ *   `elements.ts` 에 전역 강약을 건드렸다가 되돌린 실패가 두 번 기록돼 있다 —
+ *   그 길로 다시 가지 않으려고 일부러 국소 가드로 만들었다.
+ */
+function notFollowing(
+  dayO: Ohaeng,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+): boolean {
+  // ① 월지의 **여기**가 일간 오행 — 「火有餘氣」
+  const mj = JIJANGGAN[pillars.month.ji];
+  if (GAN_OHAENG[mj.yeogi.gan] === dayO) return true;
+  // ② 일간 오행을 **중기**로 품은 지지(=身庫)가 둘 이상 — 「通根身庫」
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  let go = 0;
+  for (const p of list) {
+    const j = JIJANGGAN[p.ji];
+    if (j.junggi && GAN_OHAENG[j.junggi.gan] === dayO) go++;
+  }
+  return go >= 2;
+}
+
 export function computeYongsin(dayGan: number, strength: number, monthJi: number, counts?: Partial<Record<Ohaeng, number>>, pillars?: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): Yongsin {
   const dayO = GAN_OHAENG[dayGan];
 
@@ -744,7 +779,7 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
       conflict: false, eokbuCandidates: [],
       desc: `명식이 일간 쪽으로 극단적으로 기울어, 일반 억부가 아니라 대세를 따르는 종왕격(從旺格)으로 봅니다. 왕한 ${dayO} 기운을 거스르지 말고 올라타는 것이 길 — ${dayO}·${huisin} 기운의 시기·환경이 약이고, 정면으로 거스르는 ${gisin} 기운이 오히려 탈이 됩니다.` };
   }
-  if (strength <= 0.03 && counts) {
+  if (strength <= 0.03 && counts && !(GS.jonggd && pillars && notFollowing(dayO, pillars))) {
     // 종세: 일간이 기댈 곳 없이 약하고 특정 세력이 지배 → 식상(종아)/재성(종재)/관성(종살)을 따름
     const cand: [Ohaeng, string][] = [
       [SAENG[dayO], '종아격(從兒格)'], [GEUK[dayO], '종재격(從財格)'], [gwanOhaeng(dayO), '종살격(從殺格)'],
