@@ -103,6 +103,13 @@ export interface Yongsin {
   conflict: boolean;
   /** 억부 후보 평가 결과(점수순). 왜 저 오행을 골랐고 다른 후보는 왜 탈락했는지의 근거 */
   eokbuCandidates: EokbuCandidate[];
+  /**
+   * **무엇이 승부를 갈랐는가** — 1위와 2위를 한 줄로 대조한다.
+   *   후보 점수만 나열하면 사용자는 '왜 저게 이겼는지'를 못 읽는다.
+   *   점수 차가 근소하면(1.5 이내) 그 사실 자체를 말해 준다 —
+   *   아슬아슬한 판정을 확정적인 것처럼 보이게 하지 않는 게 이 화면의 존재 이유다.
+   */
+  decisive?: string;
 }
 
 /**
@@ -132,6 +139,7 @@ const iga = (w: string) => `${w}${jong(w) ? '이' : '가'}`;
 const gwa = (w: string) => `${w}${jong(w) ? '과' : '와'}`;
 const eul = (w: string) => `${w}${jong(w) ? '을' : '를'}`;
 const ira = (w: string) => `${w}${jong(w) ? '이라' : '라'}`;
+const eun = (w: string) => `${w}${jong(w) ? '은' : '는'}`;
 
 // 생아자(인성 오행): X where SAENG[X]=dayO
 function inseongOhaeng(dayO: Ohaeng): Ohaeng {
@@ -324,6 +332,13 @@ export interface EokbuCandidate {
   structuralRoot: '정기' | '합국' | '지장간' | '없음';
   /** 관계적 뿌리 — 이 오행을 생해 주는 세력이 원국에서 힘을 쓰는가(財滋弱殺 류). 아직 판정에 반영하지 않는다. */
   relationalRoot: boolean;
+  /**
+   * 이 후보를 **연(또는 밀어올린) 원전 분기**와 그 근거 구절.
+   *   기본 억부(신약이면 인성·비겁 / 그 외 식상·재성·관살)로 생긴 후보에는 없다.
+   *   화면에 그대로 보여 주기 위한 것이다 — 엔진이 왜 평소와 다른 후보를 꺼냈는지
+   *   사용자가 원문 한 줄까지 확인할 수 있어야 한다.
+   */
+  origin?: { branch: string; quote: string };
 }
 
 /** 원국에서 그 오행이 어떻게 존재하는가 (일간 자신의 천간은 세지 않는다 — 강약 계산과 같은 원칙) */
@@ -637,6 +652,9 @@ export function evaluateEokbu(
   let inAdd = 0, biAdd = 0, sikAdd = 0, jaeAdd = 0, gwanAdd = 0;
   const extra: [EokbuCandidate['group'], Ohaeng, number][] = [];
   const heoCand: Ohaeng[] = [];  // 虛用 후보 — 원국에 없는 오행. 六曰 갈래에서만 채워진다.
+  //  어느 원전 분기가 어느 후보를 열었는지 — 결과 화면에 그대로 보여 주기 위한 기록.
+  const origins = new Map<string, { branch: string; quote: string }>();
+  const mark = (g: EokbuCandidate['group'], v: Ohaeng, branch: string, quote: string) => origins.set(`${g}:${v}`, { branch, quote });
   if (sanggwan) {
     if (weak) {
       // 日主弱 + 傷官旺 → 用印. 단 印이 없으면 用比刦(三曰 傷官用刦格).
@@ -656,12 +674,12 @@ export function evaluateEokbu(
       //   방향은 '무엇이 더 무거운가'로 가른다.
       //     식상 > 인성 → 설기가 문제 → 印으로 制傷生身 「必須用己土之印, 使其止水生金」(JCS-038)
       //     인성 > 식상 → 印이 문제 → 傷官으로 洩 「必以卯木爲用」(JCS-050)·「必以寅木爲用」(JCS-051)
-      if (c(inO) >= 2 && c(inO) > c(sangO)) extra.push(['식상', sangO, 6.5]);
+      if (c(inO) >= 2 && c(inO) > c(sangO)) { extra.push(['식상', sangO, 6.5]); mark('식상', sangO, '상관격 印重', '地支印星並旺 … 必以卯木爲用'); }
     } else {
       // 日主旺 + 傷官亦旺 + 財 있음 → 用財 (二曰 傷官用財格)
-      if (c(sangO) >= 2 && c(jaeO) >= 1) jaeAdd += 5.5;
+      if (c(sangO) >= 2 && c(jaeO) >= 1) { jaeAdd += 5.5; mark('재성', jaeO, '상관격 二曰 用財', '日主旺, 傷官亦旺, 宜用財'); }
       // 日主旺 + 比刦多 + 財星衰 + 傷官輕 → 用官
-      if (c(dayO) >= 3 && c(jaeO) <= 1 && c(sangO) <= 1) gwanAdd += 4.0;
+      if (c(dayO) >= 3 && c(jaeO) <= 1 && c(sangO) <= 1) { gwanAdd += 4.0; mark('관살', gwanO2, '상관격 五曰 用官', '日主旺, 比刦多, 財星衰, 傷官輕, 宜用官'); }
     }
   }
   // ── v8 官殺 파이프라인 — 갈래별로 분리해 적용한다 ──────────────────
@@ -670,20 +688,20 @@ export function evaluateEokbu(
   if (gs) {
     // 四曰 合官留殺 — 혼잡이 합으로 정리되면 남은 관살이 '깨끗해져' 쓸 수 있다.
     //   「喜其合殺留官, 官星坐祿」(JCS-084) · 「丁火獨清 … 無刦奪官有生扶」(JCS-085)
-    if (GS.hap && gs.resolvedByHap) gwanAdd += 4.5;
+    if (GS.hap && gs.resolvedByHap) { gwanAdd += 4.5; mark('관살', gwanO2, '官殺 四曰 合官留殺', '喜其合殺留官, 官星坐祿'); }
 
     // 一曰 財滋弱殺 — 殺이 제 뿌리가 없고 財가 지지 정기로 서 있으면 財를 쓴다.
     //   「若無寅木則丙火無根, 必要用財滋殺」(JCS-071) · 「用財滋殺明矣」(JCS-072)
     if (GS.jaeja && !gs.threat) {
       const gwanPr = presence(gwanO2, pillars), jaePr = presence(jaeO, pillars);
-      if (gwanPr.stems > 0 && gwanPr.jeonggi === 0 && hapguk(gwanO2, pillars) === 0 && jaePr.jeonggi > 0) jaeAdd += 4.5;
+      if (gwanPr.stems > 0 && gwanPr.jeonggi === 0 && hapguk(gwanO2, pillars) === 0 && jaePr.jeonggi > 0) { jaeAdd += 4.5; mark('재성', jaeO, '官殺 一曰 財滋弱殺', '若無寅木則丙火無根, 必要用財滋殺'); }
     }
 
     // 二曰 殺重用印 / 五曰 官殺混雜 — 殺이 횡행하면 **강약을 묻지 않고** 印을 방어 후보로 연다.
     //   「眾殺橫行, 一仁可化」(p.63) · 「寅能納水化殺生身 … 印星得用」(p.73)
     //   ⚠️ 신강(≥0.55)이면 열지 않는다. 이미 몸이 든든하면 원전은 印이 아니라 食으로 설한다 —
     //     印을 더 얹으면 「水多木漂」가 된다(JCS-009 실측으로 깨졌다).
-    if (GS.salin && gs.threat && c(inO) > 0 && !weak && strength < 0.55) extra.push(['인성', inO, 7.0]);
+    if (GS.salin && gs.threat && c(inO) > 0 && !weak && strength < 0.55) { extra.push(['인성', inO, 7.0]); mark('인성', inO, '官殺 二曰 殺重用印', '眾殺橫行, 一仁可化'); }
 
     // 三曰 食神制殺 — 印이 지지에 서 있지 않으면 食傷으로 때려잡는다.
     //   「一將當關, 羣凶自伏」(p.65) · 「丙火獨透, 制殺扶身」(p.66)
@@ -694,7 +712,7 @@ export function evaluateEokbu(
     if (GS.sikje && gs.threat && c(sangO) > 0 && weak) {
       const inPr = presence(inO, pillars);
       const sikBreaksJohu = !!johuNeed && GEUK[sangO] === johuNeed;
-      if (inPr.jeonggi === 0 && inPr.stems === 0 && !sikBreaksJohu) extra.push(['식상', sangO, 7.0]);
+      if (inPr.jeonggi === 0 && inPr.stems === 0 && !sikBreaksJohu) { extra.push(['식상', sangO, 7.0]); mark('식상', sangO, '官殺 三曰 食神制殺', '一將當關, 羣凶自伏'); }
     }
 
     // 六曰 制殺太過 — 食傷이 殺의 두 배를 넘으면 殺이 죽는다.
@@ -739,8 +757,8 @@ export function evaluateEokbu(
       //   「金寒水冷, 過于洩氣, **全賴酉時扶身** … 用神必在酉金」(性情 / JCS-007) — 印(己丑辰)이 전부 濕土다.
       //   반대쪽 대조: 「喜支藏**煖土**, 足以砥定中流」(傷官 p.80 / JCS-070) — 戌이 있어 印을 쓴다.
       const inRoots = onlySeupto(inO, pillars);
-      if (GS.seupin && inRoots) extra.push(['비겁', dayO, 7.0]);
-      else extra.push(['인성', inO, 7.0]);
+      if (GS.seupin && inRoots) { extra.push(['비겁', dayO, 7.0]); mark('비겁', dayO, '洩重 + 濕土印', '嫌其辰爲濕土, 生金拱水, 未足幫身 → 全賴酉時扶身'); }
+      else { extra.push(['인성', inO, 7.0]); mark('인성', inO, '洩重用印', '傷官太旺, 過於洩氣, 用神在土, 不在火也'); }
     }
   }
 
@@ -749,6 +767,11 @@ export function evaluateEokbu(
     : [['식상', SAENG[dayO], 6.0 + sikAdd], ['재성', jaeO, 2.5 + jaeAdd], ['관살', gwanO2, 2.0 + gwanAdd], ...extra];
   const scored = defs
     .map(([g, v, b]) => scoreCandidate(g, v, b, pillars, counts, johuNeed, g === '재성' && jaeAdd > 0));
+  // 원전 분기가 연 후보에 출처를 붙인다(표시 전용 — 점수에는 영향이 없다).
+  for (const c of scored) {
+    const o = origins.get(`${c.group}:${c.value}`);
+    if (o) c.origin = o;
+  }
   // 虛用 후보는 **살아 있는 후보가 하나도 없을 때에만** 얹는다.
   //   원국에 쓸 것이 남아 있으면 그걸 쓰는 게 원전의 기본이다(「置之不用」은 없는 걸 쓰라는 뜻이 아니다).
   for (const v of heoCand) {
@@ -1072,7 +1095,23 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   const vals = Array.from(new Set(competing.map((b) => b.value) as Ohaeng[]));
   const conflict = vals.length > 1;
 
-  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict, eokbuCandidates };
+  // 1·2위 대조 한 줄 — 억부로 결정됐을 때만 뜻이 있다.
+  let decisive: string | undefined;
+  if (method === '억부') {
+    const live = eokbuCandidates.filter((c) => c.usable);
+    const [a, b] = live;
+    if (a) {
+      const gap = b ? a.score - b.score : Infinity;
+      const src = a.origin ? `${a.origin.branch} — 「${a.origin.quote}」에 따라 연 후보입니다. ` : '';
+      decisive = b
+        ? `${src}${a.group}(${a.value})${jong(a.value) ? '이' : '가'} ${b.group}(${b.value})${jong(b.value) ? '을' : '를'} ${gap.toFixed(1)}점 차로 앞섰습니다. ` +
+          (gap < 1.5
+            ? `⚠️ 점수 차가 작아 아슬아슬한 판정입니다 — 두 기운 다 참고하세요. ${a.value}: ${a.reason} / ${b.value}: ${b.reason}`
+            : `${eun(a.value)} ${a.reason}. ${eun(b.value)} ${b.reason}.`)
+        : `${src}쓸 수 있는 후보가 ${a.group}(${a.value}) 하나뿐이었습니다 — ${a.reason}.`;
+    }
+  }
+  return { primary, eokbu, johu, huisin, gisin, method, desc, bases, conflict, eokbuCandidates, decisive };
 }
 
 /** 격국·용신·조후 한 묶음 + AI/풀이용 요약 문자열 */
