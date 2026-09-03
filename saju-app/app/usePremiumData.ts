@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 
-export type PremiumKind = 'gaeun' | 'auspicious' | 'yearly';
+export type PremiumKind = 'gaeun' | 'auspicious' | 'yearly' | 'sin12';
 
 export function usePremiumData<T>(enabled: boolean, kind: PremiumKind, body: Record<string, unknown> | null) {
   const [data, setData] = useState<T | null>(null);

@@ -806,3 +806,33 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 }
 .cand-lack > b { color: var(--mystic, #b9a6e6); display: block; margin-bottom: 4px; }
 .cand-lack-src { margin-top: 6px; font-size: 12.5px; opacity: 0.72; }
+
+/* ── 신살 길흉반전 (유료 구간) ───────────────────────────────
+   무료: 살 이름·자리·기본 뜻까지. 유료: 그 살이 내 용신 기준으로 어느 쪽으로 뒤집히는지.
+   가리는 선을 「살 몇 개를 숨긴다」가 아니라 「표면은 열고 깊이를 잠근다」로 그었다. */
+.flip-badge {
+  margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap;
+}
+.flip-badge.positive { background: rgba(93, 168, 121, 0.16); color: #6fbf8e; border: 1px solid rgba(93, 168, 121, 0.35); }
+.flip-badge.negative { background: rgba(196, 110, 96, 0.16); color: #d68a7a; border: 1px solid rgba(196, 110, 96, 0.35); }
+.flip-line {
+  margin-top: 7px; padding-left: 9px; font-size: 13px; line-height: 1.62;
+  border-left: 2px solid var(--line);
+}
+.flip-line.positive { border-left-color: rgba(93, 168, 121, 0.5); }
+.flip-line.negative { border-left-color: rgba(196, 110, 96, 0.5); }
+.flip-locked {
+  margin-top: 7px; font-size: 12.8px; line-height: 1.6; color: var(--text-mute);
+  padding-left: 9px; border-left: 2px dashed var(--line);
+}
+.flip-gate {
+  margin-top: 14px; padding: 16px 16px 14px; border-radius: 12px;
+  border: 1px solid rgba(198, 164, 92, 0.32); background: rgba(198, 164, 92, 0.06);
+}
+.flip-gate-h { font-size: 15.5px; font-weight: 700; line-height: 1.5; margin-bottom: 8px; }
+.flip-gate-h b { color: var(--gold); }
+.flip-gate p { font-size: 13.2px; line-height: 1.72; color: var(--text-mute); margin: 0 0 8px; }
+.flip-gate p b { color: var(--text); }
+.flip-gate-what { padding-top: 8px; border-top: 1px dashed var(--line); }
+.flip-gate .btn { margin-top: 4px; }

@@ -218,6 +218,12 @@ export default function Home() {
   //   결제한 명식과 어긋나지 않게. 개운법은 카드와 가이드북 PDF 가 같이 쓰므로 여기서 한 번만 받는다.
   const premiumBody = () => (analyzed ?? reqBody());
   const gaeunQ = usePremiumData<GaeunResult>(premium && !!analyzed, 'gaeun', analyzed ?? null);
+  // 신살 길흉반전 — 무료 응답에는 아예 실려 오지 않는다(서버에서 뺀다). 결제 후 여기서 받아온다.
+  type FlipItem = { name: string; baseTone: string; flip: null | { dir: 'positive' | 'negative'; label: string; spot: string; line: string; tone: string } };
+  type Sin12Premium = { byYear: FlipItem[]; byDay: FlipItem[]; sinsal: FlipItem[]; yongsin: { primary: string; huisin: string; gisin: string } };
+  const flipQ = usePremiumData<Sin12Premium>(premium && !!analyzed, 'sin12', analyzed ?? null);
+  const flipOf = (name: string) => flipQ.data?.byYear.find((x) => x.name === name)?.flip ?? null;
+  const flipLock = (result as any)?.advanced?.flipLock as { flips: number; names: string[]; total: number } | undefined;
 
   // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
   //   ⚠️ READING_TAG 를 반드시 넣는다. 판정이 바뀌거나 **설명문만 바뀌어도**
@@ -548,9 +554,19 @@ export default function Home() {
             </div>
             {result.advanced.sinsal.length > 0 && (
               <div className="sinsal-wrap">
-                {result.advanced.sinsal.map((s, i) => (
-                  <div className={`sinsal ${s.tone}`} key={i}><div className="sinsal-h"><b>{s.name}</b> <span>{s.targets}</span></div><p>{s.desc}</p></div>
-                ))}
+                {result.advanced.sinsal.map((s, i) => {
+                  const f = flipQ.data?.sinsal.find((x) => x.name === s.name)?.flip ?? null;
+                  return (
+                    <div className={`sinsal ${f ? f.tone : s.tone}`} key={i}>
+                      <div className="sinsal-h">
+                        <b>{s.name}</b> <span>{s.targets}</span>
+                        {f && <span className={`flip-badge ${f.dir}`}>{f.dir === 'positive' ? '길로 반전' : '흉으로 굳음'}</span>}
+                      </div>
+                      <p>{s.desc}</p>
+                      {f && <p className={`flip-line ${f.dir}`}>※ {f.line}</p>}
+                    </div>
+                  );
+                })}
               </div>
             )}
             {/* 12신살 — 삼합 기준 12개 체계 (도화=연살, 역마, 화개 포함) */}
@@ -558,13 +574,45 @@ export default function Home() {
               <h3 className="hapchung-title">12신살(十二神殺)</h3>
               <div className="meta" style={{ marginBottom: 10 }}>띠(년지)를 기준으로 본 열두 가지 살. 명식에 실제로 걸린 것만 표시합니다.</div>
               <div className="sinsal-wrap">
-                {result.advanced.sin12.byYear.map((x) => (
-                  <div className={`sinsal ${x.tone}`} key={x.name}>
-                    <div className="sinsal-h"><b>{x.name}{x.alias ? ` (${x.alias})` : ''}</b> <span>{x.ji} · {x.at.join('·')}</span></div>
-                    <p>{x.desc} <a href={`/sinsal/${x.name}`} style={{ color: 'var(--gold)', whiteSpace: 'nowrap' }}>{x.name} 자세히 →</a></p>
-                  </div>
-                ))}
+                {result.advanced.sin12.byYear.map((x) => {
+                  const f = flipOf(x.name);
+                  const willFlip = flipLock?.names.includes(x.name);
+                  return (
+                    <div className={`sinsal ${f ? f.tone : x.tone}`} key={x.name}>
+                      <div className="sinsal-h">
+                        <b>{x.name}{x.alias ? ` (${x.alias})` : ''}</b> <span>{x.ji} · {x.at.join('·')}</span>
+                        {f && <span className={`flip-badge ${f.dir}`}>{f.dir === 'positive' ? '길로 반전' : '흉으로 굳음'}</span>}
+                      </div>
+                      <p>{x.desc} <a href={`/sinsal/${x.name}`} style={{ color: 'var(--gold)', whiteSpace: 'nowrap' }}>{x.name} 자세히 →</a></p>
+                      {f && <p className={`flip-line ${f.dir}`}>※ {f.line}</p>}
+                      {!f && willFlip && (
+                        <p className="flip-locked">
+                          🔒 이 별은 당신 명식에서 <b>그대로 읽으면 안 됩니다</b> — 앉은 글자가 용신 편인지 기신 편인지에 따라 뜻이 뒤집혀요.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+              {!premium && flipLock && flipLock.flips > 0 && (
+                <div className="flip-gate">
+                  <div className="flip-gate-h">
+                    걸린 {flipLock.total}개 중 <b>{flipLock.flips}개</b>가 당신 명식에서 <b>뒤집힙니다</b>
+                  </div>
+                  <p>
+                    12신살이 어떤 글자에 붙는지는 띠와 지지만 알면 어디서든 나와요. 그래서 위까지는 전부 열어뒀습니다.
+                    <br />
+                    하지만 <b>같은 장성살이라도 그 글자가 내 용신 편이면 힘이 되고, 기신 편이면 오히려 반감됩니다.</b>
+                    {' '}이 판정은 용신이 서 있어야만 가능해서, 살 배치표만 가진 곳에서는 나올 수 없어요.
+                  </p>
+                  <p className="flip-gate-what">
+                    정밀 리포트에서 열리는 것 — <b>{flipLock.names.join(' · ')}</b>가 각각 어느 쪽으로 뒤집히는지,
+                    그 근거가 되는 글자(용신·희신·기신·구신)와 이유 한 줄씩.
+                  </p>
+                  <button className="btn" onClick={() => setPayOpen(true)}>내 신살이 어느 쪽인지 보기 →</button>
+                </div>
+              )}
+              {premium && flipQ.loading && <p className="meta">길흉반전을 불러오는 중…</p>}
               <p style={{ marginTop: 10, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
                 ※ 12신살은 <b>년지(띠) 기준</b>이 통설이라 위 목록은 년지로 잡았어요. 일지 기준으로 보는 학파도 있어 함께 적어둡니다 —{' '}
                 <b>일지 기준</b>: {result.advanced.sin12.byDay.map((x) => `${x.name}(${x.ji})`).join(', ')}.
