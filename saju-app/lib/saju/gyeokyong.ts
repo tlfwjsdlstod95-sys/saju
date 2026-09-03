@@ -224,8 +224,9 @@ export interface GwansalFlags {
   sikje: boolean;  // 三曰 食神制殺
   jesal: boolean;  // 六曰 制殺太過
   heo: boolean;    // 虛用 — 원국에 없는 오행을 用神 후보로 허용(六曰이 켜졌을 때만 의미가 있다)
+  seolin: boolean; // 洩重用印 — 식상이 판을 덮으면 강약 불문 印을 방어 후보로 연다
 }
-export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true };
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true };
 /**
  * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
  *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
@@ -234,7 +235,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -632,6 +633,23 @@ export function evaluateEokbu(
         if (!presence(rescue, pillars).present) heoCand.push(rescue);
       }
     }
+  }
+
+  // ── 洩重用印 — 官殺의 「殺重用印」과 정확히 대칭인 자리 ─────────────────
+  //  v8 은 **관살**이 횡행하면 강약을 묻지 않고 印을 열었다(「眾殺橫行, 一仁可化」).
+  //  원전은 **식상**이 판을 덮을 때도 똑같이 印을 쓴다 — 剋이 아니라 洩로 몸이 무너지는 경우다.
+  //    「傷官太旺, **過於洩氣**, 用神在土, 不在火也」(傷官 p.35 계열 / JCS-001)
+  //    「必須用己土之印, 使其**止水**生金衛火」(假神 p.106 / JCS-038)
+  //    「金水傷官當令, 喜支藏煖土, **足以砥定中流**」(傷官 p.80 / JCS-070)
+  //  세 사례 모두 결론이 印이고, 앞의 둘은 신약이라 지금도 맞는다.
+  //  못 맞히는 건 **중화 구간**뿐이다 — 억부가 중화·신강에서 인성 후보를 아예 만들지 않기 때문.
+  //  ⚠️ 조건을 좁힌다(전부 실측으로 넣은 것이다):
+  //    ① 식상을 **지장간까지** 세서 4 이상 — 임철초의 산술과 같은 방식(六曰에서 확인한 것).
+  //    ② 신강(>=0.55)이면 열지 않는다. 몸이 든든하면 洩는 병이 아니라 秀氣다.
+  //    ③ 印이 조후를 거스르면 열지 않는다 — 冬金에 濕土를 더하면 얼어붙는다.
+  if (GS.seolin && !weak && strength < 0.55 && deepCount(sangO, pillars) >= 4 && c(inO) > 0) {
+    const inBreaksJohu = !!johuNeed && GEUK[inO] === johuNeed;
+    if (!inBreaksJohu) extra.push(['인성', inO, 7.0]);
   }
 
   const defs: [EokbuCandidate['group'], Ohaeng, number][] = weak
