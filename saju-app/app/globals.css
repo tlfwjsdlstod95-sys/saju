@@ -752,3 +752,33 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .cand-n { flex: 1 1 240px; color: var(--text-mute); }
 .cand-notice { margin: 10px 0 2px; font-size: 12px; letter-spacing: .01em; color: var(--text-dim); border: 1px dashed rgba(230,200,120,0.35); border-radius: 8px; padding: 6px 10px; display: inline-block; }
 .cand-notice b { color: var(--gold); }
+
+/* ── /accuracy 접기 블록 ──────────────────────────────────────────
+   3-B(케이스 표)와 4(버전 이력)는 전문적이라 차별화 포인트이지만, 길어서
+   처음 온 사람이 여기서 막힌다. 요약은 늘 보이게 두고 본문만 접는다. */
+.acc-fold { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; }
+.acc-fold > summary {
+  cursor: pointer; list-style: none; padding: 12px 14px;
+  font-size: 14px; font-weight: 600; color: var(--gold);
+  display: flex; align-items: center; gap: 8px;
+}
+.acc-fold > summary::-webkit-details-marker { display: none; }
+.acc-fold > summary::after {
+  content: '▾'; margin-left: auto; font-size: 12px; opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+.acc-fold[open] > summary::after { transform: rotate(180deg); }
+.acc-fold > summary:hover { background: rgba(255,255,255,0.03); }
+.acc-fold-body { padding: 0 14px 14px; }
+/* 한눈 요약 띠 — 접혀 있어도 숫자는 보여야 한다 */
+.acc-gist {
+  display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px;
+  padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.035);
+  font-size: 13.5px; line-height: 1.6;
+}
+.acc-gist b { color: var(--gold); }
+/* 쉬운 말 풀이 — 전문 용어 옆에 한 줄 */
+.acc-plain {
+  margin-top: 10px; padding: 10px 12px; border-left: 2px solid var(--border);
+  font-size: 13px; line-height: 1.75; color: var(--text-mute);
+}
