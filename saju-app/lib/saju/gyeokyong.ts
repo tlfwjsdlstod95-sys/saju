@@ -229,8 +229,9 @@ export interface GwansalFlags {
   seupto: boolean; // 濕土 안의 水는 세력으로 세지 않는다 — 「竝無生發之意」
   seupin: boolean; // 印의 뿌리가 濕土뿐이면 印 대신 比劫으로 扶身 — 「未足幫身」
   nanto: boolean;  // 월지 餘氣가 일간 오행이면 신약에서 比劫 가점 — 「火有餘氣」(근거 1건, 기본 OFF)
+  byeokDown: boolean; // 병약을 억부 **뒤로** — 원문에서 病은 用神 선택법이 아니라 상태 서술이다
 }
-export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false };
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false, byeokDown: true };
 /**
  * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
  *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
@@ -239,7 +240,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true, seupto: false, seupin: true, nanto: false, byeokDown: true };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -573,8 +574,19 @@ function scoreCandidate(
     //   冬木·水多木漂에서 뿌리 없는 丙火를 그래도 쓰는 이유다(JCS-009).
     //   ※ 반대로 冬金은 원전이 火를 用神에서 명시 부정한다(JCS-003/007) — 그건 억부 후보가 아니라
     //     조후우선 분기에서 걸러진다.
-    if (pr.jeonggi === 0 && hg === 0 && value !== johuNeed) {
-      return { group, value, score: -Infinity, usable: false, structuralRoot: sRoot, relationalRoot: relRoot, reason: `${hostile} 세력이 판을 덮어 뿌리 없는 ${value}는 빼앗깁니다.` };
+    // 조후 예외 — 계절이 그 기운을 요구하면 뿌리가 없어도 살려 둔다(JCS-009 冬木·水多木漂).
+    //   ⚠️ 단 그 예외에도 한계가 있다. **지지 네 자리가 모두 그 극(剋) 세력이면** 예외를 무효로 한다.
+    //     「壬水乘權, **坐亥子**, 所謂崑崙之水**沖奔無情**. 丙火**剋絕, 置之不論**」(寒暖 p.114 / JCS-049)
+    //     같은 겨울·水旺·무근 丙火인데 JCS-009는 쓰고 JCS-049는 논외로 두는 차이가 여기다 —
+    //     JCS-009는 지지 申子子酉(水 2/4), JCS-049는 子亥亥子(**水 4/4**)다.
+    //     ※ 이 한계선이 없으면 병약을 억부 뒤로 내리는 순간 JCS-049 반례가 깨진다(실제로 깨졌다).
+    const jis = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+    const drowned = jis.length === 4 && jis.every((p) => p.jiOhaeng === hostile);
+    if (pr.jeonggi === 0 && hg === 0 && (value !== johuNeed || drowned)) {
+      return { group, value, score: -Infinity, usable: false, structuralRoot: sRoot, relationalRoot: relRoot,
+        reason: drowned && value === johuNeed
+          ? `지지가 온통 ${hostile} 기운이라, 계절이 ${value}를 원해도 뿌리 없는 ${value}는 끊깁니다.`
+          : `${hostile} 세력이 판을 덮어 뿌리 없는 ${value}는 빼앗깁니다.` };
     }
     // 傷官用財에서는 일간이 財를 剋하는 것이 흠이 아니라 **用의 조건**이다 —
     //   「日主旺, 傷官亦旺, 宜用財」(傷官 p.78). 왕한 일주라야 財를 감당(能任財)한다.
@@ -987,9 +999,24 @@ export function computeYongsin(dayGan: number, strength: number, monthJi: number
   //   통관 값 자체는 `bases`에 계속 남겨 '기준별 결론'에 보이게 한다 — 지우는 게 아니라 순위를 내린다.
   let method: Yongsin['method'];
   let primary: Ohaeng;
+  // ⚠️ v13 — **병약을 억부 뒤로 내렸다.** (v8.1에서 통관을 내린 것과 같은 판단)
+  //   원문 근거: 우리 골든 전체에서 임철초가 「病」을 쓰는 자리는 **단 한 곳**이고,
+  //     그마저 用神을 먼저 정한 뒤의 **상태 서술**이다 —
+  //     「喜支藏煖土, 足以砥定中流, **因時財爲病**」(傷官 p.80 / JCS-070).
+  //     게다가 거기서 病은 時支의 財 한 글자다. 「한 오행이 판을 덮었다」는 우리 정의와 다르다.
+  //     用神을 고르는 방법으로 病藥을 지목한 자리를 찾지 못했다(통관과 같은 결론).
+  //   실측: 병약이 결정한 골든 4건 중 적중 2건인데, **억부였다면 3건**이다.
+  //     JCS-010·053·079는 억부와 **같은 답**이고, 다르게 낸 유일한 건(JCS-078)에서 **틀렸다.**
+  //     즉 병약이 억부보다 나은 답을 낸 사례가 **0건**이다.
+  //   ⚠️ 문턱 상향은 답이 아니었다 — 발동한 4건의 세력 집중도가 이미 71·86·71·71% 라
+  //     문턱을 올려도 넷 다 그대로 통과한다(측정으로 확인). 위치 문제였다.
+  //   ⚠️ **조후우선은 건드리지 않는다.** 같은 방법으로 재 보니 5건 중 3건 적중이고
+  //     **억부였다면 0건**이다. 제 몫을 하고 있다 — 내리면 3건을 잃는다.
+  //   병약 값 자체는 `bases`에 남겨 '기준별 결론'에 계속 보인다. 지우는 게 아니라 순위를 내린다.
   if (johuUsable && johu) { method = '조후우선'; primary = johu; }
-  else if (byeong && yak) { method = '병약'; primary = yak; }
+  else if (!GS.byeokDown && byeong && yak) { method = '병약'; primary = yak; }
   else if (eokbuTop) { method = '억부'; primary = eokbu; }
+  else if (byeong && yak) { method = '병약'; primary = yak; }
   else if (tonggwan) { method = '통관'; primary = tonggwan; }
   else { method = '억부'; primary = eokbu; }
   const huisin = inseongOhaeng(primary);     // 용신을 생하는 오행
