@@ -23,8 +23,8 @@ export const runtime = 'nodejs';
 //   - 이용권 없으면 402 + needsPurchase — 클라는 잠금 화면을 유지한다.
 //   - AI 호출이 없는 순수 계산이라 guardAI 가 아니라 guardCompute 를 쓴다(일일 상한 불필요).
 
-type Kind = 'gaeun' | 'auspicious' | 'yearly';
-const KINDS: Kind[] = ['gaeun', 'auspicious', 'yearly'];
+type Kind = 'gaeun' | 'auspicious' | 'yearly' | 'sin12';
+const KINDS: Kind[] = ['gaeun', 'auspicious', 'yearly', 'sin12'];
 const PURPOSE_KEYS: Purpose[] = ['wedding', 'moving', 'contract', 'travel', 'decision'];
 
 export async function POST(req: Request) {
@@ -65,6 +65,26 @@ export async function POST(req: Request) {
 
   if (kind === 'gaeun') {
     return NextResponse.json({ data: computeGaeun(result) });
+  }
+
+  // 신살 길흉반전 — 무료 응답에서 뺀 그 값.
+  //   같은 장성살이라도 그 글자가 용신 편이면 힘이 되고 기신 편이면 반감된다.
+  //   이 판정은 용신이 서 있어야만 가능해서, 룩업표만 가진 곳은 흉내를 못 낸다.
+  if (kind === 'sin12') {
+    const pick = (l: { name: string; tone: string; flip?: unknown }[]) =>
+      l.map((x) => ({ name: x.name, baseTone: x.tone, flip: x.flip ?? null }));
+    return NextResponse.json({
+      data: {
+        byYear: pick(result.advanced.sin12.byYear),
+        byDay: pick(result.advanced.sin12.byDay),
+        sinsal: pick(result.advanced.sinsal as unknown as { name: string; tone: string; flip?: unknown }[]),
+        yongsin: {
+          primary: result.gyeokYong.yongsin.primary,
+          huisin: result.gyeokYong.yongsin.huisin,
+          gisin: result.gyeokYong.yongsin.gisin,
+        },
+      },
+    });
   }
 
   if (kind === 'yearly') {
