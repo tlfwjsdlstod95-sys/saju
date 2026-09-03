@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { computeSaju } from '@/lib/saju';
 import { guardCompute, clampInt } from '@/lib/apiGuard';
+import { stripSinsalFlips } from '@/lib/saju/advanced';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -32,12 +33,30 @@ export async function POST(req: Request) {
     };
 
     const result = computeSaju(input);
+
+    // ── 무료 응답에서 신살 길흉반전을 뺀다 (유료 구간) ──
+    //   살 이름·자리·기본 뜻은 그대로 준다. 잠그는 건 「내 용신 기준으로 뒤집히는가」뿐이고,
+    //   그건 용신 판정이 서 있어야만 나오는 값이라 우리만 줄 수 있다.
+    //   개수와 이름은 열어 둔다 — 무엇이 걸렸는지 알아야 궁금해진다.
+    const y = stripSinsalFlips(result.advanced.sin12.byYear);
+    const d = stripSinsalFlips(result.advanced.sin12.byDay);
+    const sn = stripSinsalFlips(result.advanced.sinsal);
+    const free = {
+      ...result,
+      advanced: {
+        ...result.advanced,
+        sinsal: sn.list,
+        sin12: { ...result.advanced.sin12, byYear: y.list, byDay: d.list },
+        flipLock: { flips: y.summary.flips, names: y.summary.names, total: result.advanced.sin12.byYear.length },
+      },
+    };
+
     // 누적 풀이 수 카운터 (실측 — 랜딩 사회적 증거용. env 없으면 생략, 실패 무시)
     const kvUrl = process.env.UPSTASH_REDIS_REST_URL, kvTok = process.env.UPSTASH_REDIS_REST_TOKEN;
     if (kvUrl && kvTok) {
       fetch(`${kvUrl}/incr/stat:readings_total`, { headers: { Authorization: `Bearer ${kvTok}` } }).catch(() => {});
     }
-    return NextResponse.json(result);
+    return NextResponse.json(free);
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? '계산 중 오류가 발생했습니다.' }, { status: 500 });
   }
