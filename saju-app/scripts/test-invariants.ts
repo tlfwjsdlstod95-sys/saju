@@ -170,9 +170,15 @@ section('용신(computeYongsin)');
     //   신강 쪽엔 인성(二曰 殺重用印), 신약 쪽엔 식상(三曰 食神制殺)이 들어온다.
     //   원전 근거 「眾殺橫行, 一仁可化」 · 「一將當關, 羣凶自伏」.
     //   그래서 '강약 방향'은 v7보다 한 칸 더 넓어졌다. 불변식도 같이 넓힌다.
+    // v10 洩重用印 + 濕土 — 식상이 판을 덮으면 중화에서도 印이 열리고(v9),
+    //   그 印의 뿌리가 濕土(辰·丑)뿐이면 印 대신 **比劫**이 열린다.
+    //   원전 근거 「嫌其辰爲濕土, 生金拱水, **未足幫身**」(JCS-054) ·
+    //            「過于洩氣, **全賴酉時扶身** … 用神必在酉金」(JCS-007).
+    //   그래서 신강·중화 쪽에도 비겁(dayO)이 들어올 수 있다. 불변식을 또 한 칸 넓힌다.
+    //   ⚠️ 넓힐 때마다 이 불변식이 잡아내는 힘은 약해진다. 근거 없이 넓히지 말 것.
     const allowed = s <= 0.38
       ? [inseong, dayO, SAENG[dayO]]
-      : [SAENG[dayO], GEUK[dayO], OHS.find((x) => GEUK[x] === dayO)!, inseong];
+      : [SAENG[dayO], GEUK[dayO], OHS.find((x) => GEUK[x] === dayO)!, inseong, dayO];
     if (!allowed.includes(y.primary)) eokbuOk = false;
     const cands = (y as any).eokbuCandidates as { value: string }[] | undefined;
     if (cands && cands.length && !cands.some((c) => c.value === y.primary)) eokbuOk = false;
