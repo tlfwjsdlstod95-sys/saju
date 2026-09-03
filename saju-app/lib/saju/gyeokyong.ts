@@ -226,8 +226,10 @@ export interface GwansalFlags {
   heo: boolean;    // 虛用 — 원국에 없는 오행을 用神 후보로 허용(六曰이 켜졌을 때만 의미가 있다)
   seolin: boolean; // 洩重用印 — 식상이 판을 덮으면 강약 불문 印을 방어 후보로 연다
   jonggd: boolean; // 從勢 진입 가드 — 일간이 여기·묘고에 뿌리를 두면 從하지 않는다
+  seupto: boolean; // 濕土 안의 水는 세력으로 세지 않는다 — 「竝無生發之意」
+  seupin: boolean; // 印의 뿌리가 濕土뿐이면 印 대신 比劫으로 扶身 — 「未足幫身」
 }
-export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true };
+export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: true, heo: true, seolin: true, jonggd: true, seupto: false, seupin: true };
 /**
  * 실제로 켜는 조합. **六曰 制殺太過는 끈다.**
  *   원전 근거는 확실하지만(p.75~76) 우리 표본에서 고친 건 0건이고 깨뜨린 건 2건이다
@@ -236,7 +238,7 @@ export const GWANSAL_ALL: GwansalFlags = { hap: true, jaeja: true, salin: true, 
  *   ⚠️ 四曰 合官留殺은 켜 두지만 현재 효과는 0이다 — 대상 케이스(JCS-084·085)가
  *     억부에 오기 전에 통관·조후 분기에서 결정돼 버린다. 그 우선순위가 다음 숙제다.
  */
-export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true };
+export const GWANSAL_DEFAULT: GwansalFlags = { hap: true, jaeja: true, salin: true, sikje: true, jesal: false, heo: false, seolin: true, jonggd: true, seupto: false, seupin: true };
 let GS: GwansalFlags = { ...GWANSAL_DEFAULT };
 /** 테스트 전용 — 갈래별 조합 검증에 쓴다. 프로덕션 경로에서는 호출하지 않는다. */
 export function setGwansalFlags(f: Partial<GwansalFlags>) { GS = { ...GWANSAL_DEFAULT, ...f }; }
@@ -344,15 +346,55 @@ function presence(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar
  *   지장간을 한 기둥당 1로 세면 네 사례가 전부 「四制」·「五制」와 맞아떨어진다.
  *   ※ 강약·후보 점수에는 쓰지 않는다. 이 갈래의 발동 조건 전용이다.
  */
-function deepCount(o: Ohaeng, pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null }): number {
+function deepCount(
+  o: Ohaeng,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+  skipSeuptoWater = false,
+): number {
   const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
   let n = 0;
   for (const p of list) {
     if (p !== pillars.day && GAN_OHAENG[p.gan] === o) n++;
     if (p.jiOhaeng === o) n++;
-    else if (p.jijanggan.some((g) => GAN_OHAENG[g] === o)) n++;
+    else if (p.jijanggan.some((g) => GAN_OHAENG[g] === o)) {
+      // 濕土(辰·丑) 속에 든 水는 세지 않는다 — 원문이 「작용하지 않는다」고 못 박은 자리다.
+      if (skipSeuptoWater && o === '수' && SEUPTO.has(p.ji)) continue;
+      n++;
+    }
   }
   return n;
+}
+
+/**
+ * 濕土(습토) — 辰·丑. 지장간에 癸水를 품어 물을 **막지 못하고 머금는다.**
+ *   임철초는 이 구분을 판정의 근거로 여섯 번 쓴다:
+ *     「支中**重重濕土, 竝無生發之意**, 只可用水, 不能用火矣」(燥濕 p.119 / JCS-044)
+ *     「丑乃北方**濕土, 晦火蓄水**」(燥濕 p.121 / JCS-046)
+ *     「嫌其辰爲**濕土, 生金拱水, 未足幫身**」(傷官 p.85 / JCS-054)
+ *     「丑辰皆**濕土, 能蓄水晦火**」(傷官 p.81 / JCS-064)
+ *   반대쪽이 **煖土**(未·戌 — 지장간에 丁火를 품는다):
+ *     「喜支藏**煖土, 足以砥定中流**」(傷官 p.80 / JCS-070)
+ *   즉 같은 土라도 辰·丑은 물을 머금고, 未·戌이라야 막는다.
+ *
+ * ⚠️ 이 구분도 우리가 정한 게 아니라 **지장간 테이블이 정해 준다**
+ *   (辰=乙癸戊 · 丑=癸辛己 → 癸水 / 未=丁乙己 · 戌=辛丁戊 → 丁火).
+ *   從勢 가드의 여기·중기 구분과 같은 원리다.
+ */
+const SEUPTO = new Set<number>([4, 1]);  // 辰(4) · 丑(1)
+
+/** 그 오행의 지지 뿌리가 **濕土뿐인가** — 土에만 뜻이 있다(다른 오행이면 항상 false). */
+function onlySeupto(
+  o: Ohaeng,
+  pillars: { year: Pillar; month: Pillar; day: Pillar; hour: Pillar | null },
+): boolean {
+  if (o !== '토') return false;
+  const list = [pillars.year, pillars.month, pillars.day, pillars.hour].filter(Boolean) as Pillar[];
+  let seup = 0, other = 0;
+  for (const p of list) {
+    if (p.jiOhaeng !== '토') continue;
+    if (SEUPTO.has(p.ji)) seup++; else other++;   // 未·戌 = 煖土
+  }
+  return seup > 0 && other === 0;
 }
 
 // 지지 합국(合局) — 삼합(三合)·방합(方合).
@@ -622,7 +664,7 @@ export function evaluateEokbu(
     //    JCS-033·063 을 깨뜨렸다. 「이득 0·손해 2」의 진짜 원인이 조건식 자체였다.
     //    임철초가 세는 방식(制가 넷 이상)을 그대로 옮긴다 — 「四食相制」·「四制」·「五制」.
     //    지장간 포함 制 개수: 원전 4사례 = 5·4·4·5 / 오발동 2건 = 3·3. 경계가 깨끗하다.
-    if (GS.jesal && c(gwanO2) > 0 && deepCount(sangO, pillars) >= 4) {
+    if (GS.jesal && c(gwanO2) > 0 && deepCount(sangO, pillars, GS.seupto) >= 4) {
       if (c(inO) > 0) { if (weak) inAdd += 2.5; else extra.push(['인성', inO, 7.5]); }
       else jaeAdd += 4.0;
       // 虛用 — 衞殺·滋殺을 맡을 글자가 **원국에 아예 없을 때**.
@@ -650,7 +692,15 @@ export function evaluateEokbu(
   //    ③ 印이 조후를 거스르면 열지 않는다 — 冬金에 濕土를 더하면 얼어붙는다.
   if (GS.seolin && !weak && strength < 0.55 && deepCount(sangO, pillars) >= 4 && c(inO) > 0) {
     const inBreaksJohu = !!johuNeed && GEUK[inO] === johuNeed;
-    if (!inBreaksJohu) extra.push(['인성', inO, 7.0]);
+    if (!inBreaksJohu) {
+      // 濕土뿐인 印은 몸을 못 세운다 — 그때는 印이 아니라 **比劫**으로 扶身한다.
+      //   「嫌其辰爲**濕土, 生金拱水, 未足幫身**」(傷官 p.85 / JCS-054)
+      //   「金寒水冷, 過于洩氣, **全賴酉時扶身** … 用神必在酉金」(性情 / JCS-007) — 印(己丑辰)이 전부 濕土다.
+      //   반대쪽 대조: 「喜支藏**煖土**, 足以砥定中流」(傷官 p.80 / JCS-070) — 戌이 있어 印을 쓴다.
+      const inRoots = onlySeupto(inO, pillars);
+      if (GS.seupin && inRoots) extra.push(['비겁', dayO, 7.0]);
+      else extra.push(['인성', inO, 7.0]);
+    }
   }
 
   const defs: [EokbuCandidate['group'], Ohaeng, number][] = weak
