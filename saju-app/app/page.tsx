@@ -452,7 +452,7 @@ export default function Home() {
           🔒 입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
         </p>
         <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
-          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <s style={{ opacity: 0.6 }}>₩9,900</s> <b style={{ color: 'var(--gold)' }}>₩5,900</b> — 런칭 기념 · 첫 500명 한정
+          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <b style={{ color: 'var(--gold)' }}>₩5,900</b> · 단건 결제
           {' '}<Link href="/pricing" style={{ color: 'var(--gold)' }}>이용권 안내 →</Link>
         </p>
         {error && <div className="warn error">{error}</div>}
@@ -729,7 +729,7 @@ export default function Home() {
                   <div className="prem-unlocked">✓ 이 사주의 리포트를 구매하셨어요. 계정에 저장되어 언제든 다시 열람할 수 있습니다.</div>
                   <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '심층 풀이 생성 중…' : '✨ 프리미엄 심층 풀이로 다시 풀기'}</button>
                 </>
-              : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · <s style={{ opacity: .6, fontWeight: 400 }}>₩9,900</s> ₩5,900</button>}
+              : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · ₩5,900</button>}
             <button className="btn guidebook-btn" onClick={() => { if (premium) window.print(); else setPayOpen(true); }}>
               📕 인생 가이드북 PDF로 저장{!premium && ' 🔒'}
             </button>
