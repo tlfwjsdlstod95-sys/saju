@@ -15,7 +15,6 @@ const OWNER_KEY = 'saju_owner_v1';   // 사장님 무료 이용 (판매 상품 �
 const CUSTOMER_KEY = 'saju_customer_key';
 const RETURN_KEY = 'saju_pay_return';
 const PRICE = 5900;        // 런칭 할인가 (서버 app/api/payment/confirm 의 PRODUCT_AMOUNT 와 반드시 동일하게 유지)
-const LIST_PRICE = 9900;   // 정가 (줄 긋기 표시용)
 
 // 사장님 전용 잠금해제 코드 — 이 코드를 ?owner= 로 붙여 들어오면 결제 없이 자동 해제됩니다.
 const OWNER_CODE = 'heaarim-ed31bc854ab540aa-2026';
@@ -163,9 +162,7 @@ export default function Paywall(
           <div className="pay-badge">📄 정밀 리포트 1건</div>
           <div className="pay-title">{productName || 'AI 심층 풀이 + 정밀 리포트'}</div>
           <div className="pay-price">
-            <span className="pay-orig">₩{LIST_PRICE.toLocaleString()}</span>
             <b>₩{PRICE.toLocaleString()}</b>
-            <span className="pay-save">런칭 할인 {Math.round((1 - PRICE / LIST_PRICE) * 100)}%</span>
           </div>
           <p className="pay-sub">지금 보고 계신 생년월일시 1건에 대한 리포트입니다.</p>
           <ul className="pay-list">
