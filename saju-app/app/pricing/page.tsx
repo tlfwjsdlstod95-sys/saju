@@ -13,7 +13,6 @@ const ITEMS = [
   {
     name: '정밀 사주 리포트 1건',
     price: 5900,
-    list: 9900,
     unit: '생년월일시 1건 기준',
     desc: 'AI가 그 명식만을 위해 새로 쓰는 심층 풀이(말투 선택 가능) + 신년운세 월별 캘린더 + 결혼·이사·계약 택일 + 개운법 + 인생 가이드북 PDF + 대운 80년 상세.',
     how: '결제 승인 즉시 해당 생년월일시의 리포트가 생성되어 웹에서 열람 (별도 배송 없는 디지털 콘텐츠)',
@@ -21,7 +20,6 @@ const ITEMS = [
   {
     name: 'AI 궁합 심층 리포트 1건',
     price: 4900,
-    list: null,
     unit: '두 사람의 생년월일시 1쌍 기준',
     desc: '두 사람의 명식을 대조해 상성 점수·잘 맞는 지점·부딪히는 지점·관계 운영법을 AI가 길게 풀어주는 궁합 리포트.',
     how: '결제 승인 즉시 해당 두 명식의 궁합 리포트가 생성되어 웹에서 열람 (별도 배송 없는 디지털 콘텐츠)',
@@ -44,7 +42,6 @@ export default function Pricing() {
           <div className="chips" style={{ marginBottom: 12 }}>
             <div className="chip">
               판매가 <b style={{ color: 'var(--gold)' }}>{it.price.toLocaleString()}원</b>
-              {it.list && <s style={{ opacity: 0.6, marginLeft: 6 }}>{it.list.toLocaleString()}원</s>}
             </div>
             <div className="chip">부가세 포함</div>
             <div className="chip">건별 결제 · 자동갱신 없음</div>
