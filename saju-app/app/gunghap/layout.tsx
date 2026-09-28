@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '이 사람이랑, 진짜 괜찮은 걸까 💞',
     description: '두 사람의 명식으로 보는 정통 사주 궁합 — 무료로 확인해보세요.',
+    url: '/gunghap', type: 'website', locale: 'ko_KR', siteName: '헤아림',
     // 궁합 전용 카드 — 공유 링크가 이 페이지의 유통 경로 자체라, 브랜드 워드마크 한 장으로는 누를 이유가 없다.
     // (원본 스크립트: `헤아림_OG_궁합.py` — 문구만 고쳐 다시 렌더하면 된다)
     images: [{ url: '/og-gunghap.png', width: 1200, height: 630, alt: '이 사람이랑, 진짜 괜찮은 걸까 — 헤아림 사주 궁합' }],
