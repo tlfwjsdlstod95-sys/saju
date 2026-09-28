@@ -4,7 +4,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
 import TermNote from '../TermNote';
-import { yongsinRows, rate, holdoutRows, tunedRows, primaryRows, totalCases, johuSample, JOHU_MIN_N, HOLDOUT_MIN_N } from '@/lib/goldenReport';
+import { kstDay } from '@/lib/trackSpec';
+import { yongsinRows, rate, holdoutRows, tunedRows, primaryRows, totalCases, transcribedCases, johuSample, JOHU_MIN_N, HOLDOUT_MIN_N } from '@/lib/goldenReport';
 
 export const metadata: Metadata = pageMeta({
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
@@ -14,7 +15,7 @@ export const metadata: Metadata = pageMeta({
 });
 
 const stat = { border: '1px solid rgba(230,200,120,0.25)', borderRadius: 14, padding: '18px 16px', textAlign: 'center' as const, background: 'rgba(230,200,120,0.04)' };
-const statNum = { fontSize: 'clamp(22px, 4.5vw, 30px)', fontWeight: 800 as const, color: 'var(--gold)', fontFamily: 'var(--serif)', lineHeight: 1.2 };
+const statNum = { fontSize: 'clamp(22px, 4.5vw, 30px)', whiteSpace: 'nowrap' as const, fontWeight: 800 as const, color: 'var(--gold)', fontFamily: 'var(--serif)', lineHeight: 1.2 };
 const statLabel = { fontSize: 13, opacity: 0.75, marginTop: 6, lineHeight: 1.5 };
 const row = { display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' as const };
 const num = { color: 'var(--gold)', fontWeight: 700 as const };
@@ -33,6 +34,9 @@ export default function AccuracyPage() {
   const rTune = rate(tunedRows(rows));
   const rPrim = rate(primaryRows(tunedRows(rows)));
   const holdOpen = rHold.total >= HOLDOUT_MIN_N;
+  const nTranscribed = transcribedCases();
+  // 정적 페이지라 빌드(=배포) 시각에 계산된다 — 표·숫자도 같은 순간에 엔진으로 다시 뽑힌다.
+  const builtOn = kstDay();
   return (
     <main className="wrap">
       <div className="hero" style={{ paddingTop: 40 }}>
@@ -43,6 +47,7 @@ export default function AccuracyPage() {
           월주·일주가 통째로 바뀌기 때문입니다. 헤아림은 &ldquo;믿어 달라&rdquo;고 말하는 대신 —
           측정하고, 그 숫자를 그대로 공개합니다.
         </p>
+        <p className="acc-asof">이 페이지의 숫자는 <b>{builtOn}</b> 배포된 판정 엔진 v{ENGINE_VERSION}으로 다시 계산한 값입니다.</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 26 }}>
@@ -55,8 +60,8 @@ export default function AccuracyPage() {
           <div style={statLabel}>만세력 교차검증 일치<br />(1900~2100 전 일자, 독립 구현 대조)</div>
         </div>
         <div style={stat}>
-          <div style={statNum}>고전 {nCases}命 대조</div>
-          <div style={statLabel}>『자평진전』·『적천수천미』 원전 명식으로<br />판정 로직을 채점·공개</div>
+          <div style={statNum}>고전 {nCases}命</div>
+          <div style={statLabel}>『자평진전』·『적천수천미』 원전 명식으로<br />판정 로직을 채점·공개 (옮겨 적은 {nTranscribed}건 중 채점 기준이 있는 명식)</div>
         </div>
       </div>
 
@@ -149,52 +154,33 @@ export default function AccuracyPage() {
           1947년 간행본 원문 — 에 실린 실제 명식 <b style={num}>{nCases}건</b>으로 판정 로직을 채점하고,
           일치율을 숨기지 않고 공개합니다.
         </p>
-        <div style={{ overflowX: 'auto', marginTop: 12 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', textAlign: 'left' }}>
-                <th style={{ padding: '8px 10px' }}>판정 항목</th>
-                <th style={{ padding: '8px 10px' }}>고전 원전 재현율 (적중/표본)</th>
-                <th style={{ padding: '8px 10px' }}>비고</th>
-              </tr>
-            </thead>
-            <tbody style={{ opacity: 0.9 }}>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <td style={{ padding: '8px 10px' }}>격국(格局)</td>
-                <td style={{ padding: '8px 10px' }}><b style={num}>100%</b> (25/25)</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>자평진전 원문 명식 기준</td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <td style={{ padding: '8px 10px' }}>신강·신약</td>
-                <td style={{ padding: '8px 10px' }}><b style={num}>87.5%</b> (21/24)</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>적천수천미 「旺衰」편 기준 · 개발 세트</td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <td style={{ padding: '8px 10px' }}>용신(用神)</td>
-                <td style={{ padding: '8px 10px' }}>
-                  <span style={{ fontSize: 13 }}>처음 보는 명식(홀드아웃)</span><br />
-                  {holdOpen
-                    ? <><b style={num}>{rHold.pct}%</b> ({rHold.hit}/{rHold.total})</>
-                    : <>{rHold.total}건 모으는 중</>}
-                  <br /><span style={{ fontSize: 13 }}>규칙을 고칠 때 본 명식(개발 세트) {rTune.pct}% ({rTune.hit}/{rTune.total})</span>
-                  {rPrim.total < rTune.total && <><br /><span style={{ fontSize: 13 }}>개발 세트 중 원전만 {rPrim.pct}% ({rPrim.hit}/{rPrim.total})</span></>}
-                </td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>
-                  적천수천미 계열 · 아래 케이스별 전체 공개 ·
-                  {' '}<b>홀드아웃 숫자가 실력</b>이고, 개발 세트 숫자는 규칙을 맞출 때 본 명식이라 부풀어 있습니다
-                  {rPrim.total < rTune.total && <> · 개발 세트 {rTune.total - rPrim.total}건은 논문 재인용(원전 쪽 대조 전)</>}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px 10px' }}>조후(調候)</td>
-                <td style={{ padding: '8px 10px' }}>원전 {johu.primary}건 · 현대 사례 N={johu.n - johu.primary}</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>
-                  적천수 원전 기준으로는 아직 채점할 표본이 없습니다. 논문의 현대 명조는 참고로만 두고,
-                  원전 {JOHU_MIN_N}건이 모이기 전까지 비율을 적지 않습니다
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="acc-cards">
+          <div className="acc-card">
+            <div className="acc-card-k">격국(格局)</div>
+            <div className="acc-card-v">100% <small>(25/25)</small></div>
+            <div className="acc-card-n">『자평진전』 원문 명식 기준</div>
+          </div>
+          <div className="acc-card">
+            <div className="acc-card-k">신강·신약</div>
+            <div className="acc-card-v">87.5% <small>(21/24)</small></div>
+            <div className="acc-card-n">『적천수천미』 「旺衰」편 기준 · 개발 세트</div>
+          </div>
+          <div className="acc-card acc-card-main">
+            <div className="acc-card-k">용신(用神) · 처음 보는 명식</div>
+            <div className="acc-card-v">
+              {holdOpen ? <>{rHold.pct}% <small>({rHold.hit}/{rHold.total})</small></> : <>{rHold.total}건 모으는 중</>}
+            </div>
+            <div className="acc-card-n"><b>이 숫자가 실력입니다</b> — 규칙을 만들 때 한 번도 보지 않은 명식(홀드아웃)만 따로 채점했습니다.</div>
+            <div className="acc-card-sub">
+              참고: 규칙을 고칠 때 본 명식(개발 세트) {rTune.pct}% ({rTune.hit}/{rTune.total}) — 답을 보고 맞춘 명식이라 부풀어 있는 숫자입니다.
+              {rPrim.total < rTune.total && <> 그중 원전만 {rPrim.pct}% ({rPrim.hit}/{rPrim.total}), 나머지 {rTune.total - rPrim.total}건은 논문 재인용.</>}
+            </div>
+          </div>
+          <div className="acc-card">
+            <div className="acc-card-k">조후(調候)</div>
+            <div className="acc-card-v">채점 전</div>
+            <div className="acc-card-n">원전 {johu.primary}건 · 현대 사례 N={johu.n - johu.primary}. 원전 {JOHU_MIN_N}건이 모이기 전에는 비율을 적지 않습니다.</div>
+          </div>
         </div>
         <p style={{ lineHeight: 1.8, marginTop: 12, fontSize: 14, opacity: 0.8 }}>
           100%가 아닌 숫자를 그대로 적는 이유 — 해석 영역에서 &ldquo;다 맞힌다&rdquo;는 말은 검증을 안 했다는
@@ -251,17 +237,18 @@ export default function AccuracyPage() {
         <details className="acc-fold">
         <summary>케이스 {r.total}건 전체 표 펼치기</summary>
         <div className="acc-fold-body">
+        <p className="case-table-note">폰에서는 케이스·원전 결론·엔진 결론·일치만 보여요. 출전(판본·편·쪽)과 판정 방법은 넓은 화면에서 함께 나옵니다.</p>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 600 }}>
+          <table className="case-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', textAlign: 'left', whiteSpace: 'nowrap' }}>
                 <th style={{ padding: '8px 10px' }}>케이스</th>
-                <th style={{ padding: '8px 10px' }}>출전(판본 · 편 · 쪽)</th>
+                <th className="opt" style={{ padding: '8px 10px' }}>출전(판본 · 편 · 쪽)</th>
                 <th style={{ padding: '8px 6px' }}>원전 결론</th>
                 <th style={{ padding: '8px 6px' }}>엔진 결론</th>
-                <th style={{ padding: '8px 6px' }}>판정 방법</th>
+                <th className="opt" style={{ padding: '8px 6px' }}>판정 방법</th>
                 <th style={{ padding: '8px 6px' }}>일치</th>
-                <th style={{ padding: '8px 6px' }}>버전</th>
+                <th className="opt" style={{ padding: '8px 6px' }}>버전</th>
               </tr>
             </thead>
             <tbody style={{ opacity: 0.9 }}>
@@ -271,17 +258,17 @@ export default function AccuracyPage() {
                     {row.id}
                     {row.seenBy === 'none' && row.schemaOk && <><br /><span style={{ fontSize: 11.5, color: 'var(--gold)' }}>홀드아웃</span></>}
                   </td>
-                  <td style={{ padding: '8px 10px', fontSize: 12.5, lineHeight: 1.5 }}>
+                  <td className="opt" style={{ padding: '8px 10px', fontSize: 12.5, lineHeight: 1.5 }}>
                     {row.book}<br />
                     <span style={{ opacity: 0.7 }}>{row.chapter} · {row.page}</span>
                   </td>
                   <td style={{ padding: '8px 6px' }}>{row.expected}</td>
                   <td style={{ padding: '8px 6px', color: row.match ? undefined : 'var(--mystic)' }}>{row.got}</td>
-                  <td style={{ padding: '8px 6px', fontSize: 12.5 }}>{row.method}</td>
+                  <td className="opt" style={{ padding: '8px 6px', fontSize: 12.5 }}>{row.method}</td>
                   <td style={{ padding: '8px 6px', color: row.match ? 'var(--gold)' : 'var(--mystic)', whiteSpace: 'nowrap' }}>
                     {row.match ? '일치' : '불일치'}
                   </td>
-                  <td style={{ padding: '8px 6px', fontSize: 12.5, opacity: 0.7, whiteSpace: 'nowrap' }}>v{row.engine}</td>
+                  <td className="opt" style={{ padding: '8px 6px', fontSize: 12.5, opacity: 0.7, whiteSpace: 'nowrap' }}>v{row.engine}</td>
                 </tr>
               ))}
             </tbody>
