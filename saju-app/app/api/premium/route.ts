@@ -4,7 +4,7 @@ import { guardCompute, clampInt } from '@/lib/apiGuard';
 import { chartId } from '@/lib/chartId';
 import { checkEntitled } from '@/lib/entitlement';
 import { computeGaeun } from '@/lib/saju/gaeun';
-import { pickAuspicious, topAuspicious, type Purpose } from '@/lib/saju/auspicious';
+import { pickAuspicious, topAuspicious, tiedBeyondTop, auspFormula, type Purpose } from '@/lib/saju/auspicious';
 import { computeYearlyFortune } from '@/lib/saju/yearly';
 import type { BirthInput } from '@/lib/saju/types';
 
@@ -23,8 +23,8 @@ export const runtime = 'nodejs';
 //   - 이용권 없으면 402 + needsPurchase — 클라는 잠금 화면을 유지한다.
 //   - AI 호출이 없는 순수 계산이라 guardAI 가 아니라 guardCompute 를 쓴다(일일 상한 불필요).
 
-type Kind = 'gaeun' | 'auspicious' | 'yearly' | 'sin12';
-const KINDS: Kind[] = ['gaeun', 'auspicious', 'yearly', 'sin12'];
+type Kind = 'gaeun' | 'auspicious' | 'yearly' | 'sin12' | 'yongsin';
+const KINDS: Kind[] = ['gaeun', 'auspicious', 'yearly', 'sin12', 'yongsin'];
 const PURPOSE_KEYS: Purpose[] = ['wedding', 'moving', 'contract', 'travel', 'decision'];
 
 export async function POST(req: Request) {
@@ -87,6 +87,26 @@ export async function POST(req: Request) {
     });
   }
 
+  // 용신·격국 확정 판정 — 무료 응답에서 뺀 그 값(`lib/saju/gate.ts`).
+  //   파는 건 문장 길이가 아니라 **판정**이다. 그래서 근거까지 통째로 준다 —
+  //   기준(법)별 결론과 채택/기각 사유, 무엇이 승부를 갈랐는지, 결손 진단, 억부 후보 로그.
+  //   이게 곧 /accuracy 에서 채점받은 그 판정이고, 채점표는 이 값이 있어야 의미가 선다.
+  if (kind === 'yongsin') {
+    const gy = result.gyeokYong;
+    return NextResponse.json({
+      data: {
+        gyeokguk: gy.gyeokguk,
+        yongsin: gy.yongsin,
+        johu: gy.johu,
+        strength: result.dayMasterStrength,
+        // 규칙 풀이에서 뺐던 유료 문장(격국 그릇·용신 설명)도 여기서 돌려준다.
+        paidLines: Object.fromEntries(
+          result.interpretations.filter((s) => s.paid).map((s) => [s.key, s.paid as string]),
+        ),
+      },
+    });
+  }
+
   if (kind === 'yearly') {
     const now = new Date().getFullYear();
     const year = clampInt(body.year2 ?? now, now - 1, now + 5, now);
@@ -102,7 +122,8 @@ export async function POST(req: Request) {
   if (ty === today.getFullYear() && tm === today.getMonth() + 1) {
     all = all.filter((d) => d.day >= today.getDate());
   }
+  const top = topAuspicious(all);
   return NextResponse.json({
-    data: { top: topAuspicious(all, 6), avoided: all.filter((d) => d.warn).map((d) => d.day) },
+    data: { top, avoided: all.filter((d) => d.warn).map((d) => d.day), moreTied: tiedBeyondTop(all, top), formula: auspFormula(purpose) },
   });
 }
