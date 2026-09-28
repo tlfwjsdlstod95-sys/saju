@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { BIZ } from '../biz';
 
-export const metadata = { title: '이용약관 · 사주 명리' };
+export const metadata = { title: '이용약관 · 헤아림' };
 
 export default function TermsPage() {
   return (
