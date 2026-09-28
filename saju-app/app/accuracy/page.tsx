@@ -47,7 +47,7 @@ export default function AccuracyPage() {
           월주·일주가 통째로 바뀌기 때문입니다. 헤아림은 &ldquo;믿어 달라&rdquo;고 말하는 대신 —
           측정하고, 그 숫자를 그대로 공개합니다.
         </p>
-        <p className="acc-asof">이 페이지의 숫자는 <b>{builtOn}</b> 배포된 판정 엔진 v{ENGINE_VERSION}으로 다시 계산한 값입니다.</p>
+        <p className="acc-asof">이 페이지의 숫자는 <b>{builtOn}</b> 배포된 판정 엔진 v{ENGINE_VERSION}로 다시 계산한 값입니다.</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 26 }}>
