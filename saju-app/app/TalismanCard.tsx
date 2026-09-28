@@ -192,7 +192,7 @@ export default function TalismanCard({ result }: { result: SajuResult }) {
     <div className="card">
       <h2>나의 행운 카드</h2>
       <div className="meta" style={{ marginBottom: 14 }}>
-        {result.input.name ? `${result.input.name}님` : '당신'}에게 필요한 기운 <b>{gaeun.yongsin}({HANJA[gaeun.yongsin]})</b>을 담은 카드예요.
+        {result.input.name ? `${result.input.name}님` : '당신'}에게 필요한 기운 <b>{gaeun.yongsin}({HANJA[gaeun.yongsin]})</b>{(() => { const c = gaeun.yongsin.charCodeAt(gaeun.yongsin.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 ? '을' : '를'; })()} 담은 카드예요.
         배경화면·스토리에 올려 행운 컬러를 곁에 두세요.
       </div>
       <canvas ref={canvasRef} className="share-canvas" style={{ maxWidth: 300 }} />
