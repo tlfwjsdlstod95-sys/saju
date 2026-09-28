@@ -6,6 +6,7 @@ import { guardAI, clampInt } from '@/lib/apiGuard';
 import { pairId } from '@/lib/chartId';
 import { checkEntitled, currentUid } from '@/lib/entitlement';
 import { saveReport } from '@/lib/reports';
+import { ENGINE_VERSION } from '@/lib/saju/version';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
           await saveReport({
             uid, kind: 'gunghap', chart: pair, variant: 'v1',
             title: `${nameA} × ${nameB} · 궁합 리포트`,
-            meta: { name: nameA, partner: nameB, free: invite },
+            meta: { name: nameA, partner: nameB, free: invite, engine: ENGINE_VERSION },
             body: full,
           });
         }
