@@ -10,7 +10,7 @@ import { ENGINE_VERSION } from '@/lib/saju/version';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 300;   // 2026-09-29: 긴 풀이가 60초에서 잘리던 문제
 
 function parse(b: any): BirthInput {
   return {
