@@ -256,7 +256,8 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 }
 .review-nick:focus { outline: none; border-color: var(--gold-soft); }
 .review-count { margin-left: auto; font-size: 12px; color: var(--text-mute); }
-.review-consent { margin-top: 12px; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+.review-consent { margin-top: 12px; font-size: 13px; color: var(--text-dim); line-height: 1.6; align-items: flex-start; }
+.review-consent input { margin-top: 3px; flex: none; }
 .review-consent b { color: var(--gold); font-weight: 700; }
 .review-submit { margin-top: 14px; }
 .review-note { margin-top: 10px; font-size: 12px; line-height: 1.7; }

@@ -118,7 +118,7 @@ export default function ReviewPrompt({ chart, premium }: { chart: string | null;
 
       <label className="chk review-consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        인스타그램 등 헤아림 홍보에 이 후기를 <b>닉네임만</b> 붙여 인용해도 좋아요 (선택)
+        <span>인스타그램 등 헤아림 홍보에 이 후기를 <b>닉네임만</b> 붙여 인용해도 좋아요 (선택)</span>
       </label>
 
       {err && <div className="warn" style={{ marginTop: 10 }}>{err}</div>}
