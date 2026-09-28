@@ -61,7 +61,7 @@ export default function AccuracyPage() {
         </div>
         <div style={stat}>
           <div style={statNum}>고전 {nCases}命</div>
-          <div style={statLabel}>『자평진전』·『적천수천미』 원전 명식으로<br />판정 로직을 채점·공개 (옮겨 적은 {nTranscribed}건 중 채점 기준이 있는 명식)</div>
+          <div style={statLabel}>원전 명식으로 판정을 채점·공개<br />(옮겨 적은 {nTranscribed}건 중 채점 기준이 있는 것)</div>
         </div>
       </div>
 
