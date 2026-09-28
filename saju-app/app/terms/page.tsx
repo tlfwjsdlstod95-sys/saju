@@ -1,7 +1,9 @@
+import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import { BIZ } from '../biz';
 
-export const metadata = { title: '이용약관 · 헤아림' };
+export const metadata: Metadata = pageMeta({ title: '이용약관 · 헤아림', description: '헤아림 서비스 이용약관 — 무료 명식·정밀 리포트 이용 조건과 운영자 정보.', path: '/terms' });
 
 export default function TermsPage() {
   return (
