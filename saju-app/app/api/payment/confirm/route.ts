@@ -29,9 +29,8 @@ export async function POST(req: Request) {
   // 인상 전환 유예(2026-09-28): 인상 배포 직전에 5,900 결제창을 연 사람이 배포 뒤 승인되면 금액 불일치로 튕긴다.
   //   그 사람에게 결제 실패를 보여주지 않으려고 **9-29 23:59(KST)까지만** 옛 금액도 받는다. 이후엔 PRODUCT_AMOUNT 하나.
   //   ⚠️ 유예가 끝나면 이 블록을 지워도 된다(동작은 같다).
-  const LEGACY_AMOUNT = 5900, LEGACY_UNTIL = Date.parse('2026-09-29T23:59:59+09:00');
-  const legacyOk = amount === LEGACY_AMOUNT && Date.now() <= LEGACY_UNTIL;
-  if (amount !== PRODUCT_AMOUNT && !legacyOk) {
+  //   2026-09-29: 유예 종료(승혁 결정) — 이제 9,900 하나만 받는다.
+  if (amount !== PRODUCT_AMOUNT) {
     return NextResponse.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
   }
 
