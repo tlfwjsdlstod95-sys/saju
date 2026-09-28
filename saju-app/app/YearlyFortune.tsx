@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 // ⚠️ 계산 모듈(yearly.ts)은 import 하지 않는다 — 유료 콘텐츠라 서버(/api/premium)에서만 계산한다.
 import type { YearlyFortune as YearlyData } from '@/lib/saju/yearly';   // 타입만(번들 미포함)
 import { usePremiumData } from './usePremiumData';
@@ -144,6 +145,28 @@ export default function YearlyFortune({
         {aiErr && <div className="warn" style={{ marginTop: 12 }}>{aiErr}</div>}
       </div>
 
+      {y.formula?.length ? (
+        <details className="daily-fold">
+          <summary>계산</summary>
+          <ul className="daily-formula">{y.formula.map((l) => <li key={l}>{l}</li>)}</ul>
+          {y.months[0]?.parts && (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="daily-parts">
+                <thead><tr><th>달</th><th>간지</th><th>오행</th><th>관계</th><th>점수</th><th style={{ textAlign: 'left' }}>원국과의 관계</th></tr></thead>
+                <tbody>
+                  {y.months.map((m) => (
+                    <tr key={m.month}>
+                      <td>{m.month}월</td><td>{m.ganji}</td><td>{m.parts.oheng}</td>
+                      <td>{m.parts.relations > 0 ? `+${m.parts.relations}` : m.parts.relations}</td><td><b>{m.score}</b></td>
+                      <td style={{ textAlign: 'left', fontSize: 11.5 }}>{m.relations.join(' · ') || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </details>
+      ) : null}
       <p className="daily-foot">월운은 절기(節氣) 기준 월지에 세운 천간을 대입해 계산했습니다. 큰 흐름의 참고로 활용하세요.</p>
     </div>
   );

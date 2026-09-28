@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { CHEONGAN, JIJI } from '@/lib/saju/constants';
 import { SIN12_ORDER } from '@/lib/saju/advanced';
+import { SITE_URL } from '@/lib/siteUrl';
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://heaarim.co.kr';
+const BASE = SITE_URL;   // 주소는 한 곳(lib/siteUrl.ts)에서만 정한다
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const iljoo: MetadataRoute.Sitemap = [];
@@ -19,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/sinsal`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/accuracy`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/pricing`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/sample`, changeFrequency: 'monthly', priority: 0.7 },   // 리포트 샘플 1쪽 (9-23)
     ...iljoo,
     ...sinsal,
   ];

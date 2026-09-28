@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 import type { AuspiciousDay, Purpose } from '@/lib/saju/auspicious';  // 타입만(번들 미포함)
 import { usePremiumData } from './usePremiumData';
 
@@ -30,7 +31,7 @@ export default function AuspiciousDates({
   const ty = base.getFullYear(), tm = base.getMonth() + 1;
   const label = PURPOSE_UI.find((p) => p.key === purpose)!.label;
 
-  const { data, loading, locked, err } = usePremiumData<{ top: AuspiciousDay[]; avoided: number[] }>(
+  const { data, loading, locked, err } = usePremiumData<{ top: AuspiciousDay[]; avoided: number[]; moreTied?: number; formula?: string[] }>(
     premium, 'auspicious',
     premium ? { ...reqBody(), purpose, targetYear: ty, targetMonth: tm } : null,
   );
@@ -89,6 +90,9 @@ export default function AuspiciousDates({
               <div className="ausp-mid">
                 <div className="ausp-gz">{d.ganjiHanja} <small>{d.ganji}</small></div>
                 <div className="ausp-reasons">{d.reasons.slice(0, 2).join(' · ') || '무난하게 좋은 날'}</div>
+                {d.relations?.length ? (
+                  <div className="ausp-reasons" style={{ opacity: 0.75, fontSize: 11.5 }}>원국과: {d.relations.slice(0, 3).join(' · ')}{d.relations.length > 3 ? ` 외 ${d.relations.length - 3}` : ''}</div>
+                ) : null}
               </div>
               <div className="ausp-score" style={{ color: barColor(d.score) }}>{d.score}<small>점</small></div>
             </div>
@@ -96,9 +100,18 @@ export default function AuspiciousDates({
         </div>
       )}
 
+      {(data?.moreTied ?? 0) > 0 && (
+        <p className="meta" style={{ marginTop: 8, fontSize: 12.5 }}>마지막 점수와 같은 날이 {data!.moreTied}일 더 있어요 — 이른 날짜부터 보여 드렸습니다.</p>
+      )}
       {avoided.length > 0 && (
         <div className="ausp-avoid">⚠️ 피하면 좋은 날: {avoided.map((d) => `${d}일`).join(' · ')} <span>(일지와 충, 변동·마찰)</span></div>
       )}
+      {data?.formula?.length ? (
+        <details className="daily-fold">
+          <summary>계산</summary>
+          <ul className="daily-formula">{data.formula.map((l) => <li key={l}>{l}</li>)}</ul>
+        </details>
+      ) : null}
       <p className="daily-foot">일진(日辰)을 당신 일간에 대입해 합충·손없는날까지 반영한 결과입니다. 큰 결정의 참고로 활용하세요.</p>
     </div>
   );

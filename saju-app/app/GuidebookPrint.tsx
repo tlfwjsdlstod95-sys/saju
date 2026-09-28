@@ -1,6 +1,9 @@
 'use client';
 
-import type { SajuResult, Pillar } from '@/lib/saju/types';
+import { luckTone } from '@/lib/saju/luckTone';
+import type { Pillar } from '@/lib/saju/types';
+// 화면 컴포넌트가 받는 건 언제나 **무료 응답 모양**(판정 없음)이라 그 타입으로 고정한다.
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 import { computeHapchung } from '@/lib/saju/hapchung';
 // ⚠️ 유료 처방 계산(gaeun.ts)은 여기서 하지 않는다 — 서버에서 받아 prop 으로 내려받는다.
 import type { GaeunResult } from '@/lib/saju/gaeun';   // 타입만(번들 미포함)
@@ -123,7 +126,7 @@ export default function GuidebookPrint({ result, ai, gaeun }: {
           <thead><tr>{r.luck.sewoon.map((d) => <th key={d.year}>{d.year}</th>)}</tr></thead>
           <tbody>
             <tr>{r.luck.sewoon.map((d) => <td key={d.year}>{d.ganHanja}{d.jiHanja}</td>)}</tr>
-            <tr>{r.luck.sewoon.map((d) => <td key={d.year} className={d.score >= 20 ? 'gb-good' : d.score <= -20 ? 'gb-bad' : ''}>{d.score > 0 ? '+' : ''}{d.score}</td>)}</tr>
+            <tr>{r.luck.sewoon.map((d) => <td key={d.year} className={luckTone(d.score) === 'good' ? 'gb-good' : luckTone(d.score) === 'bad' ? 'gb-bad' : ''}>{d.score > 0 ? '+' : ''}{d.score}</td>)}</tr>
           </tbody>
         </table>
       </section>

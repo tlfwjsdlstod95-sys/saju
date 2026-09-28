@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 
 const W = 1080, H = 1350;
 const OHAENG_HANJA: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };

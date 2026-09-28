@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 import { computeNaming } from '@/lib/saju/naming';
 
 const OHAENG_COLOR: Record<string, string> = {

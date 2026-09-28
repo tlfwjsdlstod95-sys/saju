@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 import type { CompatResult } from '@/lib/saju/compatibility';
 
 const W = 1080, H = 1350;

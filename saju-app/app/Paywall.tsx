@@ -14,7 +14,12 @@ const ENT_PREFIX = 'saju_ent_v2:';   // 명식별 로컬 캐시 (진짜 권한�
 const OWNER_KEY = 'saju_owner_v1';   // 사장님 무료 이용 (판매 상품 아님)
 const CUSTOMER_KEY = 'saju_customer_key';
 const RETURN_KEY = 'saju_pay_return';
-const PRICE = 5900;        // 런칭 할인가 (서버 app/api/payment/confirm 의 PRODUCT_AMOUNT 와 반드시 동일하게 유지)
+const PRICE = 5900;        // 판매가 (서버 app/api/payment/confirm 의 PRODUCT_AMOUNT 와 반드시 동일하게 유지)
+// ⚠️ 2026-09-17 LIST_PRICE(9,900) 취소선 제거.
+//    9,900 원에 **판매한 기간이 없다** → 종전거래가격이 아니므로 줄 긋기는 허위 종전가격 표시다.
+//    토스 계약의 「정찰제」와도 부딪힌다. 인상할 때는 할인 없이 9,900 으로 올린다
+//    (그때부터 9,900 이 실판매가가 되고, 그 뒤에 붙이는 할인은 정당해진다).
+//    근거: 카드사심사후_수정대기목록.md §D
 
 // 사장님 전용 잠금해제 코드 — 이 코드를 ?owner= 로 붙여 들어오면 결제 없이 자동 해제됩니다.
 const OWNER_CODE = 'heaarim-ed31bc854ab540aa-2026';

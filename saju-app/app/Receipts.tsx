@@ -13,7 +13,12 @@ const won = (n: number) => '₩' + n.toLocaleString('ko-KR');
 export default function Receipts() {
   const [list, setList] = useState<Receipt[]>([]);
   const [open, setOpen] = useState<string | null>(null);
-  useEffect(() => { setList(listReceipts()); }, []);
+  useEffect(() => {
+    setList(listReceipts());
+    const onSync = () => setList(listReceipts());
+    window.addEventListener('saju:synced', onSync);
+    return () => window.removeEventListener('saju:synced', onSync);
+  }, []);
 
   if (list.length === 0) return null;
 

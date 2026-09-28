@@ -3,7 +3,8 @@
 // 나의 행운 부적 — 용신 오행 기반 디지털 부적 카드 (무료, 인스타 스토리 1080×1920)
 // 힙한 미니멀 타로 컨셉. computeGaeun(용신)에서 컬러/방위/아이템 도출.
 import { useEffect, useRef, useState } from 'react';
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 // ⚠️ 유료 처방(gaeun.ts)을 여기서 import 하면 클라이언트 번들에 실려 잠금이 무의미해진다.
 //    부적은 무료 카드이므로 '어떤 오행이 필요한지 + 그 색·방위'만 쓰는 최소 모듈을 쓴다.
 import { luckyOhaeng, OHAENG_LOOK } from '@/lib/saju/luckyElement';

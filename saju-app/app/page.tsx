@@ -3,12 +3,17 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { chartId } from '@/lib/chartId';
-import type { SajuResult, Pillar, LuckPillar } from '@/lib/saju/types';
+import type { Pillar, LuckPillar } from '@/lib/saju/types';
+// 클라이언트가 받는 건 **판정이 빠진** 결과다(무료 응답). 타입으로 그 사실을 못 박아 둔다 —
+// 그래야 화면 코드가 실수로 `yongsin.primary` 를 참조하는 순간 컴파일이 막는다.
+import type { FreeSajuResult } from '@/lib/saju/gate';
 import { parseReadingStream } from '@/lib/saju/readingMeta';
 import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
 import { computeHapchung } from '@/lib/saju/hapchung';
+import { luckTone } from '@/lib/saju/luckTone';
+import { daewoonSummary, peakSentence, nowSentence, ZERO_SENTENCE, APPROX_SENTENCE, LUCK_FORMULA } from '@/lib/saju/luckSummary';
 import ShareCard from './ShareCard';
 import TalismanCard from './TalismanCard';
 import ReadingCard from './ReadingCard';
@@ -22,7 +27,11 @@ import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium } from './Paywall';
 import ReportShelf from './ReportShelf';
+import SummaryCard from './SummaryCard';
+import PlanCompare from './PlanCompare';
+import TimeUnknownCard from './TimeUnknownCard';
 import { usePremiumData } from './usePremiumData';
+import type { Gyeokguk, Yongsin, Johu } from '@/lib/saju/gyeokyong';
 import type { GaeunResult } from '@/lib/saju/gaeun';
 import Reviews from './Reviews';
 import ReviewPrompt from './ReviewPrompt';
@@ -36,8 +45,10 @@ const OHAENG_COLOR: Record<string, string> = {
 
 // 출생 도시 목록은 app/cities.ts에서 공용 관리 (궁합 페이지와 공유)
 
+// 점 색 경계는 신년운세 등급과 같은 선(luck.ts LUCK_TONE) — 2026-09-23 대운 점수를 신년 식으로 통일하면서 맞췄다
 function scoreColor(s: number): string {
-  return s >= 20 ? '#22c55e' : s <= -20 ? '#ef4444' : '#eab308';
+  const t = luckTone(s);
+  return t === 'good' ? '#22c55e' : t === 'bad' ? '#ef4444' : '#eab308';
 }
 
 // 대운/세운 운세 흐름 그래프 (SVG)
@@ -138,6 +149,16 @@ function GzCell({ pos, p }: { pos: string; p: Pillar | null }) {
   );
 }
 
+
+/** 분 → 사람이 읽는 시간차 ('3일 4시간' · '2시간 12분' · '18분') */
+function fmtDelta(min: number): string {
+  const a = Math.abs(Math.round(min));
+  const d = Math.floor(a / 1440), h = Math.floor((a % 1440) / 60), m = a % 60;
+  if (d) return `${d}일 ${h}시간`;
+  if (h) return `${h}시간 ${m}분`;
+  return `${m}분`;
+}
+
 export default function Home() {
   const [form, setForm] = useState({
     name: '', year: '', month: '', day: '', hour: '', minute: '0',
@@ -145,7 +166,7 @@ export default function Home() {
     calType: 'solar' as 'solar' | 'lunar', isLeapMonth: false,
     jasiMode: 'yaja' as 'yaja' | 'jeongja', // 자시 학파 (23시대 출생 시에만 노출)
   });
-  const [result, setResult] = useState<SajuResult | null>(null);
+  const [result, setResult] = useState<FreeSajuResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ai, setAi] = useState<{ lead: string; sections: any[] } | null>(null);
@@ -178,13 +199,20 @@ export default function Home() {
   }, [premium, chart, result, analyzed]);
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+  // 시각 미상 카드의 「시각 넣고 다시 보기」 — 체크를 풀고 입력 폼의 「시」 칸으로 데려간다
+  const enterTime = () => {
+    setForm((f) => ({ ...f, unknownTime: false }));
+    document.getElementById('birth-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => (document.getElementById('birth-hour') as HTMLInputElement | null)?.focus({ preventScroll: true }), 450);
+  };
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [notice, setNotice] = useState('');
   // 누적 풀이 수 (실측 카운터 — 100 미만이면 표시 안 함)
-  const [stats, setStats] = useState(0);
+  // 랜딩 사회적 증거 — 전부 서버 실측값. people=고유 명식 수(HLL), cases=/accuracy 와 같은 채점 표본 수.
+  const [stats, setStats] = useState<{ people: number; cases: number }>({ people: 0, cases: 0 });
   useEffect(() => {
-    fetch('/api/stats').then((r) => r.json()).then((d) => setStats(d?.total ?? 0)).catch(() => {});
+    fetch('/api/stats').then((r) => r.json()).then((d) => setStats({ people: d?.people ?? 0, cases: d?.cases ?? 0 })).catch(() => {});
   }, []);
   useEffect(() => {
     setProfiles(listProfiles());
@@ -196,7 +224,10 @@ export default function Home() {
 
   // 결과 화면 복원 — 12신살 사전 등 다른 페이지에 갔다 뒤로 오면 입력 화면으로 초기화되던 문제.
   // 결과가 React state에만 있어 페이지를 벗어나면 날아갔음. sessionStorage 스냅샷으로 되살린다.
-  const SESSION_KEY = 'saju_session_v1';
+  // ⚠️ 응답 모양이 바뀌면 **반드시 버전을 올린다.**
+  //   v2 (2026-09-09): 세로 자르기로 `gyeokYong` 모양이 바뀌고 `boundary` 가 생겼다.
+  //   옛 스냅샷(v1)을 복원하면 없는 필드를 읽어 결과 화면이 통째로 깨진다 — 배포 직후 재방문자가 정확히 그 경우다.
+  const SESSION_KEY = 'saju_session_v2';
   const [restored, setRestored] = useState(false);
   useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(s.ai); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
   useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone, analyzed })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form, analyzed]);
@@ -224,6 +255,16 @@ export default function Home() {
   const flipQ = usePremiumData<Sin12Premium>(premium && !!analyzed, 'sin12', analyzed ?? null);
   const flipOf = (name: string) => flipQ.data?.byYear.find((x) => x.name === name)?.flip ?? null;
   const flipLock = (result as any)?.advanced?.flipLock as { flips: number; names: string[]; total: number } | undefined;
+
+  // 용신·격국 **확정 판정**도 무료 응답에는 실려 오지 않는다(`lib/saju/gate.ts`).
+  //   무료 화면이 가진 건 후보와 「여기서 갈린다」는 사실뿐이고, 판정과 근거는 결제 후 여기서 받는다.
+  type YongsinPremium = {
+    gyeokguk: Gyeokguk; yongsin: Yongsin; johu: Johu;
+    strength: number; paidLines: Record<string, string>;
+  };
+  const yongsinQ = usePremiumData<YongsinPremium>(premium && !!analyzed, 'yongsin', analyzed ?? null);
+  const yq = yongsinQ.data;
+  const yongLock = result?.gyeokYong?.yongsinLock;
 
   // 같은 명식이면 AI 풀이를 재호출하지 않도록 캐시 키 (브라우저 localStorage)
   //   ⚠️ READING_TAG 를 반드시 넣는다. 판정이 바뀌거나 **설명문만 바뀌어도**
@@ -382,30 +423,33 @@ export default function Home() {
         <p>사주, 나를 꿰뚫다 — 천문 데이터로 계산한 진짜 명식 위에서, 인생의 결정을 돕습니다</p>
       </div>
 
+      {/* 히어로 신뢰 라인.
+          ⚠️ 2026-09-09 — NASA JPL 6.8초 · 71,733일 같은 **스펙 숫자를 첫 화면에서 내렸다.**
+             ① 「진태양시·야자시 보정합니다」는 경쟁 사이트(사주만세·척척사주·데이사주)도 똑같이 쓰는 말이라
+                문장으로는 구분이 안 된다 — 이 자리에서 정확도를 '주장'해 봐야 값을 못 한다.
+             ② 그 숫자들은 **결제 직전**("이거 믿어도 되나")과 `/accuracy` 에서 터뜨려야 값을 한다.
+             차별점은 주장이 아니라 **명식을 넣은 뒤 나오는 개인화된 증거**(경계 진단)로 옮겼다. */}
       <div className="trust">
         <div className="trust-badges">
-          <span className="tb">🛰 NASA JPL 행성력 대비 절기 오차 평균 6.8초</span>
-          <span className="tb">🧪 1900~2100 만세력 71,733일 교차검증 100%</span>
-          <span className="tb">◷ 진태양시·야자시·서머타임 보정</span>
+          <span className="tb">◷ 진태양시·야자시·서머타임까지 계산</span>
+          <span className="tb">🔎 내 명식이 다른 곳과 갈리는 지점을 그대로 공개</span>
         </div>
-        {stats >= 100 && (
+        {stats.people >= 1000 && (
           <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-mute)', textAlign: 'center' }}>
-            지금까지 <b style={{ color: 'var(--gold)' }}>{stats.toLocaleString()}명</b>이 명식을 확인했어요
+            지금까지 <b style={{ color: 'var(--gold)' }}>{stats.people.toLocaleString()}명</b>이 명식을 확인했어요
           </p>
         )}
         <p className="trust-sub">
-          대부분의 무료 만세력이 놓치는 진태양시·야자시·서머타임까지 보정하고, 고전 원전 59命으로 판정을 채점해 공개합니다.{' '}
-          <a href="/accuracy" style={{ color: 'var(--gold)' }}>검증 방법과 숫자 전부 보기 →</a>
+          같은 생년월일인데 앱마다 사주가 다른 이유, 당신 명식에서 직접 보여드립니다.
+          {stats.cases > 0 && <> 저희 판정은 고전 원전 <b>{stats.cases}건</b>으로 채점해 <b>틀린 것까지</b> 공개하고 있어요.</>}
+          {' '}<a href="/accuracy" style={{ color: 'var(--gold)' }}>검증 방법과 숫자 전부 보기 →</a>
         </p>
       </div>
 
       {loading && <Analyzing corr={`${(((CITIES[form.city] ?? 126.978) - 135) * 4).toFixed(1)}분`} />}
 
-      <div className="card">
+      <div className="card" id="birth-form">
         <h2>생년월일시 입력</h2>
-        <div style={{ margin: '2px 0 14px' }}>
-          <Link href="/gunghap" style={{ fontSize: 14, color: 'var(--gold)', textDecoration: 'none' }}>💞 궁합 보러 오셨다면 여기 →</Link>
-        </div>
         <div style={{ marginBottom: 14 }}><label>이름 (선택 · 풀이에 반영)</label><input value={form.name} onChange={(e) => set('name', e.target.value)} /></div>
         <div className="cal-toggle">
           <button type="button" className={form.calType === 'solar' ? 'on' : ''} onClick={() => set('calType', 'solar')}>양력</button>
@@ -418,7 +462,7 @@ export default function Home() {
           <div><label>연도({form.calType === 'lunar' ? '음력' : '양력'})</label><input type="number" value={form.year} onChange={(e) => set('year', e.target.value)} /></div>
           <div><label>월</label><input type="number" value={form.month} onChange={(e) => set('month', e.target.value)} /></div>
           <div><label>일</label><input type="number" value={form.day} onChange={(e) => set('day', e.target.value)} /></div>
-          <div><label>시 (0~23)</label><input type="number" value={form.hour} disabled={form.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
+          <div><label>시 (0~23)</label><input id="birth-hour" type="number" value={form.hour} disabled={form.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
           <div><label>분</label><input type="number" value={form.minute} disabled={form.unknownTime} onChange={(e) => set('minute', e.target.value)} /></div>
           <div><label>출생도시 <span className="hint">· 목록에 없으면 가장 가까운 도시를 선택</span></label>
             <select value={form.city} onChange={(e) => set('city', e.target.value)}>
@@ -452,11 +496,22 @@ export default function Home() {
           🔒 입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
         </p>
         <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
+          {/* ⚠️ 2026-09-17 취소선(₩9,900)과 「런칭 기념·첫 500명 한정」 삭제.
+              ① 9,900 은 판매한 기간이 없어 종전거래가격이 아니다 → 허위 종전가격.
+              ② 구매자 수 카운터가 없어 500명을 셀 수도, 끝낼 수도 없다 → 종료되지 않는 수량 한정.
+              둘 다 표시광고법 리스크이고 토스 「정찰제」와 부딪힌다. 근거: 카드사심사후_수정대기목록.md §D */}
           명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <b style={{ color: 'var(--gold)' }}>₩5,900</b> · 단건 결제
           {' '}<Link href="/pricing" style={{ color: 'var(--gold)' }}>이용권 안내 →</Link>
         </p>
         {error && <div className="warn error">{error}</div>}
       </div>
+
+      <Link href="/gunghap" className="card gh-entry">
+        <div className="gh-entry-t">💞 이 사람이랑, 진짜 괜찮은 걸까</div>
+        <p>두 사람의 명식으로 보는 정통 사주 궁합 — <b>무료</b>예요.
+          {' '}상대방 생일을 몰라도 <b>내 정보만 넣고 링크를 보내면</b> 상대가 채우는 순간 완성됩니다.</p>
+        <span className="gh-entry-cta">궁합 보러 가기 →</span>
+      </Link>
 
       {/* 결과 미리보기 — 입력 전 '시식 코너' (실제 생성된 풀이 문장 사용) */}
       {!result && (
@@ -467,7 +522,7 @@ export default function Home() {
             <div className="lead-mark">✦ 당신의 사주</div>
             <p className="lead-quote">당신은 산처럼 버티면서 정작 자기 무게에 짓눌리는 사람입니다 — 혼자 버티려 하지만, 물이 흘러야 비로소 빛나는 구조로 태어났어요.</p>
           </div>
-          <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>명식표 · 오행 분포 · 격국/용신 · 오늘의 운세 · 행운 부적 카드까지 전부 무료예요.</p>
+          <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>명식표 · 오행 개수 · 용신이 갈리는 지점 · 오늘의 운세는 무료입니다. 엔진의 확정 판정과 근거는 리포트에 있어요.</p>
         </div>
       )}
 
@@ -502,30 +557,35 @@ export default function Home() {
 
       {result && (
         <>
+          {/* ── 결과 화면 카드 순서 (2026-09-17 재배치 · 카드사심사후_수정대기목록.md §E-4 ①) ──
+              읽는 순서를 「무엇이 나왔나 → 어떻게 계산했나 → 어디서 갈리나 → 왜 그런가 → 그래서 언제」로 맞췄다.
+              문구는 한 글자도 바꾸지 않았다. JSX 블록 위치만 옮겼다.
+              바뀐 것 세 가지:
+               ① 「정밀 보정 내역」이 맨 아래(26번째)에서 명식 바로 뒤로 올라왔다.
+                  계산 투명성이 이 브랜드의 전부인데 아무도 안 보는 자리에 있었다.
+               ② 결제 카드가 오행·강약·격국용신·십신 뒤로 내려갔다.
+                  전에는 「뭐가 나왔나」보다 「사세요」가 먼저였다.
+               ③ 궁합 CTA 카드가 첫 카드 자리에서 결제 뒤로 내려갔다.
+                  결제 직전에 무료 CTA 를 놓으면 시선을 빼앗는다.
+              ⚠️ 되돌리기 쉬운 판단 하나 — DailyFortune(오늘의 운세)을 3번째에서 대운·세운 뒤로 옮겼다.
+                 시간축을 10년→1년→오늘 순으로 묶는 게 읽기 좋지만, 오늘의 운세는 재방문 훅이라
+                 스크롤이 깊어지는 대가가 있다. 재방문율이 떨어지면 이 블록만 다시 위로 올리면 된다. ── */}
+
           <div className="lead-card">
             <div className="lead-mark">✦ {result.input.name ? `${result.input.name}님 사주` : '당신의 사주'}{ai && <span className="ai-badge">✨ AI 심층 풀이</span>}</div>
             <p className="lead-quote">{ai && ai.lead ? ai.lead : result.readingLead}{aiStreaming && ai && !ai.lead && <span className="caret" />}</p>
             <button className="save-btn" onClick={saveCurrent}>💾 이 사주 보관함에 저장</button>
           </div>
 
-          {/* 바이럴 루프: 궁합은 상대를 데려와야 완성 — 결과 직후 최상단 배치 */}
-          <div className="card" style={{ textAlign: 'center' }}>
-            <h2>💞 이 사주, 그 사람이랑은?</h2>
-            <div className="meta" style={{ marginBottom: 14 }}>사주는 혼자 보지만 궁합은 둘이 봐야 완성돼요. 초대 문구를 보내서 서로의 명식으로 확인해 보세요. 궁합 점수는 무료!</div>
-            <div className="share-actions" style={{ justifyContent: 'center' }}>
-              <Link href="/gunghap" className="btn share-btn" style={{ textDecoration: 'none' }}>💞 우리 궁합 보러 가기</Link>
-              <button className="btn share-btn ghost" onClick={copyInviteLink}>🔗 초대 문구 복사</button>
-            </div>
-          </div>
+          {/* 결과 상단 요약 (§E-4 ②) — 상태 태그 · 한 줄 진단 · 경계 알림 · 계산 기준 · 엔진 버전 */}
+          <SummaryCard result={result} />
 
-          <DailyFortune result={result} />
-
-          <YearlyFortune result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
-
-          <AuspiciousDates result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
+          {/* 시각 미상 분기 (§E-4 ③) — 시각을 모르는 사람에게만. 확정된 것 / 시각을 알아야 정해지는 것 */}
+          {result.timeScan && <TimeUnknownCard scan={result.timeScan} onEnterTime={enterTime} />}
 
           <div className="card">
             <h2>사주 명식 (四柱)</h2>
+            {/* 경계 배지는 2026-09-23 결과 상단 「이 명식 한눈에」 카드(SummaryCard)로 옮겼다 — 규칙·문구는 lib/saju/summary.ts */}
             <div className="saju-table">
               <div className="h">구분</div><div className="h">시주</div><div className="h">일주</div><div className="h">월주</div><div className="h">년주</div>
               <div className="h">천간<br/>지지</div>
@@ -534,14 +594,7 @@ export default function Home() {
               <GzCell pos="月" p={result.pillars.month} />
               <GzCell pos="年" p={result.pillars.year} />
             </div>
-            <Link href="/accuracy" className="verify-strip">
-              <span className="vs-ic">🔎</span>
-              <span className="vs-txt">
-                이 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산했어요 — 진태양시·균시차·야자시 보정,
-                절기 오차 평균 6.8초(NASA JPL 행성력 대비)
-              </span>
-              <span className="vs-go">이렇게 검증했어요 →</span>
-            </Link>
+            {/* 엔진 버전 띠도 요약 카드로 옮겼다(2026-09-23) */}
             {result.warnings.map((w, i) => <div className="warn" key={i}>⚠️ {w}</div>)}
             <div className="adv">
               <div className="adv-row"><span className="adv-k">십이운성</span>
@@ -637,6 +690,277 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="card">
+            <h2>정밀 보정 내역</h2>
+            <div className="meta">
+              <b>표준자오선</b> {result.corrected.standardMeridian}°E ·
+              <b> 경도보정</b> {result.corrected.longitudeCorrectionMin}분 ·
+              <b> 균시차</b> {result.corrected.equationOfTimeMin}분<br />
+              <b>서머타임</b> {result.corrected.summerTimeApplied ? '적용(-1h)' : '없음'} ·
+              <b> 자시구분</b> {result.corrected.jasiType ?? '—'}<br />
+              <b>진태양시</b> {result.corrected.apparentSolarDateTime}
+            </div>
+          </div>
+
+          {/* ── 경계 진단 — 무료 구간의 '상품'. 자랑이 아니라 **당신 명식의 갈림길**을 보여준다 ── */}
+          {result.boundary && (() => {
+            const b = result.boundary!;
+            const omit = b.variants.filter((v) => v.kind === '생략');
+            const school = b.variants.filter((v) => v.kind === '학파');
+            return (
+              <div className="card bd-card" id="boundary">
+                <h2>경계 진단 — 당신 명식이 갈릴 수 있는 지점</h2>
+                <div className="meta" style={{ marginBottom: 14 }}>
+                  같은 생년월일시인데 앱마다 사주가 다른 이유는 대개 아래 네 가지에서 갈립니다.
+                  {' '}당신 명식이 그 경계의 어디에 서 있는지 그대로 보여드려요.
+                </div>
+
+                <div className="bd-facts">
+                  <div><span>진태양시</span><b>{b.trueSolar.apparentSolarDateTime}</b>
+                    <em>경도 보정 {b.trueSolar.longitudeCorrectionMin}분 · 균시차 {b.trueSolar.eotMin}분</em></div>
+                  <div><span>가장 가까운 절입</span><b>{b.jeolgi.name}({b.jeolgi.hanja})</b>
+                    <em>{b.jeolgi.whenKST} · {b.jeolgi.deltaMin >= 0 ? `${fmtDelta(b.jeolgi.deltaMin)} 지나서 출생` : `${fmtDelta(b.jeolgi.deltaMin)} 전에 출생`}</em></div>
+                  <div><span>자시 · 서머타임</span><b>{b.jasiType ?? '시간 모름'}</b>
+                    <em>{b.dstApplied ? '서머타임 기간 출생 — 1시간 되돌려 계산' : '서머타임 해당 없음'}</em></div>
+                </div>
+
+                {omit.length > 0 && (
+                  <div className="bd-block">
+                    <h3 className="bd-h">▸ 이 계산을 생략하면</h3>
+                    {omit.map((v) => (
+                      <div className="bd-row" key={v.key}>
+                        <div className="bd-row-h"><b>{v.label}</b><span>{v.changed.join(' · ')}가 달라집니다</span></div>
+                        <p className="bd-what">{v.what}</p>
+                        <div className="bd-cmp">
+                          <span className="bd-ours">헤아림 <b>{v.ours}</b></span>
+                          <span className="bd-arrow">→</span>
+                          <span className="bd-theirs">그 방식 <b>{v.theirs}</b></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {school.map((v) => (
+                  <div className="bd-block bd-school" key={v.key}>
+                    <h3 className="bd-h">▸ 학파를 바꾸면 (정답이 둘)</h3>
+                    <p className="bd-what">
+                      자시는 <b>학파가 갈립니다.</b> 헤아림 기본값은 <b>야자시</b>(23시대도 그날 일주 유지)이고,
+                      {' '}입력 화면에서 바꿀 수 있어요. {v.what}으로 보면 {v.changed.join(' · ')}가
+                      {' '}<b>{v.ours}</b> 대신 <b>{v.theirs}</b>가 됩니다.
+                    </p>
+                    <p className="bd-neutral">여기서는 <b>어느 쪽이 맞다고 말하지 않습니다.</b> 계산이 아니라 관점의 문제예요.</p>
+                  </div>
+                )) }
+
+                {/* 안심 카드 — 68%가 여기 해당한다. 겁을 주지 않는다는 증거라 반드시 띄운다.
+                    ⚠️ 단 **시간을 모르면 시주·자시는 애초에 판단 대상이 아니다.** 그때 「어디서 보든 같다」고 말하면
+                       사실보다 센 말이 된다(시각을 넣으면 갈릴 수 있다). 그래서 문구를 나눈다. */}
+                {!b.anyChange && (b.unknownTime ? (
+                  <div className="bd-safe">
+                    <b>시각을 모르면 시주와 자시는 판단 대상이 아니에요.</b>
+                    {/* ⚠️ 2026-09-23: 「년·월·일은 어디서 보든 같다」는 절입일·자정 직후 출생에게 거짓이 된다
+                        (시각에 따라 월주·일주가 갈린다). 시각 미상 카드(timeScan)가 갈린다고 판정하면 그 말을 하지 않는다. */}
+                    {result.timeScan?.pillars.some((p) => p.status === 'split') ? (
+                      <> 다만 <b>{result.timeScan.pillars.filter((p) => p.status === 'split').map((p) => p.pillar).join('·')}는 태어난 시각에 따라</b> 달라져요 —
+                        {' '}<a href="#time-unknown" style={{ color: 'var(--gold)' }}>「시각 없이 알 수 있는 것」</a>에 나눠 두었어요.</>
+                    ) : (
+                      <> 나머지 세 기둥(년·월·일)은 절기·경도 어느 쪽으로 계산해도
+                        {' '}그대로라, <b>여기까지는 어디서 보든 같습니다.</b></>
+                    )}
+                    {' '}<b>태어난 시각을 알면</b> 시주가 붙고, 그때 갈릴 수 있는지도 이 자리에서 같이 알려드릴 수 있어요.
+                  </div>
+                ) : (
+                  <div className="bd-safe">
+                    <b>당신 명식은 경계에서 멀어요.</b> 진태양시·절기·자시 어느 쪽으로 계산해도 네 기둥이 그대로입니다 —
+                    {' '}<b>어디서 보든 같은 명식</b>이 나온다는 뜻이에요. 겁줄 일이 아니라 그냥 사실이라, 있는 그대로 알려드립니다.
+                  </div>
+                ))}
+
+                {b.unknownTime && b.anyChange && (
+                  <p className="bd-note">※ 출생 시각을 모르면 시주와 자시는 비교 대상이 아니에요. 시간을 알면 이 진단이 훨씬 정확해집니다.</p>
+                )}
+
+                <p className="bd-close">
+                  어느 쪽이 맞는지는 저희가 정하지 않았습니다. 『적천수천미』 원전에 실린 명식
+                  {stats.cases > 0 ? <> <b>{stats.cases}건</b>으로</> : '으로'} 저희 판정을 채점하고, <b>틀린 것까지</b> 그대로 공개합니다.
+                  {' '}<a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 보기 →</a>
+                </p>
+              </div>
+            );
+          })()}
+
+          <div className="card">
+            <h2>오행 분포 (五行)</h2>
+            <div className="meta" style={{ marginBottom: 10 }}>천간·지지 8자 기준 — 지지 속에 숨은 지장간(支藏干)의 기운은 격국·풀이에 별도로 반영됩니다.</div>
+            {(['목','화','토','금','수'] as const).map((o) => {
+              const c = (result.ohaeng as any)[o] as number;
+              const st = (result.ohaeng.status as any)[o];
+              return (
+                <div className="bar" key={o}>
+                  <div className="bar-label" style={{ color: OHAENG_COLOR[o] }}>{o}</div>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${(c / maxOhaeng) * 100}%`, background: `linear-gradient(90deg, ${OHAENG_COLOR[o]}aa, ${OHAENG_COLOR[o]})` }}>{c}</div>
+                  </div>
+                  <div className="bar-tag">{st ?? ''}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="card">
+            <h2>일간 강약 (신강·신약)</h2>
+            <div className="gauge"><div style={{ width: `${result.dayMasterStrength * 100}%` }} /></div>
+            <div className="gauge-row"><span>신약 (관계·환경 활용형)</span><span>{Math.round(result.dayMasterStrength * 100)}%</span><span>신강 (주관·추진형)</span></div>
+          </div>
+
+          <div className="card">
+            <h2>격국 · 용신 (格局 · 用神)</h2>
+            <div className="chips">
+              {yq ? (
+                <>
+                  <div className="chip">그릇 <b>{yq.gyeokguk.name}</b></div>
+                  <div className="chip">용신 <b>{yq.yongsin.primary}(五行)</b></div>
+                  <div className="chip">용신법 <b>{yq.yongsin.method}</b></div>
+                </>
+              ) : (
+                <>
+                  <div className="chip">그릇 후보 <b>{result.gyeokYong.gyeokCandidates?.join(' · ') ?? '—'}</b></div>
+                  <div className="chip">용신 <b>{yongLock?.candidates.length ? `${yongLock.candidates.join(' · ')} 중 하나 🔒` : '한 답으로 모임 🔒'}</b></div>
+                </>
+              )}
+              <div className="chip">조후 <b>{(yq?.johu ?? result.gyeokYong.johu)?.climate ?? '—'}</b></div>
+            </div>
+
+            {yq ? (
+              <>
+                <div className="basis-box">
+                  <div className="basis-head">
+                    <b>기준별 결론</b>
+                    {yq.yongsin.conflict && <span className="basis-flag">기준에 따라 답이 갈립니다</span>}
+                  </div>
+                  {yq.yongsin.bases.map((b) => (
+                    <div className={`basis-row${b.adopted ? ' on' : ''}`} key={b.method}>
+                      <span className="basis-k">{b.method} 기준</span>
+                      <span className="basis-v">{b.value ?? '—'}</span>
+                      {b.adopted && <span className="basis-tag">채택</span>}
+                      <span className="basis-n">{b.note}</span>
+                    </div>
+                  ))}
+                  {yq.yongsin.lacking && (
+                    <div className="cand-lack">
+                      <b>결손 진단 — {yq.yongsin.lacking.value} 기운이 원국에 없습니다</b>
+                      <div>{yq.yongsin.lacking.why}</div>
+                      <div className="cand-lack-src">
+                        ↳ 원전은 이런 판을 「<b>淸枯</b>」라 부릅니다 — 「壬水雖通根身庫, 總之無金滋助, 淸枯之象」(適天髓闡微 卷二 官殺).
+                        {' '}쓸 용신은 있으나 그것을 <b>받쳐 줄 원천이 없는</b> 구조라, 그 기운이 오는 시기에 비로소 풀립니다.
+                      </div>
+                    </div>
+                  )}
+                  {yq.yongsin.decisive && (
+                    <div className="cand-decisive">
+                      <b>무엇이 갈랐나</b> — {yq.yongsin.decisive}
+                    </div>
+                  )}
+                  {yq.yongsin.eokbuCandidates?.some((c) => c.structuralRoot) && (
+                    <details className="cand-box">
+                      <summary>억부 후보를 어떻게 추렸는지 보기 ({yq.yongsin.eokbuCandidates.length}개)</summary>
+                      <div className="cand-notice">참고 정보 — <b>현재 용신 판정에는 미반영</b></div>
+                      <div className="cand-legend">
+                        아래 <b>관계적 뿌리</b>는 <b>점수에 들어가지 않습니다.</b> 어떤 후보가 채택됐는지와 무관하게,
+                        {' '}판단에 쓸 수 있을지 검토 중인 값을 있는 그대로 보여드리는 칸입니다.
+                        {' '}<br />
+                        <b>구조적 뿌리</b> — 그 기운이 지지에 실제로 서 있는가(정기 · 합국 · 지장간). <b>이 층만 판정에 씁니다.</b>
+                        {' '}<br />
+                        <b>관계적 뿌리</b> — 그 기운을 <i>생해 주는</i> 세력이 지지에 서 있는가.
+                        {' '}원전이 「無財則官亦無根」(재성이 없으면 관성도 뿌리가 없다)이라 한 층입니다.
+                        {' '}같은 논리에서 원전이 어떤 곳은 재성을, 어떤 곳은 관성을 용신으로 지목해
+                        {' '}가르는 조건이 확정되지 않아, 확인될 때까지 기록만 합니다.
+                      </div>
+                      {yq.yongsin.eokbuCandidates.map((c) => (
+                        <div className="cand-row" key={c.group}>
+                          <span className="cand-g">{c.group}</span>
+                          <span className="cand-v">{c.value}</span>
+                          <span className={`cand-root r-${c.structuralRoot ?? '없음'}`}>구조 {c.structuralRoot ?? '—'}</span>
+                          <span className={`cand-root${c.relationalRoot ? ' on' : ''}`}>관계 {c.relationalRoot ? '있음' : '없음'}</span>
+                          <span className="cand-n">
+                            {c.reason}
+                            {c.origin && (
+                              <><br /><span className="cand-src">
+                                ↳ <b>{c.origin.branch}</b> — 원전 「{c.origin.quote}」에 따라 연 후보
+                              </span></>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </details>
+                  )}
+                  <div className="basis-sum">
+                    종합 — <b>{yq.yongsin.primary}</b>({yq.yongsin.method} 기준 채택)
+                    {yq.yongsin.conflict && <span> · 다른 만세력에서 용신이 다르게 나온다면, 대개 계산이 아니라 <b>어느 기준을 먼저 쓰느냐</b>의 차이입니다.</span>}
+                  </div>
+                  <p className="basis-note">
+                    ※ 『자평진전』이 말하는 ‘용신’은 <b>월령이 만든 격</b>(여기서는 {yq.gyeokguk.name})을 가리키는 말로,
+                    위의 억부·조후 계열 용신과는 <b>다른 개념</b>입니다. 두 체계를 섞어 비교하면 서로 틀린 것처럼 보입니다.
+                  </p>
+                </div>
+                <p style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>판정 근거: {yq.gyeokguk.via} → {yq.gyeokguk.name}</p>
+                <p style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.6 }}>{yq.gyeokguk.desc}</p>
+                <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{yq.yongsin.desc}</p>
+              </>
+            ) : yongsinQ.loading ? (
+              <p className="meta">용신 판정을 불러오는 중…</p>
+            ) : yongLock ? (
+              <div className="flip-gate">
+                <div className="flip-gate-h">
+                  {yongLock.candidateCount > 1 ? (
+                    <>당신 명식의 용신은 <b>{yongLock.candidates.join(' · ')}</b> 사이에서 <b>갈립니다</b></>
+                  ) : (
+                    <>당신 명식은 <b>다섯 가지 법이 한 답으로 모이는</b> 자리입니다</>
+                  )}
+                </div>
+                <p>
+                  용신은 <b>어느 법을 먼저 쓰느냐</b>에서 갈려요. 5용신 정법(억부·조후·병약·통관·전왕) 중
+                  {' '}당신 명식에서 값이 나온 건 <b>{yongLock.methodsCount}개</b>입니다.
+                  {yongLock.candidateCount > 1
+                    ? ' 다른 곳과 용신이 다르게 나온다면 대개 계산이 틀린 게 아니라, 여기서 갈린 겁니다.'
+                    : ' 법이 갈려도 답이 같은, 흔들림 없는 자리예요. 그게 무엇이고 왜 그런지는 근거와 함께 리포트에서 열립니다.'}
+                </p>
+                <p className="flip-gate-what">
+                  정밀 리포트에서 열리는 것 — <b>우리 엔진이 채택한 용신 하나와 그 근거</b>
+                  (기준별 결론·채택과 기각 사유·무엇이 1·2위를 갈랐는지), <b>격국 확정</b>과 그릇 풀이
+                  {yongLock.hasLacking && (
+                    <>, 그리고 <b>결손 진단(淸枯)</b> — 쓸 기운은 있는데 그걸 <b>받쳐 줄 원천이 원국에 없는</b> 구조라 어느 기운이 올 때 풀리는지</>
+                  )}.
+                </p>
+                <p className="flip-gate-what">
+                  그리고 그 판정은 <b>채점받은 판정</b>입니다. 『적천수천미』 원전 명식으로 채점해 맞힌 것도 틀린 것도 전부 공개해 뒀어요 —{' '}
+                  <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 보기 →</a>
+                </p>
+                <button className="btn" onClick={() => setPayOpen(true)}>내 용신이 무엇인지 보기 →</button>
+              </div>
+            ) : null}
+
+            <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
+              ※ 신강·신약은 <b>득령(월지)·득지(일지)·득세</b>를 가중 합산해 판정하며, 득세는 일간 자신을 뺀 나머지 글자로 셉니다.
+              용신은 서낙오 『자평수언』의 <b>5용신 정법 — 억부·조후·병약·통관·전왕(종격)</b>을 모두 계산해
+              그중 <b>종격 → 조후 시급 → 병약 → 억부</b> 순으로 채택합니다.
+              통관은 계산해 함께 보되 <b>채택 순위에서는 뒤에 둡니다</b> —
+              저희 채점 기준인 『적천수천미』가 통관을 &lsquo;다리 오행을 용신으로 삼는 법&rsquo;이 아니라
+              &lsquo;기운이 막히지 않고 흐르는가&rsquo;라는 <b>상태 평가</b>로 쓰기 때문입니다(卷二 通神論 通關).
+              어떤 법을 우선하느냐는 학파에 따라 견해가 갈릴 수 있어요.
+              {' '}격국은 자평진전 「用神專尋月令」에 따라 <b>월지 정기(본기)</b>를 기본으로 잡습니다 — 투출한 여기·중기를 격으로 잡는 곳도 있어, 그래서 곳마다 격이 갈립니다.
+            </p>
+          </div>
+
+          <div className="card">
+            <div className="chips">
+              {Object.entries(result.sipsinSummary).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
+                <div className="chip" key={k}>{k} <b>×{v}</b></div>
+              ))}
+            </div>
+          </div>
+
           <div className="card reading">
             <h2>사주 풀이</h2>
             <div className="meta" style={{ marginBottom: 12 }}>{result.input.name ? `${result.input.name}님` : '당신'}을 꿰뚫어 보는 선배의 시선으로, 따뜻하지만 솔직하게 풀었습니다.</div>
@@ -714,16 +1038,21 @@ export default function Home() {
           <div className="card premium">
             <h2>{premium ? '✓ 정밀 리포트 (구매 완료)' : '🔒 정밀 리포트 1건'}</h2>
             <p className="meta" style={{ marginBottom: 14 }}>이직·이사·계약·연애 — 진짜 결정을 앞뒀다면, 정밀 리포트에서 '언제, 어느 방향으로'까지 확인하세요.</p>
-            <ul className="prem-list">
-              <li>🔮 이 명식만을 위한 심층 AI 풀이 — 말투 3종 선택</li>
-              <li>📈 대운 80년 상세 — 시기별 재물·직업·건강 변곡점</li>
-              <li>🗓️ {new Date().getFullYear()}~{new Date().getFullYear() + 1} 신년운세 — 월별 길흉 캘린더</li>
-              <li>🍀 나만의 개운법 · 결혼·이직·이사 택일</li>
-            </ul>
+            {/* §E-4 ④ (2026-09-23) 6줄 목차 → 무료·유료 차이표. 칸 하나하나가 실제 게이팅과 맞아야 한다(PlanCompare.tsx 머리말) */}
+            <PlanCompare />
+            <Link href="/sample" className="pc-sample">
+              <span>실제 리포트는 어떻게 생겼나 — 『적천수천미』 명식으로 뽑은 <b>용신 판정 1쪽</b></span>
+              <b>샘플 보기 →</b>
+            </Link>
+            {/* 스펙 숫자는 여기가 제자리다 — 결제 직전, 「이거 믿어도 되나」 하는 순간. */}
             <p className="prem-verify">
-              🔎 이 리포트가 읽는 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산합니다.{' '}
+              🔎 이 리포트가 읽는 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산합니다 —{' '}
+              NASA JPL 행성력 대비 <b>절기 오차 평균 6.8초</b> · 1900~2100 만세력 <b>71,733일 교차검증 100%</b>
+              {stats.cases > 0 && <> · 고전 원전 <b>{stats.cases}건</b>으로 판정을 채점(틀린 것까지 공개)</>}.{' '}
               <Link href="/accuracy">검증 방법과 숫자 보기 →</Link>
             </p>
+            {/* ⚠️ 2026-09-17 아래 결제 버튼의 취소선(₩9,900)을 제거했다.
+                9,900 은 판매한 기간이 없어 종전거래가격이 아니다 — 카드사심사후_수정대기목록.md §D */}
             {premium
               ? <>
                   <div className="prem-unlocked">✓ 이 사주의 리포트를 구매하셨어요. 계정에 저장되어 언제든 다시 열람할 수 있습니다.</div>
@@ -739,148 +1068,32 @@ export default function Home() {
           <Receipts />
 
           <div className="card">
-            <h2>오행 분포 (五行)</h2>
-            <div className="meta" style={{ marginBottom: 10 }}>천간·지지 8자 기준 — 지지 속에 숨은 지장간(支藏干)의 기운은 격국·풀이에 별도로 반영됩니다.</div>
-            {(['목','화','토','금','수'] as const).map((o) => {
-              const c = (result.ohaeng as any)[o] as number;
-              const st = (result.ohaeng.status as any)[o];
-              return (
-                <div className="bar" key={o}>
-                  <div className="bar-label" style={{ color: OHAENG_COLOR[o] }}>{o}</div>
-                  <div className="bar-track">
-                    <div className="bar-fill" style={{ width: `${(c / maxOhaeng) * 100}%`, background: `linear-gradient(90deg, ${OHAENG_COLOR[o]}aa, ${OHAENG_COLOR[o]})` }}>{c}</div>
-                  </div>
-                  <div className="bar-tag">{st ?? ''}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="card">
-            <h2>일간 강약 (신강·신약)</h2>
-            <div className="gauge"><div style={{ width: `${result.dayMasterStrength * 100}%` }} /></div>
-            <div className="gauge-row"><span>신약 (관계·환경 활용형)</span><span>{Math.round(result.dayMasterStrength * 100)}%</span><span>신강 (주관·추진형)</span></div>
-          </div>
-
-          <div className="card">
-            <h2>격국 · 용신 (格局 · 用神)</h2>
-            <div className="chips">
-              <div className="chip">그릇 <b>{result.gyeokYong.gyeokguk.name}</b></div>
-              <div className="chip">용신 <b>{result.gyeokYong.yongsin.primary}(五行)</b></div>
-              <div className="chip">용신법 <b>{result.gyeokYong.yongsin.method}</b></div>
-              <div className="chip">조후 <b>{result.gyeokYong.johu.climate}</b></div>
-            </div>
-            <div className="basis-box">
-              <div className="basis-head">
-                <b>기준별 결론</b>
-                {result.gyeokYong.yongsin.conflict && <span className="basis-flag">기준에 따라 답이 갈립니다</span>}
-              </div>
-              {result.gyeokYong.yongsin.bases.map((b) => (
-                <div className={`basis-row${b.adopted ? ' on' : ''}`} key={b.method}>
-                  <span className="basis-k">{b.method} 기준</span>
-                  <span className="basis-v">{b.value ?? '—'}</span>
-                  {b.adopted && <span className="basis-tag">채택</span>}
-                  <span className="basis-n">{b.note}</span>
-                </div>
-              ))}
-              {result.gyeokYong.yongsin.lacking && (
-                <div className="cand-lack">
-                  <b>결손 진단 — {result.gyeokYong.yongsin.lacking.value} 기운이 원국에 없습니다</b>
-                  <div>{result.gyeokYong.yongsin.lacking.why}</div>
-                  <div className="cand-lack-src">
-                    ↳ 원전은 이런 판을 「<b>淸枯</b>」라 부릅니다 — 「壬水雖通根身庫, 總之無金滋助, 淸枯之象」(適天髓闡微 卷二 官殺).
-                    {' '}쓸 용신은 있으나 그것을 <b>받쳐 줄 원천이 없는</b> 구조라, 그 기운이 오는 시기에 비로소 풀립니다.
-                  </div>
-                </div>
-              )}
-              {result.gyeokYong.yongsin.decisive && (
-                <div className="cand-decisive">
-                  <b>무엇이 갈랐나</b> — {result.gyeokYong.yongsin.decisive}
-                </div>
-              )}
-              {result.gyeokYong.yongsin.eokbuCandidates?.some((c) => c.structuralRoot) && (
-                <details className="cand-box">
-                  <summary>억부 후보를 어떻게 추렸는지 보기 ({result.gyeokYong.yongsin.eokbuCandidates.length}개)</summary>
-                  <div className="cand-notice">참고 정보 — <b>현재 용신 판정에는 미반영</b></div>
-                  <div className="cand-legend">
-                    아래 <b>관계적 뿌리</b>는 <b>점수에 들어가지 않습니다.</b> 어떤 후보가 채택됐는지와 무관하게,
-                    {' '}판단에 쓸 수 있을지 검토 중인 값을 있는 그대로 보여드리는 칸입니다.
-                    {' '}<br />
-                    <b>구조적 뿌리</b> — 그 기운이 지지에 실제로 서 있는가(정기 · 합국 · 지장간). <b>이 층만 판정에 씁니다.</b>
-                    {' '}<br />
-                    <b>관계적 뿌리</b> — 그 기운을 <i>생해 주는</i> 세력이 지지에 서 있는가.
-                    {' '}원전이 「無財則官亦無根」(재성이 없으면 관성도 뿌리가 없다)이라 한 층입니다.
-                    {' '}같은 논리에서 원전이 어떤 곳은 재성을, 어떤 곳은 관성을 용신으로 지목해
-                    {' '}가르는 조건이 확정되지 않아, 확인될 때까지 기록만 합니다.
-                  </div>
-                  {result.gyeokYong.yongsin.eokbuCandidates.map((c) => (
-                    <div className="cand-row" key={c.group}>
-                      <span className="cand-g">{c.group}</span>
-                      <span className="cand-v">{c.value}</span>
-                      <span className={`cand-root r-${c.structuralRoot ?? '없음'}`}>구조 {c.structuralRoot ?? '—'}</span>
-                      <span className={`cand-root${c.relationalRoot ? ' on' : ''}`}>관계 {c.relationalRoot ? '있음' : '없음'}</span>
-                      <span className="cand-n">
-                        {c.reason}
-                        {c.origin && (
-                          <><br /><span className="cand-src">
-                            ↳ <b>{c.origin.branch}</b> — 원전 「{c.origin.quote}」에 따라 연 후보
-                          </span></>
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </details>
-              )}
-              <div className="basis-sum">
-                종합 — <b>{result.gyeokYong.yongsin.primary}</b>({result.gyeokYong.yongsin.method} 기준 채택)
-                {result.gyeokYong.yongsin.conflict && <span> · 다른 만세력에서 용신이 다르게 나온다면, 대개 계산이 아니라 <b>어느 기준을 먼저 쓰느냐</b>의 차이입니다.</span>}
-              </div>
-              <p className="basis-note">
-                ※ 『자평진전』이 말하는 ‘용신’은 <b>월령이 만든 격</b>(여기서는 {result.gyeokYong.gyeokguk.name})을 가리키는 말로,
-                위의 억부·조후 계열 용신과는 <b>다른 개념</b>입니다. 두 체계를 섞어 비교하면 서로 틀린 것처럼 보입니다.
-              </p>
-            </div>
-            <p style={{ marginTop: 10, opacity: 0.7, fontSize: 13 }}>판정 근거: {result.gyeokYong.gyeokguk.via} → {result.gyeokYong.gyeokguk.name}</p>
-            <p style={{ marginTop: 10, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.gyeokguk.desc}</p>
-            <p style={{ marginTop: 6, opacity: 0.85, lineHeight: 1.6 }}>{result.gyeokYong.yongsin.desc}</p>
-            <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
-              ※ 신강·신약은 <b>득령(월지)·득지(일지)·득세</b>를 가중 합산해 판정하며, 득세는 일간 자신을 뺀 나머지 글자로 셉니다.
-              용신은 서낙오 『자평수언』의 <b>5용신 정법 — 억부·조후·병약·통관·전왕(종격)</b>을 모두 계산해
-              &lsquo;기준별 결론&rsquo;에 나란히 보여드리고, 그중 <b>종격 → 조후 시급 → 병약 → 억부</b> 순으로 채택합니다.
-              통관은 계산해 함께 보여드리되 <b>채택 순위에서는 뒤에 둡니다</b> —
-              저희 채점 기준인 『적천수천미』가 통관을 &lsquo;다리 오행을 용신으로 삼는 법&rsquo;이 아니라
-              &lsquo;기운이 막히지 않고 흐르는가&rsquo;라는 <b>상태 평가</b>로 쓰기 때문입니다(卷二 通神論 通關).
-              어떤 법을 우선하느냐는 학파에 따라 견해가 갈릴 수 있어요.
-            </p>
-          </div>
-
-          <div className="card">
-            <div className="chips">
-              {Object.entries(result.sipsinSummary).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
-                <div className="chip" key={k}>{k} <b>×{v}</b></div>
-              ))}
-            </div>
-          </div>
-
-          <NamingCard result={result} />
-
-          <GaeunCard result={result} premium={premium} onLocked={() => setPayOpen(true)} gaeun={gaeunQ} />
-
-          <ShareCard result={result} />
-
-          <TalismanCard result={result} />
-
-          <Link href="/gunghap" className="gunghap-cta">
-            💞 친구·연인과 사주 궁합 확인하기 →
-          </Link>
-
-          <div className="card">
             <h2>10년 대운 흐름 (大運)</h2>
             <div className="meta" style={{ marginBottom: 6 }}>
-              <b>{result.luck.direction}</b> · 대운수 <b>{result.luck.daewoonAge}</b> ·
-              매 10년 단위로 바뀌는 인생의 큰 흐름입니다. 선이 위(길)일수록 일간에 우호적인 운입니다.
+              <b>{result.luck.direction}</b> · 대운수 <b>{result.luck.startAge ?? Math.max(1, Math.round(result.luck.daewoonAge))}</b>
+              {result.luck.qiyun && (
+                <> (정밀 起運 {result.luck.qiyun.years}년 {result.luck.qiyun.months}개월
+                  {result.luck.qiyun.approx ? ' · 출생 시각을 몰라 ±4개월' : ''})</>
+              )} ·
+              매 10년 단위로 바뀌는 인생의 큰 흐름입니다. 선이 위일수록 일간 강약 기준으로 우호적인 글자가 들어오는 10년입니다.
             </div>
             <LuckGraph items={result.luck.daewoon} mode="age" />
+            {/* §E-5 (2026-09-23) 요약 한 줄 — 곡선 안의 상대 위치만. 전성기·최고의 운 같은 단정 금지, 동점은 전부, 원점수 비노출 */}
+            {(() => {
+              const s = daewoonSummary(result.luck.daewoon, new Date().getFullYear());
+              if (!s) return null;
+              return (
+                <div className="luck-sum">
+                  <p className="luck-peak">{peakSentence(s).split('\n').map((l, i) => <span key={i}>{i > 0 && <br />}{l}</span>)}</p>
+                  {nowSentence(s) && <p className="luck-now">{nowSentence(s)}{result.luck.qiyun?.approx && <><br />{APPROX_SENTENCE}</>}</p>}
+                  <p className="luck-zero">{ZERO_SENTENCE}</p>
+                  <details className="daily-fold">
+                    <summary>계산</summary>
+                    <ul className="daily-formula">{LUCK_FORMULA.map((l) => <li key={l}>{l}</li>)}</ul>
+                  </details>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="card">
@@ -889,17 +1102,33 @@ export default function Home() {
             <LuckGraph items={result.luck.sewoon} mode="year" nowYear={result.luck.sewoon[0]?.year} />
           </div>
 
-          <div className="card">
-            <h2>정밀 보정 내역</h2>
-            <div className="meta">
-              <b>표준자오선</b> {result.corrected.standardMeridian}°E ·
-              <b> 경도보정</b> {result.corrected.longitudeCorrectionMin}분 ·
-              <b> 균시차</b> {result.corrected.equationOfTimeMin}분<br />
-              <b>서머타임</b> {result.corrected.summerTimeApplied ? '적용(-1h)' : '없음'} ·
-              <b> 자시구분</b> {result.corrected.jasiType ?? '—'}<br />
-              <b>진태양시</b> {result.corrected.apparentSolarDateTime}
+          <DailyFortune result={result} />
+
+          <YearlyFortune result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
+
+          <AuspiciousDates result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
+
+          {/* 바이럴 루프: 궁합은 상대를 데려와야 완성 — 결과 직후 최상단 배치 */}
+          <div className="card" style={{ textAlign: 'center' }}>
+            <h2>💞 이 사주, 그 사람이랑은?</h2>
+            <div className="meta" style={{ marginBottom: 14 }}>사주는 혼자 보지만 궁합은 둘이 봐야 완성돼요. 초대 문구를 보내서 서로의 명식으로 확인해 보세요. 궁합 점수는 무료!</div>
+            <div className="share-actions" style={{ justifyContent: 'center' }}>
+              <Link href="/gunghap" className="btn share-btn" style={{ textDecoration: 'none' }}>💞 우리 궁합 보러 가기</Link>
+              <button className="btn share-btn ghost" onClick={copyInviteLink}>🔗 초대 문구 복사</button>
             </div>
           </div>
+
+          <GaeunCard result={result} premium={premium} onLocked={() => setPayOpen(true)} gaeun={gaeunQ} />
+
+          <NamingCard result={result} />
+
+          <TalismanCard result={result} />
+
+          <ShareCard result={result} />
+
+          <Link href="/gunghap" className="gunghap-cta">
+            💞 친구·연인과 사주 궁합 확인하기 →
+          </Link>
 
           <GuidebookPrint result={result} ai={ai} gaeun={gaeunQ.data} />
 

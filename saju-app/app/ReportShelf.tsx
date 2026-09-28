@@ -13,6 +13,7 @@ import {
   cloudListReports, cloudGetReport, cloudDeleteReport,
   type CloudReportSummary, type CloudReportKind,
 } from '@/lib/cloud';
+import { ENGINE_VERSION } from '@/lib/saju/version';
 import {
   parseReadingStream,
   READING_KEYS, READING_ICONS, READING_LABELS,
@@ -107,6 +108,11 @@ export default function ReportShelf() {
                     {it.meta?.birth ? ` ${it.meta.birth}` : ''}
                     {it.meta?.ilju ? ` · ${it.meta.ilju}` : ''}
                     {` · ${fmtDate(it.updatedAt)}`}
+                    {typeof it.meta?.engine === 'number' && it.meta.engine < ENGINE_VERSION && (
+                      <span className="report-old" title="이후 명식 판정 기준이 개선됐어요. 이 글은 작성 당시 기준으로 쓰였습니다.">
+                        이전 판정 기준
+                      </span>
+                    )}
                   </small>
                 </span>
                 <span className="report-caret">{open ? '▲' : '▼'}</span>
@@ -114,6 +120,12 @@ export default function ReportShelf() {
 
               {open && (
                 <div className="report-body">
+                  {typeof it.meta?.engine === 'number' && it.meta.engine < ENGINE_VERSION && (
+                    <p className="report-notice">
+                      이 리포트는 <b>작성 당시의 명식 판정 기준</b>으로 쓰였어요. 이후 엔진이 개선돼
+                      지금 화면의 지표와 일부 다를 수 있습니다. 받아보신 글은 그대로 보관하며, 임의로 다시 쓰지 않아요.
+                    </p>
+                  )}
                   {busy === it.id && <p className="meta">불러오는 중…</p>}
                   {busy !== it.id && !raw && <p className="meta">원문을 찾지 못했어요. 위에서 다시 열어보시면 새로 보관됩니다.</p>}
                   {parsed && (

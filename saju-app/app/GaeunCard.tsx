@@ -1,6 +1,7 @@
 "use client";
 
-import type { SajuResult } from '@/lib/saju/types';
+
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 import type { GaeunResult } from '@/lib/saju/gaeun';   // 타입만 — 빌드 시 지워져 번들에 안 실린다
 // 계산은 서버에서만 한다(/api/premium). 여기서 계산하면 잠금이 '화면 가리기'에 그친다.
 // 같은 데이터를 가이드북 PDF 도 쓰므로, 요청은 페이지에서 한 번만 하고 결과를 내려받는다.
