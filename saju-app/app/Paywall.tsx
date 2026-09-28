@@ -14,7 +14,9 @@ const ENT_PREFIX = 'saju_ent_v2:';   // 명식별 로컬 캐시 (진짜 권한�
 const OWNER_KEY = 'saju_owner_v1';   // 사장님 무료 이용 (판매 상품 아님)
 const CUSTOMER_KEY = 'saju_customer_key';
 const RETURN_KEY = 'saju_pay_return';
-const PRICE = 5900;        // 판매가 (서버 app/api/payment/confirm 의 PRODUCT_AMOUNT 와 반드시 동일하게 유지)
+export const PRICE = 9900; // 판매가 — 정밀 리포트·궁합 공통 (서버 app/api/payment/confirm 의 PRODUCT_AMOUNT 와 반드시 동일하게 유지)
+// ✅ 2026-09-28 전 카드사 승인 후 5,900 → 9,900 인상. **할인 표시 없이** 올렸다(정찰제 · 줄긋기 금지는 그대로).
+//    궁합도 이 PRICE 로 결제된다 — /pricing 에 4,900 이라 적혀 있던 불일치도 같은 날 9,900 으로 맞췄다(§18-6 「4,900 쪼개기 금지」).
 // ⚠️ 2026-09-17 LIST_PRICE(9,900) 취소선 제거.
 //    9,900 원에 **판매한 기간이 없다** → 종전거래가격이 아니므로 줄 긋기는 허위 종전가격 표시다.
 //    토스 계약의 「정찰제」와도 부딪힌다. 인상할 때는 할인 없이 9,900 으로 올린다

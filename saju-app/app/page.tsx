@@ -25,7 +25,7 @@ import ChatPanel from './ChatPanel';
 import NamingCard from './NamingCard';
 import Receipts from './Receipts';
 import GuidebookPrint from './GuidebookPrint';
-import Paywall, { usePremium } from './Paywall';
+import Paywall, { usePremium, PRICE } from './Paywall';
 import ReportShelf from './ReportShelf';
 import SummaryCard from './SummaryCard';
 import PlanCompare from './PlanCompare';
@@ -500,7 +500,7 @@ export default function Home() {
               ① 9,900 은 판매한 기간이 없어 종전거래가격이 아니다 → 허위 종전가격.
               ② 구매자 수 카운터가 없어 500명을 셀 수도, 끝낼 수도 없다 → 종료되지 않는 수량 한정.
               둘 다 표시광고법 리스크이고 토스 「정찰제」와 부딪힌다. 근거: 카드사심사후_수정대기목록.md §D */}
-          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <b style={{ color: 'var(--gold)' }}>₩5,900</b> · 단건 결제
+          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <b style={{ color: 'var(--gold)' }}>₩{PRICE.toLocaleString()}</b> · 단건 결제
           {' '}<Link href="/pricing" style={{ color: 'var(--gold)' }}>이용권 안내 →</Link>
         </p>
         {error && <div className="warn error">{error}</div>}
@@ -1058,7 +1058,7 @@ export default function Home() {
                   <div className="prem-unlocked">✓ 이 사주의 리포트를 구매하셨어요. 계정에 저장되어 언제든 다시 열람할 수 있습니다.</div>
                   <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '심층 풀이 생성 중…' : '✨ 프리미엄 심층 풀이로 다시 풀기'}</button>
                 </>
-              : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · ₩5,900</button>}
+              : <button className="btn" onClick={() => setPayOpen(true)}>정밀 리포트 받기 · ₩{PRICE.toLocaleString()}</button>}
             <button className="btn guidebook-btn" onClick={() => { if (premium) window.print(); else setPayOpen(true); }}>
               📕 인생 가이드북 PDF로 저장{!premium && ' 🔒'}
             </button>
