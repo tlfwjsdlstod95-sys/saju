@@ -41,6 +41,8 @@ export default function Pricing() {
           <h2>{it.name}</h2>
           <div className="chips" style={{ marginBottom: 12 }}>
             <div className="chip">
+              {/* ⚠️ 2026-09-17 취소선(list) 필드째로 삭제. 9,900 은 판매한 기간이 없어
+                  종전거래가격이 아니고, 토스 계약은 「정찰제」다. 다시 넣지 말 것 — 카드사심사후_수정대기목록.md §D */}
               판매가 <b style={{ color: 'var(--gold)' }}>{it.price.toLocaleString()}원</b>
             </div>
             <div className="chip">부가세 포함</div>
