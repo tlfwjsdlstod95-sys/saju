@@ -12,12 +12,30 @@
   "고전 명식은 생년월일이 전해지지 않으므로 pillars(한자 간지)를 직접 넣는다.",
   "gyeokguk 표기는 엔진의 gyeokguk.key 와 같게:",
   "  정관 편관 정재 편재 식신 상관 정인 편인 건록격 양인격",
-  "johu 표기: 한습 조열 서늘 온화"
+  "johu 표기: 한습 조열 서늘 온화",
+  "",
+  "⚠️ seenBy — 이 명식이 **채점에 들어간 채로 규칙이 바뀐** 첫 엔진 버전(늦어도 이 버전부터). 2026-09-10 도입.",
+  "  'none' = 어떤 규칙 수정도 이 명식의 정오답을 보고 채택되지 않았다 → 이것만 홀드아웃이다.",
+  "  ID 순번으로 홀드아웃을 정하지 않는다. 예전 「미확인(JCS-071~)」은 v8~v14 채택 판단에 매번 쓰였다 → seenBy v8.",
+  "  세트는 파생값: seenBy≠none → S0(튜닝) / none+jeokcheonsu → S1 / none+gungtong → S2(궁통보감 전용, 채점 기준 별도).",
+  "  자평진전 용신(격 용신)은 어느 세트에도 넣지 않는다 — 우리 yongsin 과 다른 개념이다.",
+  "  🔒 엔진 판정 코드를 한 줄이라도 고치면, 그때 seenBy:'none' 인 케이스를 전부 그 버전으로 바꾼다(홀드아웃 소진).",
+  "  citedBy — version.ts 이력이 **이름을 직접 적은** 버전(그냥 채점에 포함된 것보다 강한 노출).",
+  "",
+  "새 케이스(seenBy:'none') 필수: note 에 원문 한자 인용(4자 이상) · source.page 에 원전 쪽수 · 사진 경로(source.photo).",
+  "  없으면 러너가 REJECT 하고 홀드아웃에서 뺀다. 용신이 둘 이상인데 우선이 원문에 없으면 ambiguous:true → 비채점.",
+  "  웹·블로그·논문 표·모델 기억에서 가져온 8자는 넣지 않는다. 논문 목록은 원전 쪽을 찾는 색인으로만 쓴다.",
+  "source.tier:'secondary' — 논문 표·재인용에서 온 명식(원전 쪽 미대조). 채점엔 남기고 /accuracy 에 원전만 숫자를 나란히 적는다. 없으면 원전(primary)."
  ],
  "cases": [
   {
    "id": "JCS-001",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v9"
+   ],
    "pillars": {
     "year": "丁亥",
     "month": "壬子",
@@ -31,13 +49,16 @@
    "source": {
     "book": "적천수천미",
     "chapter": "出身",
-    "page": "이영환(2009) 박사논문 p.35 재인용"
+    "page": "이영환(2009) 박사논문 p.35 재인용",
+    "tier": "secondary"
    },
    "note": "원문: 庚金生于仲冬, 傷官太旺, 過於洩氣, 用神在土, 不在火也. 四柱無土, 取巳中藏戊. — 식상태과→인성 분기의 전형. 丁官이 투출했으나 壬水에 꺼져 火는 용신이 되지 못한다."
   },
   {
    "id": "JCS-002",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "丁未",
     "month": "己酉",
@@ -52,13 +73,20 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "편인격 사례",
-    "page": "표 1"
+    "page": "표 1",
+    "tier": "secondary"
    },
    "note": "원문: 편인격이면서 시간에 상관이 투간. 유월 계수가 주변의 도움을 받아 인성신강 사주가 되어, 조화를 이루도록 돕는 십신은 식상이고 식상 오행은 목이다. 시간 甲木이 寅木에 통근해 설기처가 확실하다."
   },
   {
    "id": "JCS-003",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v6",
+    "v8"
+   ],
    "pillars": {
     "year": "丁巳",
     "month": "壬子",
@@ -71,13 +99,19 @@
    "source": {
     "book": "적천수천미",
     "chapter": "한난조습 원문 사례",
-    "page": "표 Ⅲ-10"
+    "page": "표 Ⅲ-10",
+    "tier": "secondary"
    },
    "note": "원문: 조후보다 일간을 도와주는 비견을 용신으로 쓰고 있다. — 일간 辛金의 비견이므로 용신 오행은 금. 조후(火)를 쓰지 않는 반례라 조후 우선순위 검증에 중요."
   },
   {
    "id": "JCS-004",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v8.2"
+   ],
    "pillars": {
     "year": "癸丑",
     "month": "丁巳",
@@ -90,7 +124,8 @@
    "source": {
     "book": "적천수천미",
     "chapter": "조습 재해석 명조",
-    "page": "표 Ⅲ-20"
+    "page": "표 Ⅲ-20",
+    "tier": "secondary"
    },
    "note": "원문: 甲木이 4월에 태어났다. 일간이 식상과 재성으로 인해 신약하다. 다행히 정인 癸水가 신약한 일간을 생해주고 있다. — 용신은 명시되지 않아 강약만 채점. ※ JCS-046와 동일 명식(재인용). 채점은 JCS-046 쪽에서만 한다 — 같은 사주를 두 번 세면 재현율이 부풀려진다.",
    "dupOf": "JCS-046"
@@ -98,6 +133,8 @@
   {
    "id": "GTB-001",
    "school": "gungtong",
+   "seenBy": "v6",
+   "seenNote": "로드맵 원인분석(2026-08-27~) 시기의 초기 표본 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "丁卯",
     "month": "己酉",
@@ -110,13 +147,16 @@
    "source": {
     "book": "궁통보감",
     "chapter": "八月甲木",
-    "page": "표 Ⅲ-1"
+    "page": "표 Ⅲ-1",
+    "tier": "secondary"
    },
    "note": "원문: 八月甲木 木囚金旺 丁火爲先 次用丙火 庚金再次. 酉月甲木에 주용신 丁火가 연간에 있고, 丙火가 없어 월지 酉金을 쓸 수 있다."
   },
   {
    "id": "GTB-002",
    "school": "gungtong",
+   "seenBy": "v6",
+   "seenNote": "로드맵 원인분석(2026-08-27~) 시기의 초기 표본 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "癸未",
     "month": "乙卯",
@@ -130,13 +170,16 @@
    "source": {
     "book": "궁통보감",
     "chapter": "卯月甲木",
-    "page": "표 Ⅲ-2"
+    "page": "표 Ⅲ-2",
+    "tier": "secondary"
    },
    "note": "원문: 卯月甲木은 주용신이 庚金이고 보조용신으로 戊土와 丁火를 쓴다. 木의 기운이 강하기 때문에 庚金으로 제어한다. 이 명조는 지지가 亥卯未 木비겁국이고 연간 癸水가 시지 亥水에 뿌리를 두어 전체적으로 木기운이 강하다(군겁쟁재)."
   },
   {
    "id": "JOHU-001",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "로드맵 원인분석(2026-08-27~) 시기의 초기 표본 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "庚子",
     "month": "己丑",
@@ -149,13 +192,16 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "현대 명조 사례",
-    "page": "표 Ⅳ-11"
+    "page": "표 Ⅳ-11",
+    "tier": "secondary"
    },
-   "note": "원문: 癸水 일간이 丑月에 생하고 사주에 일점 火氣가 없으니 한습(寒濕)한 사주이다."
+   "note": "논문 서술: 癸水 일간이 丑月에 생하고 사주에 일점 火氣가 없으니 한습(寒濕)한 사주이다."
   },
   {
    "id": "JOHU-002",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "로드맵 원인분석(2026-08-27~) 시기의 초기 표본 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "丁巳",
     "month": "丙午",
@@ -168,13 +214,16 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "화다토척",
-    "page": "표 7"
+    "page": "표 7",
+    "tier": "secondary"
    },
-   "note": "원문: 기토는 병오월인 여름의 척박한 토다. 연주마저 정사여서 열기를 더해주어 한습한 금수를 용신으로 쓴다. — 용신을 '금수' 둘로 적어 단일 오행으로 확정할 수 없어 조후만 채점."
+   "note": "논문 서술: 기토는 병오월인 여름의 척박한 토다. 연주마저 정사여서 열기를 더해주어 한습한 금수를 용신으로 쓴다. — 용신을 '금수' 둘로 적어 단일 오행으로 확정할 수 없어 조후만 채점."
   },
   {
    "id": "JPJ-001",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "戊戌",
     "month": "甲寅",
@@ -194,6 +243,8 @@
   {
    "id": "JPJ-002",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "壬子",
     "month": "壬寅",
@@ -213,6 +264,8 @@
   {
    "id": "JPJ-003",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "癸卯",
     "month": "乙卯",
@@ -232,6 +285,13 @@
   {
    "id": "JCS-005",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v8.2",
+    "v11",
+    "v14"
+   ],
    "pillars": {
     "year": "丙辰",
     "month": "辛丑",
@@ -244,7 +304,8 @@
    "source": {
     "book": "적천수천미",
     "chapter": "한난조습 원문 사례",
-    "page": "표 Ⅱ-6 / 표 Ⅲ-8"
+    "page": "표 Ⅱ-6 / 표 Ⅲ-8",
+    "tier": "secondary"
    },
    "note": "원문: 지지에 辰·丑·辰 습토가 거듭하고 연간 丙火는 辛金과 합하여 水로 변화했고 시간 丙火는 뿌리가 없다. 오직 춥고 습한 기운뿐이다. 단지 水를 득하여 용신해야 하고, 火는 용신의 능력이 없다. — 임철초가 규준화된 조후용신법을 명시적으로 부정한 사례. ※ JCS-044와 동일 명식(재인용). 채점은 JCS-044 쪽에서만 한다 — 같은 사주를 두 번 세면 재현율이 부풀려진다.",
    "dupOf": "JCS-044"
@@ -252,6 +313,12 @@
   {
    "id": "JCS-006",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v6",
+    "v7"
+   ],
    "pillars": {
     "year": "癸未",
     "month": "丁巳",
@@ -264,7 +331,8 @@
    "source": {
     "book": "적천수천미",
     "chapter": "종격 사례",
-    "page": "표 Ⅲ-6"
+    "page": "표 Ⅲ-6",
+    "tier": "secondary"
    },
    "note": "원문: 丙火가 巳月에 태어나고 지지가 巳午未 남방을 이루어 火가 가득하다. 천간의 癸水는 뿌리가 없어 쓸 수 없으니 차라리 차가운 水 없이 火를 따라가는 것이 좋다. — 從火. 종격 판정 검증용. ※ JCS-048와 동일 명식(재인용). 채점은 JCS-048 쪽에서만 한다 — 같은 사주를 두 번 세면 재현율이 부풀려진다.",
    "dupOf": "JCS-048"
@@ -272,6 +340,14 @@
   {
    "id": "JCS-007",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v6",
+    "v7",
+    "v11",
+    "v13"
+   ],
    "pillars": {
     "year": "己丑",
     "month": "丙子",
@@ -285,13 +361,16 @@
    "source": {
     "book": "적천수천미",
     "chapter": "性情",
-    "page": "熊中丞學鵬造 / 표 Ⅲ-11"
+    "page": "熊中丞學鵬造 / 표 Ⅲ-11",
+    "tier": "secondary"
    },
    "note": "원문: 辛金生于仲冬, 金寒水冷, 過于洩氣, 全賴酉時扶身. 天干丁火, 不過取其敵寒解凍, 非用丁火也. 用神必在酉金. 凡冬金喜火取其暖局之意, 非作用神也. — 조후(火)를 명시적으로 부정하고 비겁(金)을 용신으로 잡은 사례."
   },
   {
    "id": "JCS-008",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "乙卯",
     "month": "己丑",
@@ -304,13 +383,20 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "상관격",
-    "page": "표 4"
+    "page": "표 4",
+    "tier": "secondary"
    },
    "note": "원문: 상관격. 기축월의 병화를 살펴보겠다. — 용신은 본문에 명시되지 않아 격국만 채점."
   },
   {
    "id": "JCS-009",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v8",
+    "v13"
+   ],
    "pillars": {
     "year": "丙申",
     "month": "庚子",
@@ -324,13 +410,21 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "수다목표",
-    "page": "표 5"
+    "page": "표 5",
+    "tier": "secondary"
    },
    "note": "원문: 자월의 갑목 일간은 정인격이며 한겨울 목이며, 정인격의 설기로 보면 식상 화가 필요하고 한겨울의 조후로 보아도 온기의 화가 필요하다. — 억부(설기)와 조후가 같은 답(火)으로 모이는 사례."
   },
   {
    "id": "JCS-010",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v6",
+    "v12",
+    "v13"
+   ],
    "pillars": {
     "year": "己亥",
     "month": "戊辰",
@@ -343,13 +437,16 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "토다금매",
-    "page": "표 8"
+    "page": "표 8",
+    "tier": "secondary"
    },
    "note": "원문: 월주·일지·연간·시간이 모두 토의 인성에 묻혀 있다. 연지의 해수와 시지의 자수를 용신으로 삼는다. — 토다금매(인성과다). 병약용신 분기 검증용."
   },
   {
    "id": "JPJ-004",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "丁酉",
     "month": "甲辰",
@@ -369,6 +466,8 @@
   {
    "id": "JPJ-005",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "癸丑",
     "month": "壬戌",
@@ -389,6 +488,8 @@
   {
    "id": "JPJ-006",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "癸丑",
     "month": "乙卯",
@@ -408,6 +509,8 @@
   {
    "id": "JCS-011",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "丙戌",
     "month": "丙申",
@@ -421,13 +524,16 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "현대 명조 사례",
-    "page": "표 Ⅳ-10"
+    "page": "표 Ⅳ-10",
+    "tier": "secondary"
    },
    "note": "원문: 戊土 일간에 식신격이다. 편인이 많은 신강사주로 식재관을 쓴 중 식신이 격이자 용신이 되었다. 재관이 전무하여 종왕격이며 화염토조(火炎土燥)의 명이다. — 논문에 실린 공개 명조."
   },
   {
    "id": "JPJ-007",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "丙寅",
     "month": "戊戌",
@@ -448,6 +554,8 @@
   {
    "id": "JPJ-008",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "癸丑",
     "month": "辛酉",
@@ -460,13 +568,16 @@
    "source": {
     "book": "적천수천미 계열 논문",
     "chapter": "정인격",
-    "page": "표 2"
+    "page": "표 2",
+    "tier": "secondary"
    },
    "note": "원문: <표 2> 정인격. 월주 辛酉가 동주하여 금이 겹친다. — 壬 일간 酉月에 辛이 투간."
   },
   {
    "id": "JPJ-010",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "己巳",
     "month": "己卯",
@@ -486,6 +597,8 @@
   {
    "id": "JPJ-011",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "乙卯",
     "month": "丁亥",
@@ -505,6 +618,8 @@
   {
    "id": "JPJ-012",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "壬寅",
     "month": "壬寅",
@@ -525,6 +640,11 @@
   {
    "id": "JPJ-013",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
+   "citedBy": [
+    "v3"
+   ],
    "pillars": {
     "year": "己巳",
     "month": "癸酉",
@@ -545,6 +665,8 @@
   {
    "id": "JPJ-014",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "壬寅",
     "month": "戊申",
@@ -565,6 +687,8 @@
   {
    "id": "JPJ-015",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "戊戌",
     "month": "乙卯",
@@ -585,6 +709,8 @@
   {
    "id": "JPJ-016",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "丙寅",
     "month": "戊戌",
@@ -605,6 +731,8 @@
   {
    "id": "JPJ-017",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "己未",
     "month": "丙子",
@@ -625,6 +753,8 @@
   {
    "id": "JPJ-018",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "壬寅",
     "month": "丁未",
@@ -645,6 +775,8 @@
   {
    "id": "JPJ-019",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "壬午",
     "month": "己酉",
@@ -665,6 +797,8 @@
   {
    "id": "JPJ-020",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "丁未",
     "month": "癸卯",
@@ -685,6 +819,8 @@
   {
    "id": "JPJ-021",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "己未",
     "month": "壬申",
@@ -705,6 +841,8 @@
   {
    "id": "JPJ-022",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "甲申",
     "month": "乙亥",
@@ -725,6 +863,8 @@
   {
    "id": "JPJ-023",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "庚午",
     "month": "戊子",
@@ -744,6 +884,8 @@
   {
    "id": "JPJ-024",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "庚申",
     "month": "乙酉",
@@ -763,6 +905,8 @@
   {
    "id": "JPJ-025",
    "school": "japyeong",
+   "seenBy": "v3",
+   "seenNote": "v3 격국 정기우선 교정이 자평진전 25건 채점(80%→100%)으로 채택됨",
    "pillars": {
     "year": "乙酉",
     "month": "乙酉",
@@ -782,6 +926,8 @@
   {
    "id": "JCS-012",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "甲辰",
     "month": "丁卯",
@@ -801,6 +947,8 @@
   {
    "id": "JCS-013",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "癸卯",
     "month": "乙卯",
@@ -820,6 +968,8 @@
   {
    "id": "JCS-014",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "乙丑",
     "month": "甲申",
@@ -839,6 +989,8 @@
   {
    "id": "JCS-015",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "己巳",
     "month": "己巳",
@@ -858,6 +1010,8 @@
   {
    "id": "JCS-016",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "乙丑",
     "month": "壬午",
@@ -877,6 +1031,8 @@
   {
    "id": "JCS-017",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "戊寅",
     "month": "丁巳",
@@ -896,6 +1052,8 @@
   {
    "id": "JCS-018",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "辛巳",
     "month": "丁酉",
@@ -915,6 +1073,8 @@
   {
    "id": "JCS-019",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "辛亥",
     "month": "壬辰",
@@ -934,6 +1094,8 @@
   {
    "id": "JCS-020",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "戊辰",
     "month": "戊午",
@@ -953,6 +1115,8 @@
   {
    "id": "JCS-021",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "戊戌",
     "month": "丙辰",
@@ -972,6 +1136,8 @@
   {
    "id": "JCS-022",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "壬辰",
     "month": "辛亥",
@@ -991,6 +1157,8 @@
   {
    "id": "JCS-023",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "癸酉",
     "month": "甲子",
@@ -1010,6 +1178,8 @@
   {
    "id": "JCS-024",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "壬申",
     "month": "己酉",
@@ -1029,6 +1199,8 @@
   {
    "id": "JCS-025",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "庚申",
     "month": "乙酉",
@@ -1048,6 +1220,8 @@
   {
    "id": "JCS-026",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "己卯",
     "month": "庚午",
@@ -1067,6 +1241,8 @@
   {
    "id": "JCS-027",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "己亥",
     "month": "丁卯",
@@ -1086,6 +1262,8 @@
   {
    "id": "JCS-028",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "壬寅",
     "month": "辛亥",
@@ -1105,6 +1283,8 @@
   {
    "id": "JCS-029",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "癸亥",
     "month": "癸亥",
@@ -1124,6 +1304,8 @@
   {
    "id": "JCS-030",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "丙辰",
     "month": "乙未",
@@ -1143,6 +1325,8 @@
   {
    "id": "JCS-031",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "癸卯",
     "month": "戊午",
@@ -1162,6 +1346,8 @@
   {
    "id": "JCS-032",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "壬子",
     "month": "壬辰",
@@ -1186,6 +1372,12 @@
   {
    "id": "JCS-033",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v8",
+    "v8.2"
+   ],
    "pillars": {
     "year": "乙酉",
     "month": "辛巳",
@@ -1210,6 +1402,11 @@
   {
    "id": "JCS-034",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v6"
+   ],
    "pillars": {
     "year": "乙亥",
     "month": "庚辰",
@@ -1234,6 +1431,8 @@
   {
    "id": "JCS-035",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "庚申",
     "month": "戊寅",
@@ -1258,6 +1457,8 @@
   {
    "id": "JCS-036",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "乙酉",
     "month": "戊寅",
@@ -1282,6 +1483,11 @@
   {
    "id": "JCS-037",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v8"
+   ],
    "pillars": {
     "year": "庚戌",
     "month": "戊寅",
@@ -1306,6 +1512,12 @@
   {
    "id": "JCS-038",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v7",
+    "v9"
+   ],
    "pillars": {
     "year": "丙子",
     "month": "己亥",
@@ -1330,6 +1542,8 @@
   {
    "id": "JCS-039",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "壬申",
     "month": "戊申",
@@ -1354,6 +1568,11 @@
   {
    "id": "JCS-040",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
+   "citedBy": [
+    "v8"
+   ],
    "pillars": {
     "year": "壬戌",
     "month": "戊申",
@@ -1378,6 +1597,8 @@
   {
    "id": "JCS-041",
    "school": "jeokcheonsu",
+   "seenBy": "v6",
+   "seenNote": "초기 표본. 러너 주석 「규칙은 JCS-041까지로 맞춤」 — 늦어도 v6 튜닝에 포함",
    "pillars": {
     "year": "戊辰",
     "month": "己酉",
@@ -1402,6 +1623,12 @@
   {
    "id": "JCS-042",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v11",
+    "v14"
+   ],
    "pillars": {
     "year": "甲申",
     "month": "丙子",
@@ -1426,6 +1653,11 @@
   {
    "id": "JCS-043",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7"
+   ],
    "pillars": {
     "year": "己酉",
     "month": "丙子",
@@ -1450,6 +1682,11 @@
   {
    "id": "JCS-044",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v11"
+   ],
    "pillars": {
     "year": "丙辰",
     "month": "辛丑",
@@ -1474,6 +1711,11 @@
   {
    "id": "JCS-045",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7"
+   ],
    "pillars": {
     "year": "癸未",
     "month": "丁巳",
@@ -1498,6 +1740,12 @@
   {
    "id": "JCS-046",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v11",
+    "v14"
+   ],
    "pillars": {
     "year": "癸丑",
     "month": "丁巳",
@@ -1522,6 +1770,8 @@
   {
    "id": "JCS-047",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "丁丑",
     "month": "丙午",
@@ -1546,6 +1796,11 @@
   {
    "id": "JCS-048",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7.1"
+   ],
    "pillars": {
     "year": "癸未",
     "month": "丁巳",
@@ -1570,6 +1825,12 @@
   {
    "id": "JCS-049",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v13",
+    "v14"
+   ],
    "pillars": {
     "year": "壬子",
     "month": "辛亥",
@@ -1594,6 +1855,11 @@
   {
    "id": "JCS-050",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7"
+   ],
    "pillars": {
     "year": "庚辰",
     "month": "己卯",
@@ -1618,6 +1884,8 @@
   {
    "id": "JCS-051",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "乙酉",
     "month": "戊寅",
@@ -1642,6 +1910,8 @@
   {
    "id": "JCS-052",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "己卯",
     "month": "庚午",
@@ -1666,6 +1936,13 @@
   {
    "id": "JCS-053",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7",
+    "v10",
+    "v12"
+   ],
    "pillars": {
     "year": "戊申",
     "month": "己未",
@@ -1690,6 +1967,11 @@
   {
    "id": "JCS-054",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v11"
+   ],
    "pillars": {
     "year": "戊辰",
     "month": "庚申",
@@ -1714,6 +1996,8 @@
   {
    "id": "JCS-055",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "壬戌",
     "month": "己酉",
@@ -1738,6 +2022,11 @@
   {
    "id": "JCS-056",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7"
+   ],
    "pillars": {
     "year": "庚午",
     "month": "己卯",
@@ -1762,6 +2051,8 @@
   {
    "id": "JCS-057",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "辛未",
     "month": "辛卯",
@@ -1786,6 +2077,11 @@
   {
    "id": "JCS-058",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7.1"
+   ],
    "pillars": {
     "year": "癸酉",
     "month": "己未",
@@ -1810,6 +2106,11 @@
   {
    "id": "JCS-059",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7"
+   ],
    "pillars": {
     "year": "戊申",
     "month": "戊午",
@@ -1835,6 +2136,11 @@
   {
    "id": "JCS-060",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7"
+   ],
    "pillars": {
     "year": "壬子",
     "month": "辛亥",
@@ -1859,6 +2165,8 @@
   {
    "id": "JCS-061",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "壬辰",
     "month": "壬子",
@@ -1883,6 +2191,8 @@
   {
    "id": "JCS-062",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "戊午",
     "month": "丙辰",
@@ -1907,6 +2217,8 @@
   {
    "id": "JCS-063",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "乙酉",
     "month": "辛巳",
@@ -1931,6 +2243,11 @@
   {
    "id": "JCS-064",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v11"
+   ],
    "pillars": {
     "year": "丙辰",
     "month": "癸巳",
@@ -1955,6 +2272,8 @@
   {
    "id": "JCS-065",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "丙申",
     "month": "戊戌",
@@ -1979,6 +2298,8 @@
   {
    "id": "JCS-066",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "癸亥",
     "month": "乙卯",
@@ -2003,6 +2324,8 @@
   {
    "id": "JCS-067",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "戊子",
     "month": "辛酉",
@@ -2027,6 +2350,8 @@
   {
    "id": "JCS-068",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "壬申",
     "month": "辛亥",
@@ -2051,6 +2376,8 @@
   {
    "id": "JCS-069",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
    "pillars": {
     "year": "癸亥",
     "month": "辛酉",
@@ -2075,6 +2402,15 @@
   {
    "id": "JCS-070",
    "school": "jeokcheonsu",
+   "seenBy": "v7",
+   "seenNote": "v7 상관 다섯 갈래가 JCS-043~070을 인용·채점해 채택됨",
+   "citedBy": [
+    "v7",
+    "v8.1",
+    "v9",
+    "v11",
+    "v13"
+   ],
    "pillars": {
     "year": "壬戌",
     "month": "壬子",
@@ -2099,6 +2435,13 @@
   {
    "id": "JCS-071",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v7.1",
+    "v8",
+    "v8.1"
+   ],
    "pillars": {
     "year": "己丑",
     "month": "丙寅",
@@ -2123,6 +2466,11 @@
   {
    "id": "JCS-072",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v7.1"
+   ],
    "pillars": {
     "year": "丙申",
     "month": "庚寅",
@@ -2147,6 +2495,12 @@
   {
    "id": "JCS-073",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v7.1",
+    "v8"
+   ],
    "pillars": {
     "year": "戊辰",
     "month": "庚申",
@@ -2171,6 +2525,8 @@
   {
    "id": "JCS-074",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "戊午",
     "month": "丙辰",
@@ -2195,6 +2551,8 @@
   {
    "id": "JCS-075",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "丙辰",
     "month": "辛卯",
@@ -2219,6 +2577,8 @@
   {
    "id": "JCS-076",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "戊子",
     "month": "甲寅",
@@ -2243,6 +2603,8 @@
   {
    "id": "JCS-077",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "己亥",
     "month": "丙寅",
@@ -2267,6 +2629,11 @@
   {
    "id": "JCS-078",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v13"
+   ],
    "pillars": {
     "year": "癸亥",
     "month": "癸亥",
@@ -2291,6 +2658,13 @@
   {
    "id": "JCS-079",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v7.1",
+    "v10",
+    "v14"
+   ],
    "pillars": {
     "year": "戊辰",
     "month": "戊午",
@@ -2315,6 +2689,11 @@
   {
    "id": "JCS-080",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v8"
+   ],
    "pillars": {
     "year": "庚申",
     "month": "庚辰",
@@ -2339,6 +2718,11 @@
   {
    "id": "JCS-081",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v10"
+   ],
    "pillars": {
     "year": "壬子",
     "month": "壬子",
@@ -2363,6 +2747,8 @@
   {
    "id": "JCS-082",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "壬申",
     "month": "丙午",
@@ -2387,6 +2773,12 @@
   {
    "id": "JCS-083",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v7.1",
+    "v13"
+   ],
    "pillars": {
     "year": "癸丑",
     "month": "戊午",
@@ -2394,15 +2786,14 @@
     "hour": "壬辰"
    },
    "expect": {
-    "yongsin": "수",
-    "lackingNot": "금"
+    "yongsin": "수"
    },
    "source": {
     "book": "적천수천미(滴天髓闡微) 任鐵樵 增註 / 袁樹珊 撰輯 (1947 大東書局)",
     "chapter": "卷二 通神論 官殺 (四曰 合官留殺格)",
     "page": "p.67"
    },
-   "note": "원문: 此造火長夏天, 旺之極矣. 戊癸合而化火爲忌, 還喜壬水通根身庫. 更妙年支坐丑, 足以晦火養金而蓄水, 則癸水仍得通根, 雖合而不化也 … 乙卯甲寅運剋土衞水, 雲程直上. — 【合官留殺】명식 위 인쇄된 십신 라벨(년/월/시干) 정관/식신/편관 으로 전사 검증함. ※ JCS-092와 **한 글자(丑↔巳) 차이** 대조쌍. 丑 속 辛金은 「晦火養金」으로 **살아 있어** 결손이 아니다 — `lackingNot`으로 반대 방향을 못 박는다.",
+   "note": "원문: 此造火長夏天, 旺之極矣. 戊癸合而化火爲忌, 還喜壬水通根身庫. 更妙年支坐丑, 足以晦火養金而蓄水, 則癸水仍得通根, 雖合而不化也 … 乙卯甲寅運剋土衞水, 雲程直上. — 【合官留殺】명식 위 인쇄된 십신 라벨(년/월/시干) 정관/식신/편관 으로 전사 검증함.",
    "$printedSipsin": [
     "정관",
     "식신",
@@ -2412,6 +2803,12 @@
   {
    "id": "JCS-084",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v8",
+    "v8.1"
+   ],
    "pillars": {
     "year": "甲辰",
     "month": "己巳",
@@ -2436,6 +2833,8 @@
   {
    "id": "JCS-085",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "丙辰",
     "month": "辛卯",
@@ -2460,6 +2859,8 @@
   {
    "id": "JCS-086",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "壬辰",
     "month": "壬子",
@@ -2484,6 +2885,8 @@
   {
    "id": "JCS-087",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
    "pillars": {
     "year": "甲子",
     "month": "乙亥",
@@ -2508,6 +2911,11 @@
   {
    "id": "JCS-088",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v14"
+   ],
    "pillars": {
     "year": "辛卯",
     "month": "戊戌",
@@ -2532,6 +2940,11 @@
   {
    "id": "JCS-089",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v14"
+   ],
    "pillars": {
     "year": "辛卯",
     "month": "戊戌",
@@ -2556,6 +2969,13 @@
   {
    "id": "JCS-090",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v8.2",
+    "v13",
+    "v14"
+   ],
    "pillars": {
     "year": "壬辰",
     "month": "丙午",
@@ -2563,15 +2983,14 @@
     "hour": "壬辰"
    },
    "expect": {
-    "yongsin": "금",
-    "lacking": "금"
+    "yongsin": "금"
    },
    "source": {
     "book": "적천수천미(滴天髓闡微) 任鐵樵 增註 / 袁樹珊 撰輯 (1947 大東書局)",
     "chapter": "卷二 通神論 官殺 (六曰 制殺太過格)",
     "page": "p.76"
    },
-   "note": "원문: 此殺逢四制, 柱中印雖不見, 喜其殺透食藏, 通根身庫. 總之夏火當權, 水無金滋, 至酉運合去辰土, 財星滋殺, 發甲. — 【制殺太過·印無】印이 없으면 財로 殺을 살린다(財星滋殺). 명식 위 인쇄된 십신 라벨(년/월/시干) 편관/비견/편관 으로 전사 검증함. ※ 원문은 원국에서 쓸 글자(壬水 通根身庫)와 없어서 運에서 와야 할 글자(金)를 **둘 다** 말한다. `expect.lacking`은 후자를 따로 채점하는 축이다 — `expect.yongsin`은 손대지 않았다(점수를 올리려고 정답을 고치지 않는다).",
+   "note": "원문: 此殺逢四制, 柱中印雖不見, 喜其殺透食藏, 通根身庫. 總之夏火當權, 水無金滋, 至酉運合去辰土, 財星滋殺, 發甲. — 【制殺太過·印無】印이 없으면 財로 殺을 살린다(財星滋殺). 명식 위 인쇄된 십신 라벨(년/월/시干) 편관/비견/편관 으로 전사 검증함.",
    "$printedSipsin": [
     "편관",
     "비견",
@@ -2581,6 +3000,12 @@
   {
    "id": "JCS-091",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v13",
+    "v14"
+   ],
    "pillars": {
     "year": "甲寅",
     "month": "戊辰",
@@ -2588,15 +3013,14 @@
     "hour": "壬寅"
    },
    "expect": {
-    "yongsin": "금",
-    "lacking": "금"
+    "yongsin": "금"
    },
    "source": {
     "book": "적천수천미(滴天髓闡微) 任鐵樵 增註 / 袁樹珊 撰輯 (1947 大東書局)",
     "chapter": "卷二 通神論 官殺 (六曰 制殺太過格)",
     "page": "p.76"
    },
-   "note": "원문: 此造五殺逢五制, 土雖當權, 木亦雄壯. 幸日主兩坐庫根, 又得比肩匡扶. 至壬申運, 日主逢生, 沖去寅木, 名登桂籍 … 接連癸酉二十年. — 【制殺太過】申·酉(印)운에 발복. 명식 위 인쇄된 십신 라벨(년/월/시干) 식신/편관/비견 으로 전사 검증함. ※ 원문은 원국에서 쓸 글자(壬水 通根身庫)와 없어서 運에서 와야 할 글자(金)를 **둘 다** 말한다. `expect.lacking`은 후자를 따로 채점하는 축이다 — `expect.yongsin`은 손대지 않았다(점수를 올리려고 정답을 고치지 않는다).",
+   "note": "원문: 此造五殺逢五制, 土雖當權, 木亦雄壯. 幸日主兩坐庫根, 又得比肩匡扶. 至壬申運, 日主逢生, 沖去寅木, 名登桂籍 … 接連癸酉二十年. — 【制殺太過】申·酉(印)운에 발복. 명식 위 인쇄된 십신 라벨(년/월/시干) 식신/편관/비견 으로 전사 검증함.",
    "$printedSipsin": [
     "식신",
     "편관",
@@ -2606,6 +3030,11 @@
   {
    "id": "JCS-092",
    "school": "jeokcheonsu",
+   "seenBy": "v8",
+   "seenNote": "v7.1에 「미확인」으로 들어와 v8~v14 채택 판단(미확인 36.4%→72.7%)에 매번 쓰임",
+   "citedBy": [
+    "v13"
+   ],
    "pillars": {
     "year": "癸巳",
     "month": "戊午",
@@ -2614,25 +3043,1756 @@
    },
    "expect": {
     "yongsin": "금",
-    "yongsinNot": "화",
-    "lacking": "금"
+    "yongsinNot": "화"
    },
    "source": {
     "book": "적천수천미(滴天髓闡微) 任鐵樵 增註 / 袁樹珊 撰輯 (1947 大東書局)",
     "chapter": "卷二 通神論 官殺 (四曰 合官留殺格 — 任鐵樵 自造)",
     "page": "p.68"
    },
-   "note": "원문: 「此鐵樵自造」 乾隆三十八年四月十八日辰時. 「與前造只換一丑字, 天淵之隔矣」 — JCS-083(癸丑 戊午 丙午 壬辰)과 **한 글자만 다른 대조쌍**이자 저자 본인의 명식. 丑은 濕土라 晦火蓄水해 戊癸合而不化(→貴)였지만, 巳는 旺火라 「戊癸合而必化, 不但不能助殺, 抑且化火爲刦, 反助陽刃猖狂」. 「壬水雖通根身庫, 總之無金滋助, 清枯之象」 → 金(財)이 없어 흠. 「運走四十載木火生助刦刃之地」가 흉이므로 火는 用神이 아님이 원문으로 확정된다. 명식 위 인쇄된 십신 라벨(년/월/시干) 정관/식신/편관 으로 전사 검증함. ※ 원문은 원국에서 쓸 글자(壬水 通根身庫)와 없어서 運에서 와야 할 글자(金)를 **둘 다** 말한다. `expect.lacking`은 후자를 따로 채점하는 축이다 — `expect.yongsin`은 손대지 않았다(점수를 올리려고 정답을 고치지 않는다).",
+   "note": "원문: 「此鐵樵自造」 乾隆三十八年四月十八日辰時. 「與前造只換一丑字, 天淵之隔矣」 — JCS-083(癸丑 戊午 丙午 壬辰)과 **한 글자만 다른 대조쌍**이자 저자 본인의 명식. 丑은 濕土라 晦火蓄水해 戊癸合而不化(→貴)였지만, 巳는 旺火라 「戊癸合而必化, 不但不能助殺, 抑且化火爲刦, 反助陽刃猖狂」. 「壬水雖通根身庫, 總之無金滋助, 清枯之象」 → 金(財)이 없어 흠. 「運走四十載木火生助刦刃之地」가 흉이므로 火는 用神이 아님이 원문으로 확정된다. 명식 위 인쇄된 십신 라벨(년/월/시干) 정관/식신/편관 으로 전사 검증함.",
    "$printedSipsin": [
     "정관",
     "식신",
     "편관"
    ]
+  },
+  {
+   "id": "JCS-093",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "己卯",
+    "month": "辛未",
+    "day": "丙子",
+    "hour": "辛卯"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 隱顯",
+    "page": "p.122 (時柱·大運은 p.123 첫 칸으로 이어짐)",
+    "photo": "scans/JCS-093_p122-123.png"
+   },
+   "note": "원문: 丙火生於未月、火氣正盛、坐下官星被未土傷盡、只得用天干辛金、所嫌者未爲燥土、不能生金、又暗藏刦刃 — 「只得用天干辛金」이 용신 명시(금). 十神 라벨(己=傷·辛=財·子=官·辛卯=財/印)로 일간 丙 교차검증."
+  },
+  {
+   "id": "JCS-094",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 용신을 한 글자로 박지 않아 반례(yongsinNot)로만 채점",
+   "pillars": {
+    "year": "壬午",
+    "month": "乙巳",
+    "day": "丁丑",
+    "hour": "丙午"
+   },
+   "expect": {
+    "yongsinNot": "수"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 隱顯",
+    "page": "p.123",
+    "photo": "scans/JCS-094_p123.png"
+   },
+   "note": "원문: 丁火生於孟夏、柱中刦旺逢梟、天干壬水無根、置之不用、最喜丑中一點財星深藏歸庫、丑爲濕土能洩火氣 — 「天干壬水無根、置之不用」이 부정 명시(수 아님). 「最喜…財星」은 喜라서 용신 칸에 넣지 않음."
+  },
+  {
+   "id": "JCS-095",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 용신을 한 글자로 박지 않아 반례(yongsinNot)로만 채점",
+   "pillars": {
+    "year": "戊午",
+    "month": "壬戌",
+    "day": "丁卯",
+    "hour": "癸卯"
+   },
+   "expect": {
+    "yongsinNot": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 衆寡",
+    "page": "p.125 (좌측 명식)",
+    "photo": "scans/JCS-095_p125.png"
+   },
+   "note": "원문: 此傷官當令、印星並見、官煞雖透無根、勢在去官、初年運走北方、官星得勢、一事無成、丙寅丁卯生助火土、經營發財巨萬、戊辰己巳、去盡官煞、一子登科、晚景崢嶸、此造戌午拱火、日時逢印、日主旺極、莫作用印而推、亦不可作去官留殺論也 — 「莫作用印而推」가 부정 명시(印=목 아님). 「勢在去官」은 세(勢) 서술이라 용신 칸에 넣지 않음. 十神 라벨(戊=傷·壬=官·癸=殺·卯=印)로 일간 丁 교차검증. 월령: 傷官當令 ↔ 戌月 일치."
+  },
+  {
+   "id": "JCS-096",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 원문이 용신을 한 글자로 박지 않고 「衆」(壬癸水+庚金)을 따르라고만 해서 금수 2오행 → 비채점",
+   "pillars": {
+    "year": "癸丑",
+    "month": "壬戌",
+    "day": "丙午",
+    "hour": "庚寅"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 衆寡",
+    "page": "p.126",
+    "photo": "scans/JCS-096_p126.png"
+   },
+   "note": "원문: 丙火生於九月、日主本不及時、第坐陽刃會火局、謂之強寡、年月壬癸進氣、癸水通根餘氣丑土、洩其火局、庚金生金生助、壬癸爲衆也、勢在成乎衆、故交辛酉庚申、金生水旺、遺業豐盈、其樂自如、一交己未、火土並旺、父母雙亡、及戊午二十年、破敗家業、妻子皆傷、至丙辰流落外方而亡 — 「勢在成乎衆」의 衆은 壬癸水이고 庚金이 생조라 오행 두 글자(금수). 채점 정의 §1에 따라 ambiguous 로 기록만 하고 분모에서 뺀다. 월령: 生於九月 ↔ 戌月 일치. 寅午戌 화국·坐午 양인도 원문과 일치."
+  },
+  {
+   "id": "JCS-097",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丙寅",
+    "month": "庚寅",
+    "day": "甲申",
+    "hour": "乙丑"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 震兌",
+    "page": "p.128 (우측 명식)",
+    "photo": "scans/JCS-097_p128.png"
+   },
+   "note": "원문: 甲木生於立春後四日、春初木嫩、天氣寒凝、日主坐申、月透庚金、丑土貼生申金、木嫩金堅、用火以攻之、喜得年干透丙、三陽開泰、萬象回春、何其妙也、初運辛卯壬辰、有傷丙火、蹭蹬芸牕、癸巳運轉南方、丙火祿旺、納粟入監、連捷南宮、甲午乙未、宦海無波、申運不祿 — 「用火以攻之」가 용신 명시(화). 十神 라벨(丙=食·庚=殺·乙=刦)로 일간 甲 교차검증. 월령: 立春後四日 ↔ 寅月 일치. 丙年→寅月 庚寅 · 甲日→丑時 乙丑 간지 규칙 일치."
+  },
+  {
+   "id": "JCS-098",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다 (년주는 p.128 맨 왼쪽 칸, 월주 이후는 p.129 오른쪽 끝 — 쪽 넘김 함정)",
+   "pillars": {
+    "year": "庚戌",
+    "month": "己卯",
+    "day": "甲寅",
+    "hour": "丁卯"
+   },
+   "expect": {
+    "yongsin": "토"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 震兌",
+    "page": "p.128 (좌측 명식 — 月柱 이후·大運은 p.129 첫 칸으로 이어짐)",
+    "photo": "scans/JCS-098_p128-129.png"
+   },
+   "note": "원문: 甲木生於仲春、坐祿逢刃、木旺金衰、用土以成之、方能化土生金、斷削以成真、初遊幕獲利納捐、至癸未運出仕、甲申乙酉木無根、金得地、從佐貳升知縣而遷州牧 — 「用土以成之」가 용신 명시(토). 「化土生金」은 그 다음 단계라 용신 칸에 넣지 않음. 十神 라벨(庚=殺·己=財·丁=傷·寅卯=比/刦)로 일간 甲 교차검증. 월령: 仲春 ↔ 卯月, 坐祿=日支 寅, 逢刃=時支 卯 모두 일치. 庚年→卯月 己卯 · 甲日→卯時 丁卯 간지 규칙 일치."
+  },
+  {
+   "id": "JCS-099",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "庚辰",
+    "month": "壬午",
+    "day": "甲辰",
+    "hour": "丁卯"
+   },
+   "expect": {
+    "yongsin": "수"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 震兌",
+    "page": "p.129 (좌측 명식)",
+    "photo": "scans/JCS-099_p129.png"
+   },
+   "note": "원문: 甲木生於仲夏、時干丁火透出、用水以潤之、然水亦賴金生、金亦賴水養、更妙支逢兩辰、洩火生金蓄水、一氣相生、五行俱足、是以早遊泮水、科甲聯登、仕至觀察、一生惟丙戌運金水兩傷、不利、其餘皆順境 — 「用水以潤之」가 용신 명시(수). 十神 라벨(庚=殺·丁=傷·辰=印/才/刦)로 일간 甲 교차검증. 월령: 仲夏 ↔ 午月, 支逢兩辰 = 年支·日支 辰 일치. 庚年→午月 壬午 · 甲日→卯時 丁卯 간지 규칙 일치."
+  },
+  {
+   "id": "JCS-100",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "庚戌",
+    "month": "甲申",
+    "day": "甲戌",
+    "hour": "乙丑"
+   },
+   "expect": {
+    "yongsin": "토"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 震兌",
+    "page": "p.130 (우측 명식)",
+    "photo": "scans/JCS-100_p130.png"
+   },
+   "note": "원문: 甲木生於孟秋、財生殺旺、雖天干三透甲乙、而地支不載、木凋金銳、用土以從之也、格成從殺、戌運武甲出身、丁亥運生木剋金、刑耗多端、戊子己丑財生殺旺、仕至副將 — 「用土以從之也」가 용신 명시(토). 「格成從殺」은 격 서술이라 용신 칸에 넣지 않음. 十神 라벨(庚=殺·甲=比·乙=刦)로 일간 甲 교차검증. 월령: 孟秋 ↔ 申月 일치. 「天干三透甲乙」 ↔ 月干 甲·日干 甲·時干 乙 일치. 庚年→申月 甲申 · 甲日→丑時 乙丑 간지 규칙 일치."
+  },
+  {
+   "id": "JCS-101",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛酉",
+    "month": "庚子",
+    "day": "甲子",
+    "hour": "丙寅"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 震兌",
+    "page": "p.130 (좌측 명식)",
+    "photo": "scans/JCS-101_p130.png"
+   },
+   "note": "원문: 甲木生於仲冬、木衰金寒、用火以暖之、金亦得其制矣、況乎時逢祿旺、一陽解凍、所謂得氣之寒、遇暖而發、故寒木必得火以生之也、所以科甲聯登、仕至侍郞 — 「用火以暖之」가 용신 명시(화). 十神 라벨(辛=官·庚=殺·丙=食)로 일간 甲 교차검증. 월령: 仲冬 ↔ 子月, 「時逢祿旺」 ↔ 時支 寅(甲의 祿) 일치. 辛年→子月 庚子 · 甲日→寅時 丙寅 간지 규칙 일치. 원문 끝에 「右五造舉甲木以爲例」 — 震兌 편 다섯 명식(JCS-097·098·099·100·101)이 모두 甲木 예제임을 저자가 직접 확인해 준다."
+  },
+  {
+   "id": "JCS-102",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丙子",
+    "month": "己亥",
+    "day": "丙寅",
+    "hour": "戊子"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 坎離",
+    "page": "p.132 (우측 명식)",
+    "photo": "scans/JCS-102_p132.png"
+   },
+   "note": "원문: 丙火生於孟冬、又逢兩子、天干離衰、地支坎旺、用寅木以升之也、至壬寅東方木地、采芹折桂、卯運出仕一路、運走東南、仕至觀察 — 「用寅木以升之也」가 용신 명시(목). 十神 라벨(丙=比·己=傷·戊=食)로 일간 丙 교차검증. 월령: 孟冬 ↔ 亥月, 「又逢兩子」 ↔ 年支·時支 子 일치. 丙年→亥月 己亥 · 丙日→子時 戊子 간지 규칙 일치."
+  },
+  {
+   "id": "JCS-103",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다 (년주와 첫 대운만 p.132 맨 왼쪽 칸에 있고 월주부터 p.133 오른쪽 끝 — JCS-098 과 같은 쪽 넘김)",
+   "pillars": {
+    "year": "壬午",
+    "month": "壬寅",
+    "day": "壬戌",
+    "hour": "庚戌"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 坎離",
+    "page": "p.132 (年柱·첫 大運만) → p.133 (月柱 이후)",
+    "photo": "scans/JCS-103_p132-133.png"
+   },
+   "note": "원문: 壬水生於孟春、支全火局、雖年月兩透比肩、皆屬無根、天干坎衰、地支離旺、用庚金以降之也、惜乎運途東南、在外奔馳四十年、一無成就、至五旬外交戊申、庚逢生旺、得際遇發財巨萬、娶妻三年已六旬矣、連生三子、至戌運而終 — 「用庚金以降之也」가 용신 명시(금). 十神 라벨(壬壬=比·庚=梟)로 일간 壬 교차검증. 월령: 孟春 ↔ 寅月, 「支全火局」 ↔ 年支 午·月支 寅·日支 戌 일치, 「年月兩透比肩」 ↔ 年干·月干 壬 일치. 壬年→寅月 壬寅 · 壬日→戌時 庚戌 간지 규칙 일치. 大運 癸卯(p.132)→甲辰乙巳丙午丁未戊申(p.133) 순행이 月柱 壬寅과 일치."
+  },
+  {
+   "id": "JCS-104",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 명시 형식(「用」 자 없음) 때문에 비채점 — 오행이 둘이라서가 아니다",
+   "pillars": {
+    "year": "丙子",
+    "month": "丙申",
+    "day": "丙子",
+    "hour": "丙申"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 坎離",
+    "page": "p.133 (좌측 명식)",
+    "photo": "scans/JCS-104_p133.png"
+   },
+   "note": "원문: 此造地支兩申兩子、水逢生旺、金作水論、天干四丙、地支無根、離衰坎旺、須以木運和之也、惜乎五行不順、五十年西北金水之地、故艱難險阻、刑傷顚沛、五旬外運走壬寅東方木地、財進業興、及癸卯甲寅發財數萬 — ⚠️ 채점 보류. 「須以木運和之也」는 오행 한 글자(목)를 박지만 「用」 자가 아니라 「須以…運」 이다. 채점 정의 §1 은 「用○」만 용신 칸에 넣게 되어 있어 지금은 비채점으로 둔다. 坎離 편 본문이 같은 형식을 쓴다(和者、天干皆火、地支皆水、必須有木運以和之) — 「須以○運」을 용신 명시로 볼지는 채점 정의를 고치는 결정이며, 고치면 이 케이스와 앞으로 나올 解者(必須有金運以解之) 유형이 함께 들어온다. 十神 라벨(丙=比 셋, 일간 자리만 무라벨)로 일간 丙·日柱 丙子 교차검증. 丙年→申月 丙申 · 丙日→申時 丙申 간지 규칙 일치. 판본 大運 마지막 칸은 「甲寅」으로 찍혀 있고(순행이면 甲辰) 본문도 「癸卯甲寅」이라 적는다 — 판본 오식으로 보이나 원문 그대로 적는다. 명식 8자에는 영향 없음."
+  },
+  {
+   "id": "JCS-105",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 명시 형식(「用」 자 없음) 때문에 비채점 — 2026-09-14 결정에 따라 「必須○運」은 용신 칸에 넣지 않는다",
+   "pillars": {
+    "year": "癸巳",
+    "month": "壬戌",
+    "day": "壬午",
+    "hour": "壬寅"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 坎離",
+    "page": "p.134 (우측 명식)",
+    "photo": "scans/JCS-105_p134.png"
+   },
+   "note": "원문: 壬午日元生於戌月、支會火局、年支坐巳、天干皆壬、地支皆離、必須金運以解之也、初交辛酉庚申、正得其既濟、解其財殺之勢、叼化日之光、豐衣足食、一交己未、刑耗異常、戊午財殺並旺、出外遇盜喪身 — ⚠️ 비채점. 坎離 편 「解者」 유형으로 「必須金運以解之也」라 적었고 「用」 자가 없다. JCS-104(和者 「須以木運和之也」)와 같은 사유. 2026-09-14 결정: 「用」 명시만 용신 칸에 넣는다. 명식 자체는 확실하다 — 「壬午日元生於戌月」로 일주·월지 직접 명시, 十神 라벨(癸=刦·壬壬=比·일간 자리만 무라벨), 「支會火局」 ↔ 時支 寅·日支 午·月支 戌, 「年支坐巳」 ↔ 年支 巳. 癸年→戌月 壬戌 · 壬日→寅時 壬寅 간지 규칙 일치. 大運 辛酉庚申己未戊午丁巳丙辰 역행."
+  },
+  {
+   "id": "JCS-106",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛巳",
+    "month": "甲午",
+    "day": "癸卯",
+    "hour": "癸亥"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 中和",
+    "page": "p.48",
+    "photo": "scans/JCS-106_p48.png"
+   },
+   "note": "원문: 癸卯日元、生于亥時、日主之氣已貫、喜其無土、財旺自能生官、更妙巳亥遙沖、去火存金、印星得用、木火受制、體用不傷、中和純粹、爲人智識深沈、器重荊山璞玉、才華卓越、光浮鑑水珠璣、庚運助辛制甲、自應台曜高躔、朗映紫微之彩、鼎居左列、輝騰廊廟之光、微嫌亥卯拱木、木旺金衰、未免嗣息艱難也、此莫寶齋先生造 — 「印星得用」이 용신 명시. 채점 정의 §1 의 「用印」 규칙대로 일간 癸의 인성 오행 = 금. 원문도 「去火存金」「庚運助辛制甲」으로 금을 가리킨다. 十神 라벨(辛=梟(口)·甲=傷·癸=比, 일간 자리만 무라벨)로 일간 癸·日柱 癸卯 교차검증. 「生于亥時」 ↔ 時支 亥, 辛年→午月 甲午 · 癸日→亥時 癸亥 간지 규칙 일치."
+  },
+  {
+   "id": "JCS-107",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "壬申",
+    "month": "丁未",
+    "day": "丁未",
+    "hour": "癸卯"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 官殺",
+    "page": "p.70 (좌측 명식)",
+    "photo": "scans/JCS-107_p70.png"
+   },
+   "note": "원문: 此造日月皆丁未、時殺無根、喜其壬水官星助殺、不宜合也、幸而壬水坐申、合而不化、申金爲用、更妙運走西北金水、助起官殺、鄉榜出身、仕版連登、由縣令而遷司馬、位躋黃堂 — 「申金爲用」이 용신 명시(금). 十神 라벨(壬=官·丁=比·癸=殺, 일간 자리만 무라벨)로 일간 丁·日柱 丁未 교차검증. 「日月皆丁未」 ↔ 月柱·日柱 모두 丁未 일치. 壬年→未月 丁未 · 丁日→卯時 癸卯 간지 규칙 일치. 大運 戊申己酉庚戌辛亥壬子癸丑 순행."
+  },
+  {
+   "id": "JCS-108",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "己丑",
+    "month": "辛未",
+    "day": "丙寅",
+    "hour": "己丑"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 傷官 (一曰 傷官用印格)",
+    "page": "p.79",
+    "photo": "scans/JCS-108_p79.png"
+   },
+   "note": "원문: 火土傷官重疊、幸在季夏、火氣有餘、又日坐長生、寅中甲木爲用、至丁卯運剋去辛金、破其丑土、所謂有病得藥、騰身而登月殿、慶集璚林、接連丙寅、體用皆宜、仕至黃堂 — 「寅中甲木爲用」이 용신 명시(목). 十神 라벨(己=傷 둘·辛=財, 일간 자리만 무라벨)로 일간 丙·日柱 丙寅 교차검증. 월령: 季夏 ↔ 未月, 「日坐長生」 ↔ 日支 寅(丙의 장생) 일치. 己年→未月 辛未 · 丙日→丑時 己丑 간지 규칙 일치. 大運 庚午己巳戊辰丁卯丙寅乙丑 역행."
+  },
+  {
+   "id": "JCS-109",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "己未",
+    "month": "癸酉",
+    "day": "戊戌",
+    "hour": "庚申"
+   },
+   "expect": {
+    "yongsin": "토"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 傷官",
+    "page": "p.84 (우측 명식)",
+    "photo": "scans/JCS-109_p84.png"
+   },
+   "note": "원문: 此土金傷官、支類西方、金氣太重、以刦爲用、喜其當頭剋癸、故書香繼志、更妙運走南方火地、拔貢出身、由縣令而遷州牧、涖沍黃堂、一生逢凶化吉、宦海無波也 — 「以刦爲用」이 용신 명시. 채점 정의 §1 의 「用印」 규칙과 같은 방식으로 일간 戊의 비겁 오행 = 토. 十神 라벨(己=刦·癸=財·庚=食, 일간 자리만 무라벨)로 일간 戊·日柱 戊戌 교차검증. 「支類西方」 ↔ 時支 申·月支 酉·日支 戌 일치. 己年→酉月 癸酉 · 戊日→申時 庚申 간지 규칙 일치. 大運 壬申辛未庚午己巳戊辰丁卯 역행."
+  },
+  {
+   "id": "JCS-110",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 오행 두 글자(금수) + 「必須」 형식 — 두 사유 모두로 비채점",
+   "pillars": {
+    "year": "癸酉",
+    "month": "甲子",
+    "day": "庚辰",
+    "hour": "甲申"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 順逆",
+    "page": "p.113 (좌측 명식)",
+    "photo": "scans/JCS-110_p113.png"
+   },
+   "note": "원문: 庚辰日元、支逢祿旺、水本當權、又會水局、天干枯木無根、置之不論、謂金水二人同心、必須順其金水之性、故癸亥壬運蔭庇有餘、戌運制水、還喜申酉戌全、雖見刑喪而無大患、辛運入泮、酉運補廩、庚運登科、申運大旺財源、一交己未運轉南方、刑妻剋子、家業漸消、戊午觸水之性、家業破盡而亡 — ⚠️ 비채점. 「必須順其金水之性」은 오행이 **둘(금수)** 이라 채점 정의 §1 의 ambiguous 에 해당하고, 형식도 「用」이 아닌 「必須」라 JCS-104·105 와 같은 사유다. 명식은 확실하다 — 「庚辰日元」으로 일주 직접 명시, 「支逢祿旺」 ↔ 時支 申(庚의 祿)·年支 酉(旺), 「又會水局」 ↔ 時申·月子·日辰 삼합, 「天干枯木無根」 ↔ 月干·時干 甲甲. 癸年→子月 甲子 · 庚日→申時 甲申 간지 규칙 일치. 大運 癸亥壬戌辛酉庚申己未戊午 역행. 十神 라벨(癸=傷·甲甲=才, 일간 자리만 무라벨)."
+  },
+  {
+   "id": "JCS-111",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 원문이 「用神無所着落」(용신이 붙을 데가 없다)이라 특정 오행을 지목하지도, 하나만 배제하지도 않는다 → 현재 채점 틀 밖",
+   "pillars": {
+    "year": "庚寅",
+    "month": "己卯",
+    "day": "乙亥",
+    "hour": "癸未"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 方局(下)",
+    "page": "p.8",
+    "photo": "scans/JCS-111_p8.png"
+   },
+   "note": "원문: 此造正合本文成局干透官星、左右皆空、四柱一無情致、用財則財會刦局、用官則臨絕地、用神無所着落、爲人少恆一之志、多遷變之心、以致家業破耗、讀書未就… — ⚠️ 비채점. 「用財則…用官則…用神無所着落」은 **財(乙 일간 기준 토)와 官(금)을 둘 다 배제**하면서 어떤 오행도 용신 노릇을 못 한다고 말한다. 러너의 `yongsinNot` 은 문자열 하나만 받으므로 토·금 중 하나만 넣으면 반쪽 채점이 되고, 「용신 없음」을 담을 칸도 없다. 그래서 기록만 남긴다. 명식은 확실 — 十神 라벨(庚=官·己=才·癸=梟(口), 일간 자리만 무라벨)로 일간 乙 교차검증, 庚年→卯月 己卯 · 乙日→未時 癸未 간지 규칙 일치. 大運 庚辰辛巳壬午癸未甲申乙酉 순행. ▶ v15 검토 후보: `yongsinNot` 배열 지원 또는 「용신 없음」 칸 신설."
+  },
+  {
+   "id": "JCS-112",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "癸卯",
+    "month": "丙辰",
+    "day": "甲辰",
+    "hour": "丙寅"
+   },
+   "expect": {
+    "yongsin": "토",
+    "strength": "신강"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 方局(下)",
+    "page": "p.5 (좌측 명식)",
+    "photo": "scans/JCS-112_p5.png"
+   },
+   "note": "원문: 此造財旺提綱、丙食生助、當以財星爲用、丙火爲喜、癸水爲忌、身旺用財、遺業十餘萬、初年水木運、一敗如灰、至辛亥運、火絕木生、水臨旺、凍餓而死 — 「當以財星爲用」이 용신 명시. 채점 정의 §1 대로 일간 甲의 재성 오행 = 토(月支 辰). 「身旺用財」로 강약도 명시(신강). 十神 라벨(癸=印·丙丙=食, 일간 자리만 무라벨)로 일간 甲 교차검증. 癸年→辰月 丙辰 · 甲日→寅時 丙寅 간지 규칙 일치. 大運 乙卯甲寅癸丑壬子辛亥庚戌 역행(陰年). 같은 쪽 우측 `戊寅 甲寅 甲辰 丁卯`(年柱는 p.4 끝 칸)는 用 없음으로 건너뜀."
+  },
+  {
+   "id": "JCS-113",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛未",
+    "month": "辛卯",
+    "day": "乙未",
+    "hour": "丁亥"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 方局(下)",
+    "page": "p.6 (時柱·大運 뒷부분은 p.7 첫 칸으로 이어짐)",
+    "photo": "scans/JCS-113_p6-7.png"
+   },
+   "note": "원문: 此乙木歸垣、亥卯未全、木勢旺盛、金氣虛脫、最喜時透丁火、制煞爲用、故初運土金之鄉、奔馳未遇、至丁亥運、生木制煞、軍前効力、得縣佐、丙戌運中、幫丁剋辛、升縣令、此所謂強衆而敵寡、勢在去其寡、非煞旺宜制而推也、至酉運、煞逢祿旺、沖破木局不祿 — 「時透丁火、制煞爲用」이 용신 명시(화, 식신). 저자가 「非煞旺宜制而推」라 이유를 衆寡로 밝힘. ⚠️ 쪽 넘김: p.6 에는 辛未 辛卯 乙未 세 칸만, 時柱 丁亥와 大運 乙酉는 p.7 오른쪽 끝. 「時透丁火」 ↔ 時干 丁, 「亥卯未全」 ↔ 時支 亥 로 이어붙이기 확정. 十神 라벨(辛辛=殺·丁=食). 辛年→卯月 辛卯 · 乙日→亥時 丁亥 간지 규칙 일치. 大運 庚寅己丑戊子丁亥丙戌乙酉 역행. p.7 좌측 `辛未 辛卯 乙未 戊寅`(시주만 다른 별개 명식)은 09-16 에 건너뛴 것과 같다 — 중복 아님."
+  },
+  {
+   "id": "JCS-114",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛卯",
+    "month": "丙申",
+    "day": "癸卯",
+    "hour": "壬戌"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 八格",
+    "page": "p.12 (우측 명식)",
+    "photo": "scans/JCS-114_p12.png"
+   },
+   "note": "원문: 此印綬格、以申金爲用、以丙火爲病、以壬水爲藥、中和純粹、秋水通源、運至癸巳、金水逢生得助、科甲聯登、壬辰藥病相濟、由部屬出爲郡守、蓋辛卯庚寅蓋頭逢金、不能生火壞印、名利兩全也 — 「以申金爲用」이 용신 명시(금, 인성). 十神 라벨(辛=梟(口)·丙=財·壬=刦, 일간 자리만 무라벨)로 일간 癸 교차검증. 「秋水」 ↔ 申月. 辛年→申月 丙申 · 癸日→戌時 壬戌 간지 규칙 일치. 大運 乙未甲午癸巳壬辰辛卯庚寅 역행."
+  },
+  {
+   "id": "JCS-115",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛卯",
+    "month": "丙申",
+    "day": "癸卯",
+    "hour": "甲寅"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 八格",
+    "page": "p.12 (좌측 명식 — 時柱·大運 뒷부분은 p.13 첫 칸으로 이어짐)",
+    "photo": "scans/JCS-115_p12-13.png"
+   },
+   "note": "원문: 此亦以申金爲用、以丙火爲病、與前只換一寅字、不但有病無藥、而且生助病神、彼則青錢萬選、名利兩全、此則機杼空拋、守株待兔、更嫌寅申遙沖、卯木助之、印綬受傷、木旺金缺 — 「此亦以申金爲用」이 용신 명시(금). ⚠️ 쪽 넘김 4호: p.12 에는 辛卯 丙申 癸卯 세 칸만, 時柱 甲寅(라벨 傷)과 大運 庚寅은 p.13 오른쪽 끝. 「只換一寅字」「寅申遙沖」 ↔ 時支 寅 으로 이어붙이기 확정. 癸日→寅時 甲寅 간지 규칙 일치. JCS-114 와 시주만 다르다(8자 중복 아님)."
+  },
+  {
+   "id": "JCS-116",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 從財 서술이지만 「用」 자가 저자 판정에 없음 → 비채점 확정(2026-09-17 승혁 결정). CONG_REF_0114 참고 세트",
+   "pillars": {
+    "year": "戊寅",
+    "month": "庚申",
+    "day": "丙申",
+    "hour": "丙申"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 體用",
+    "page": "p.24 (우측 명식)",
+    "photo": "scans/JCS-116_p24.png"
+   },
+   "note": "[CONG_REF_0114] 원문: 丙火生於初秋、秋金乘令、三申沖去一寅、丙火之根已拔、比肩亦不能爲力、年月兩干、又透土金、只得從其弱勢、順財之性、以比肩爲病、故運至水旺之地、制去比肩、事業巍峨、丙寅幫身、刑喪破耗、所謂弱極者扶之徒勞無功反有害也、此等格局頗多、以俗論之、前造必以金水爲用、此造必以木火爲用、以致吉凶顚倒 — ⚠️ 비채점 확정(2026-09-17 승혁 결정: 用 자 원칙 유지, S1 분모에 넣지 않음). 뜻은 從財(재성 금)인데 원문에 「用」 자가 저자 판정으로 박히지 않았다(「用」은 俗論을 반박하는 문장에만 나옴). 2026-09-14 결정(用 자만 인정)에 따라 보류. 채점 정의 §1 의 「從財면 재성 오행」을 적용하면 용신 금. 엔진: 강약 0.114 · 용신 목(억부 印) — 적용하면 miss 이고 **0.114 → 원전 財 패턴의 네 번째 모양**이다. 十神 라벨(戊=食·庚=才·丙=比, 일간 자리만 무라벨). 戊年→申月 庚申 · 丙日→申時 丙申 간지 규칙 일치. 大運 辛酉壬戌癸亥甲子乙丑丙寅 순행.",
+   "refSet": "CONG_REF_0114"
+  },
+  {
+   "id": "JCS-117",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "seenNote": "v14 동결 뒤 전사. 「土金喜用」 오행 두 글자 → 비채점",
+   "pillars": {
+    "year": "己巳",
+    "month": "庚午",
+    "day": "丙午",
+    "hour": "甲午"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷二 通神論 八格",
+    "page": "p.16",
+    "photo": "scans/JCS-117_p16.png"
+   },
+   "note": "원문: 此造俗論、丙午日支全三午、四柱滴水全無、中年又無水運、必作飛天祿馬、名利雙輝、不知此造午中己土、巳中庚金、元神透出年月兩干、眞火土傷官生財格、初交己巳戊辰、洩火生金、遺業頗豐、丁卯丙寅、土金喜用皆傷、連遭回祿三次、又剋兩妻四子、家業破盡、至乙丑運、北方溼土、晦火生金、又合化有情、經營獲利、納妾生子、重振家聲、甲子癸亥、北方水地、潤土養金、發財數萬、若以飛天合祿論、大忌水運矣 — ⚠️ 비채점. 「土金喜用」은 오행이 **둘(토금)** 이고 어느 쪽이 用인지 원문이 가르지 않는다 → §1 ambiguous. 十神 라벨(己=傷·庚=才·甲=梟, 일간 자리만 무라벨). 己年→午月 庚午 · 丙日→午時 甲午 간지 규칙 일치. 大運 己巳戊辰丁卯丙寅乙丑甲子 역행."
+  },
+  {
+   "id": "JCS-118",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "癸卯",
+    "month": "乙丑",
+    "day": "庚申",
+    "hour": "丁丑"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 夫妻",
+    "page": "卷三 p.4 (우측 명식)",
+    "photo": "scans/JCS-118_k3p4.png"
+   },
+   "note": "원문: 此造寒金坐祿、印綬當權、足以用火敵寒、所忌者年干癸水剋丁爲病、全賴月干乙木通根、洩水生火、此喜神即是財星也、更喜財星逢合、謂財來就我 — 「足以用火敵寒」이 용신 명시(화, 관성). 十神 라벨(癸=傷·乙=財·丁=官, 일간 자리만 무라벨). 癸年→丑月 乙丑 · 庚日→丑時 丁丑 간지 규칙 일치. 大運 甲子癸亥壬戌辛酉庚申己未 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-119",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "乙亥",
+    "month": "庚辰",
+    "day": "丙申",
+    "hour": "壬辰"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 夫妻",
+    "page": "卷三 p.5 (子女 편 제목 앞)",
+    "photo": "scans/JCS-119_k3p5.png"
+   },
+   "note": "원문: 丙火生於季春、印綬通根生旺、日主坐財、時干又透壬水、必以乙木爲用、可嫌者、乙庚化金、生殺壞印、其妻不賢、妒悍異常、無子而絕 — 「必以乙木爲用」이 용신 명시(목, 인성). 十神 라벨(乙=印·庚=才·壬=殺). 「季春」 ↔ 辰月. 乙年→辰月 庚辰 · 丙日→辰時 壬辰 간지 규칙 일치. 大運 己卯戊寅丁丑丙子乙亥甲戌 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-120",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "癸亥",
+    "month": "甲子",
+    "day": "丁酉",
+    "hour": "癸卯"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 子女",
+    "page": "卷三 p.8 (좌측 명식)",
+    "photo": "scans/JCS-120_k3p8.png"
+   },
+   "note": "원문: 此造殺官當令、嫌其甲木透干、不能棄命從殺、只得殺重用印、則忌卯酉逢沖、去甲木之旺地、雖天干有情、家業頗豐、而地支不協、所以妻生八女、妾生八女、竟無子、所謂身衰印作兒、此財星壞印之故也 — 「只得殺重用印」 → 채점 정의 §1 「用印」 규칙대로 일간 丁의 인성 = 목. 원문이 「不能棄命從殺」로 從殺을 명시 배제. 十神 라벨(癸=殺·甲=印·癸=殺). 癸年→子月 甲子 · 丁日→卯時 癸卯 간지 규칙 일치. 大運 癸亥壬戌辛酉庚申己未戊午 역행. 참고: 엔진 강약 0.114 인데 원전도 印 — 0.114→財 가설의 반대쪽 사례. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-121",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "乙亥",
+    "month": "辛巳",
+    "day": "丙辰",
+    "hour": "癸巳"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 父母",
+    "page": "卷三 p.15 (兄弟 편 제목 앞)",
+    "photo": "scans/JCS-121_k3p15.png"
+   },
+   "note": "원문: 此造支逢兩祿乘權、年干印綬通根、凡推命者、作旺論、用以財星、斷其名利收雙、然丙火生于孟夏、火氣方進、年干印綬、被月干財星所壞、巳亥逢沖、破祿去火、則金水反得生扶、木火失勢矣、又坐下辰土、竊去命主元神、時干癸水蓋頭、巳火亦傷、必作弱推、用以巳火 — 「必作弱推、用以巳火」이 저자 판정(화, 비겁). 앞의 「作旺論、用以財星」은 저자가 반박하는 通俗論이라 채점에 쓰지 않음. 十神 라벨(乙=印·辛=財·癸=官). 「孟夏」 ↔ 巳月. 乙年→巳月 辛巳 · 丙日→巳時 癸巳 간지 규칙 일치. 大運 庚辰己卯戊寅丁丑丙子乙亥 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-122",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 전사. 「可用」 경계 형식 → 비채점(2026-09-17 승혁 결정: §1 확정 처방 「用」만 S1). FORM_BORDER 참고 세트",
+   "pillars": {
+    "year": "壬申",
+    "month": "丙午",
+    "day": "癸亥",
+    "hour": "戊午"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.20",
+    "photo": "scans/JCS-122_k3p20.png"
+   },
+   "note": "[FORM_BORDER] ⚠️ 비채점 — 「可用」은 허용·당위 서술이라 확정 처방으로 보지 않음(09-17 결정). 원전 뜻의 오행은 expect 대신 여기 기록: {'yongsin': '수'}. 원문: 癸水生于仲夏、又逢午時、財官太旺、喜其日元得地、更妙年干刦坐長生、財星有氣、尤羨五行無木、則水不洩而火無助、壬水可用、且運走西北金水得地、遺緒不豐、自創四五十萬 — 「壬水可用」이 용신 명시(수, 비겁). ⚠️ 형식이 「爲用」이 아니라 「可用」 — 저자 판정이라 채점에 넣었으나 경계 형식으로 표시해 둔다. 十神 라벨(壬=刦·丙=財·戊=官). 「仲夏」 ↔ 午月. 壬年→午月 丙午 · 癸日→午時 戊午 간지 규칙 일치. 大運 丁未戊申己酉庚戌辛亥壬子 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276).",
+   "ambiguous": true,
+   "refSet": "FORM_BORDER",
+   "refExpect": {
+    "yongsin": "수"
+   }
+  },
+  {
+   "id": "JCS-123",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "甲午",
+    "month": "丙寅",
+    "day": "辛酉",
+    "hour": "己丑"
+   },
+   "expect": {
+    "yongsin": "토"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.23 (우측 명식)",
+    "photo": "scans/JCS-123_k3p23.png"
+   },
+   "note": "원문: 此造財臨旺地、官遇長生、日主坐祿、印綬通根、天干四字、地支皆臨祿旺、五行無水、清而純粹、春金雖弱、喜其時印通根得用、庚運幫身、癸酉年登科、午運殺旺、病晦刑喪、辛運己卯年發甲入詞林 — 「時印通根得用」 → 時干 己(인성) = 토. JCS-106 「印星得用」과 같은 형식으로 처리. 十神 라벨(甲=財·丙=官·己=梟(口)). 「春金」 ↔ 寅月. 甲年→寅月 丙寅 · 辛日→丑時 己丑 간지 규칙 일치. 大運 丁卯戊辰己巳庚午辛未壬申 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-124",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "癸卯",
+    "month": "甲寅",
+    "day": "丁巳",
+    "hour": "己酉"
+   },
+   "expect": {
+    "yongsin": "금",
+    "yongsinNot": "수"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.26 (우측 명식)",
+    "photo": "scans/JCS-124_k3p26.png"
+   },
+   "note": "원문: 此造財藏殺露、殺印相生、又聯珠相生、似乎貴格、所以祖業二十餘萬、不知年干之殺無根、其菁華盡被印綬竊去、不用癸水明矣、必用酉金之財、蓋頭覆之以土、似乎有情、但木旺土虛、相火逢生、則巳酉不會、財不眞矣、一交壬子、洩金生木、一敗如灰 — 「必用酉金之財」 용신 명시(금) + 「不用癸水明矣」 반례 명시(수 아님). 十神 라벨(癸=殺·甲=印·己=食). 癸年→寅月 甲寅 · 丁日→酉時 己酉 간지 규칙 일치. 大運 癸丑壬子辛亥庚戌己酉戊申 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-125",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 전사. 「理宜用」 경계 형식 → 비채점(2026-09-17 승혁 결정: §1 확정 처방 「用」만 S1). FORM_BORDER 참고 세트",
+   "pillars": {
+    "year": "丁卯",
+    "month": "甲辰",
+    "day": "辛亥",
+    "hour": "癸巳"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.31 (좌측 명식)",
+    "photo": "scans/JCS-125_k3p31.png"
+   },
+   "note": "[FORM_BORDER] ⚠️ 비채점 — 「理宜用」은 허용·당위 서술이라 확정 처방으로 보지 않음(09-17 결정). 원전 뜻의 오행은 expect 대신 여기 기록: {'yongsin': '토'}. 원문: 此春金逢火、理宜用印化殺、財星壞印、癸水克丁、亥水沖巳、似乎制殺有情、不知春水休囚、木火並旺、不但不能剋火、反去生木洩金、財官本可榮身、而日主不能勝任 — 「理宜用印化殺」 → §1 「用印」 규칙대로 일간 辛의 인성 = 토. ⚠️ 형식이 「理宜用」(마땅히 써야 한다)이라 경계 형식으로 표시. 十神 라벨(丁=殺·甲=財·癸=食). 「春金」 ↔ 辰月. 丁年→辰月 甲辰 · 辛日→巳時 癸巳 간지 규칙 일치. 大運 癸卯壬寅辛丑庚子己亥戊戌 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276).",
+   "ambiguous": true,
+   "refSet": "FORM_BORDER",
+   "refExpect": {
+    "yongsin": "토"
+   }
+  },
+  {
+   "id": "JCS-126",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "甲子",
+    "month": "丙寅",
+    "day": "戊寅",
+    "hour": "己未"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.33",
+    "photo": "scans/JCS-126_k3p33.png"
+   },
+   "note": "원문: 春初土虛、殺旺逢財、以丙火爲用、喜其財印相隔、生生不悖、更妙未時幫身爲喜、四柱純粹、主從得宜、所以早登甲第、一生有吉無凶 — 「以丙火爲用」이 용신 명시(화, 인성). 十神 라벨(甲=殺·丙=印(口)·己=刦). 「春初」 ↔ 寅月. 甲年→寅月 丙寅 · 戊日→未時 己未 간지 규칙 일치. 大運 丁卯戊辰己巳庚午辛未壬申癸酉甲戌 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-127",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丙申",
+    "month": "己亥",
+    "day": "庚辰",
+    "hour": "戊寅"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.34",
+    "photo": "scans/JCS-127_k3p34.png"
+   },
+   "note": "원문: 此寒金喜火、得時支寅木之生、則火有焰、然用財殺、必先身旺、妙在年支坐祿、三印貼生、更妙亥水當權、申金貪生忘沖、無火則土凍金寒、無木則水旺火虛、以火爲用、以木爲喜、木火兩字、缺一不可 — 「以火爲用、以木爲喜」이 용신 명시(화, 칠살). 十神 라벨(丙=殺·己=印·戊=梟(口)). 「寒金」 ↔ 亥月. 丙年→亥月 己亥 · 庚日→寅時 戊寅 간지 규칙 일치. 大運 庚子辛丑壬寅癸卯甲辰乙巳丙午丁未 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-128",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "乙亥",
+    "month": "戊寅",
+    "day": "丙子",
+    "hour": "甲午"
+   },
+   "expect": {
+    "yongsin": "토"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.35",
+    "photo": "scans/JCS-128_k3p35.png"
+   },
+   "note": "원문: 丙火生于寅月、印星當令、時逢刃旺、甲乙並旺透、四柱無金、寅亥化木、子水沖破、官星無用、必以月干戊土爲用、忌神即是甲木、亥子之水、反生旺木、所謂忌神輾轉攻也 — 「必以月干戊土爲用」이 용신 명시(토, 식신). 「官星無用」은 관성(수) 부정이지만 「不用」 정형이 아니라 반례 칸에 넣지 않음. 十神 라벨(乙=印·戊=食·甲=梟(口)). 乙年→寅月 戊寅 · 丙日→午時 甲午 간지 규칙 일치. 大運 丁丑丙子乙亥甲戌癸酉壬申 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-129",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛巳",
+    "month": "庚寅",
+    "day": "丙辰",
+    "hour": "己丑"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.36",
+    "photo": "scans/JCS-129_k3p36.png"
+   },
+   "note": "원문: 丙火生寅、木嫩火相、未爲旺也、生丑時、竊去命主元神、以寅木爲用、所嫌庚金當頭之忌、木嫩逢金、火虛見洩、初交己丑戊子、生金洩火、幼喪父母、孤苦不堪 — 「以寅木爲用」이 용신 명시(목, 인성). 十神 라벨(辛=財·庚=才·己=傷). 辛年→寅月 庚寅 · 丙日→丑時 己丑 간지 규칙 일치. 大運 己丑戊子丁亥丙戌乙酉甲申 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-130",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁未",
+    "month": "庚戌",
+    "day": "庚辰",
+    "hour": "丙子"
+   },
+   "expect": {
+    "yongsin": "화",
+    "strength": "신강"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.39 (우측 명식)",
+    "photo": "scans/JCS-130_k3p39.png"
+   },
+   "note": "원문: 此以丁火爲源頭、生土、土生金、兩藏財庫、身旺用官、中年行運不背、所以早登鄉榜、名利雙輝 — 「身旺用官」 → 용신 = 일간 庚의 관성(화), 강약 신강 명시. 十神 라벨(丁=官·庚=比·丙=殺). 丁年→戌月 庚戌 · 庚日→子時 丙子 간지 규칙 일치. 大運 己酉戊申丁未丙午乙巳甲辰 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-131",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 전사. 「可用」 경계 형식 → 비채점(2026-09-17 승혁 결정: §1 확정 처방 「用」만 S1). FORM_BORDER 참고 세트",
+   "pillars": {
+    "year": "己丑",
+    "month": "戊辰",
+    "day": "辛亥",
+    "hour": "戊戌"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 何知章",
+    "page": "卷三 p.43 (좌측 명식)",
+    "photo": "scans/JCS-131_k3p43.png"
+   },
+   "note": "[FORM_BORDER] ⚠️ 비채점 — 「可用」은 허용·당위 서술이라 확정 처방으로 보지 않음(09-17 결정). 원전 뜻의 오행은 expect 대신 여기 기록: {'yongsin': '목'}. 원문: 此重重厚土、埋藏脆嫩之金、五行無木、未得疏揚之利、一點亥水剋絕、支藏甲乙、無從引助、然春土氣虛、藏財可用、初運東方木地、庇蔭有餘、寅運得一子、乙丑運、土又通根而夭 — 「藏財可用」 → 亥 속 甲乙 = 일간 辛의 재성(목). ⚠️ 형식이 「可用」이라 JCS-122 와 같은 경계 형식으로 표시. 十神 라벨(己=梟(口)·戊=印·戊=印). 「春土」 ↔ 辰月. 己年→辰月 戊辰 · 辛日→戌時 戊戌 간지 규칙 일치. 大運 丁卯丙寅乙丑甲子癸亥壬戌 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276).",
+   "ambiguous": true,
+   "refSet": "FORM_BORDER",
+   "refExpect": {
+    "yongsin": "목"
+   }
+  },
+  {
+   "id": "JCS-132",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF_0114",
+   "seenNote": "v14 동결 뒤 전사. 從財 서술이지만 「用」 자 없음 → JCS-116 과 같은 처리(비채점, CONG_REF_0114 참고 세트)",
+   "pillars": {
+    "year": "戊申",
+    "month": "甲寅",
+    "day": "壬寅",
+    "hour": "丁未"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.52",
+    "photo": "scans/JCS-132_k3p52.png"
+   },
+   "note": "[CONG_REF_0114] 원문: 壬水生於孟春、土虛木盛、制殺太過、寅申逢沖、本是剋木、不知木旺金缺、金反被傷、則戊土無根依托、而日主之壬水可任性而行、見其財星有勢、自然從財而去、以致傷夫敗業、棄子從人也 — ⚠️ 비채점. 뜻은 從財(재성 화)이나 「用」 자가 없다(09-17 결정 원칙). 엔진: 강약 0.057 · 용신 금(억부 印) → 채점했다면 miss. 女命. 十神 라벨(戊=殺·甲=食·丁=財). 「孟春」 ↔ 寅月. 戊年→寅月 甲寅 · 壬日→未時 丁未 간지 규칙 일치. 大運 癸丑壬子辛亥庚戌己酉戊申丁未丙午 역행(陽年 女命). ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-133",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁未",
+    "month": "乙巳",
+    "day": "甲午",
+    "hour": "丁卯"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.53 (우측 명식)",
+    "photo": "scans/JCS-133_k3p53.png"
+   },
+   "note": "원문: 甲午日元、生于巳月、支類南方、干透兩丁、火勢猛烈、洩氣太過、局中無水、只可用刦、初運又走火地、是以早刑夫主 — 「只可用刦」 → 용신 = 일간 甲의 겁재(목). 女命. 十神 라벨(丁=傷·乙=刦·丁=傷). 丁年→巳月 乙巳 · 甲日→卯時 丁卯 간지 규칙 일치. 大運 丙午丁未戊申己酉庚戌辛亥壬子癸丑 순행(陰年 女命). 참고: 엔진 강약 0.114 인데 원전은 比刦 — 0.114→財 가설의 반대쪽 사례. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-134",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁丑",
+    "month": "癸丑",
+    "day": "庚子",
+    "hour": "乙酉"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.55 (좌측 명식)",
+    "photo": "scans/JCS-134_k3p55.png"
+   },
+   "note": "원문: 庚金生于季冬、不但寒金喜火、而且時逢陽刃、印綬當權、足以用火敵寒、月干癸水、通根祿支、剋絕丁火、其意足以欺官、時逢乙木、喜而合之、其情必向財矣 — 「足以用火敵寒」이 용신 명시(화, 관성). JCS-118 과 같은 문형. 女命. 十神 라벨(丁=官·癸=傷·乙=財). 「季冬」 ↔ 丑月. 丁年→丑月 癸丑 · 庚日→酉時 乙酉 간지 규칙 일치. 大運 甲寅乙卯丙辰丁巳戊午己未庚申辛酉 순행(陰年 女命). ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-135",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "乙未",
+    "month": "辛巳",
+    "day": "乙亥",
+    "hour": "丙戌"
+   },
+   "expect": {
+    "yongsin": "수"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.58 (우측 명식)",
+    "photo": "scans/JCS-135_k3p58.png"
+   },
+   "note": "원문: 年月日六字觀之、乙木生于巳月、傷官當令、最喜坐下亥印、沖巳制傷、不特日主喜其滋扶、抑且辛金得其衛養、正所謂傷官用印、獨殺留清 — 「傷官用印」 → §1 「用印」 규칙대로 일간 乙의 인성 = 수. 女命. 十神 라벨(乙=比·辛=殺·丙=傷). 乙年→巳月 辛巳 · 乙日→戌時 丙戌 간지 규칙 일치. 大運 壬午癸未甲申乙酉丙戌丁亥戊子己丑 순행(陰年 女命). ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-136",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丙辰",
+    "month": "癸巳",
+    "day": "丁丑",
+    "hour": "甲辰"
+   },
+   "expect": {
+    "yongsin": "금",
+    "strength": "신강"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.61 (좌측 명식)",
+    "photo": "scans/JCS-136_k3p61.png"
+   },
+   "note": "원문: 丁火生于巳月、癸水夫星清透、時干甲木、印綬獨清、是以品格端莊、持身貞潔、惜丙火太旺、生助傷官、以致鏡破釵分、然喜巳丑拱金、財星得用、身旺以財爲子、教子成名 — 「財星得用」 → 일간 丁의 재성 = 금, 「身旺」 → 신강. ⚠️ 형식이 「得用」(JCS-106 「印星得用」·JCS-123 「時印通根得用」과 같은 계열) — 경계 여부 승혁 확인 대기. 女命. 十神 라벨(丙=刦·癸=殺·甲=印). 丙年→巳月 癸巳 · 丁日→辰時 甲辰 간지 규칙 일치. 大運 壬辰辛卯庚寅己丑戊子丁亥丙戌乙酉 역행(陽年 女命). ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-137",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "FORM_BORDER",
+   "refExpect": {
+    "yongsin": "금"
+   },
+   "seenNote": "v14 동결 뒤 전사. 「以用金去火爲宜」 당위 형식 → 비채점(09-17 결정 원칙). FORM_BORDER 참고 세트",
+   "pillars": {
+    "year": "癸未",
+    "month": "庚申",
+    "day": "戊戌",
+    "hour": "己未"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.64 (우측 명식)",
+    "photo": "scans/JCS-137_k3p64.png"
+   },
+   "note": "[FORM_BORDER] ⚠️ 비채점 — 「以用金去火爲宜」는 「理宜用」(JCS-125)과 같은 당위 서술(09-17 결정). 원전 뜻의 오행 = 금. 원문: 此與前造只換未戌二支、其餘皆同、未丑皆土、午換以戌、以用金去火爲宜、大勢觀之、勝于前造、今反不及者何也、夫丑乃北方溼土、能生金晦火、又能蓄水、未乃南方燥土、能脆金助火 — 女命. 十神 라벨(癸=財·庚=食·己=刦). 癸年→申月 庚申 · 戊日→未時 己未 간지 규칙 일치. 大運 辛酉壬戌癸亥甲子乙丑丙寅丁卯戊辰 순행(陰年 女命). ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-138",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "壬辰",
+    "month": "己酉",
+    "day": "辛丑",
+    "hour": "癸巳"
+   },
+   "expect": {
+    "yongsinNot": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 女命章",
+    "page": "卷三 p.66 (좌측 명식)",
+    "photo": "scans/JCS-138_k3p66.png"
+   },
+   "note": "원문: 辛金生于仲秋、支全金局、五行無木、火已成金、必無用官之理、喜其壬癸並透、洩其精英 — 「必無用官之理」 → 반례(일간 辛의 관성 = 화, 用神 아님). 「喜其壬癸」는 喜라 용신 칸에 넣지 않음. 女命. 十神 라벨(壬=傷·己=梟(口)·癸=食). 「仲秋」 ↔ 酉月. 壬年→酉月 己酉 · 辛日→巳時 癸巳 간지 규칙 일치. 大運 戊申丁未丙午乙巳甲辰癸卯壬寅辛丑 역행(陽年 女命). ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-139",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "庚戌",
+    "month": "壬午",
+    "day": "丙寅",
+    "hour": "己亥"
+   },
+   "expect": {
+    "yongsin": "수",
+    "strength": "신강"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 小兒",
+    "page": "卷三 p.70 (좌측 명식)",
+    "photo": "scans/JCS-139_k3p70.png"
+   },
+   "note": "원문: 丙用壬殺、身強殺淺、以殺化權、更喜財滋弱殺、定然名利雙全、惜支全火局、寅亥又化木而生火、年月之庚壬無根、而少生扶、至丁巳年、巳亥沖去壬水之祿、丁火合去壬水之用、死于痘症 — 「丙用壬殺」 용신 명시(수, 칠살) · 「身強」 → 신강. 十神 라벨(庚=財·壬=殺·己=傷). 庚年→午月 壬午 · 丙日→亥時 己亥 간지 규칙 일치. 大運 癸未甲申乙酉丙戌丁亥戊子 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-140",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "戊辰",
+    "month": "甲子",
+    "day": "壬子",
+    "hour": "辛亥"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 奮鬱",
+    "page": "卷三 p.79 (우측 명식)",
+    "photo": "scans/JCS-140_k3p79.png"
+   },
+   "note": "원문: 壬水生于仲冬、三逢祿旺、所謂崑崙之水、可順而不可逆也、喜其子辰拱水、則戊土之根不固、月干甲木爲用、洩其泛濫之水、此即局中顯奮發之機也、運至丙寅丁卯、寒木得火以發榮、去陰寒之金土、是以早登甲第 — 「月干甲木爲用」 용신 명시(목, 식신). 十神 라벨(戊=殺·甲=食·辛=印). 「仲冬」 ↔ 子月. 戊年→子月 甲子 · 壬日→亥時 辛亥 간지 규칙 일치. 大運 乙丑丙寅丁卯戊辰己巳庚午 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-141",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "甲申",
+    "month": "丙子",
+    "day": "癸亥",
+    "hour": "癸亥"
+   },
+   "expect": {
+    "yongsin": "목"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 奮鬱",
+    "page": "卷三 p.79 (좌측 명식)",
+    "photo": "scans/JCS-141_k3p79.png"
+   },
+   "note": "원문: 癸水生于仲冬、三逢旺支、其勢汪洋、喜其甲丙並透、支中絕處逢生、木土互相護衛、金得流行、水得溫和、木得發榮、火得生扶、用神必是甲木、爲奮發之機、一交戊寅、雲程直上 — 「用神必是甲木」 용신 명시(목, 상관). 十神 라벨(甲=傷·丙=財·癸=比). 「仲冬」 ↔ 子月. 甲年→子月 丙子 · 癸日→亥時 癸亥 간지 규칙 일치. 大運 丁丑戊寅己卯庚辰辛巳壬午 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-142",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "庚寅",
+    "month": "戊子",
+    "day": "甲寅",
+    "hour": "丙寅"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 閑神",
+    "page": "卷三 p.86 (우측 명식)",
+    "photo": "scans/JCS-142_k3p86.png"
+   },
+   "note": "원문: 甲木生于子月、兩陽進氣、旺印生身、支坐三寅、松柏之體、旺而且堅、一點庚金臨絕、不能剋木、反爲忌神、寒木向陽、時干丙火清透、敵其寒凝、洩其菁英、而爲用神、冬火本虛、以寅木爲喜神、月干戊土能制水、又能生金、故爲閑神、以水爲仇神 — 「時干丙火清透、敵其寒凝…而爲用神」 용신 명시(화, 식신). 겨울 한습 조후형 — JCS-118·134 「用火敵寒」과 같은 논리(단 寒金이 아니라 寒木). 十神 라벨(庚=殺·戊=才·丙=食). 「子月」 명시. 庚年→子月 戊子 · 甲日→寅時 丙寅 간지 규칙 일치. 大運 己丑庚寅辛卯壬辰癸巳甲午乙未 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-143",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "甲子",
+    "month": "丁卯",
+    "day": "甲寅",
+    "hour": "庚午"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 閑神",
+    "page": "卷三 p.86 (좌측 명식)",
+    "photo": "scans/JCS-143_k3p86.png"
+   },
+   "note": "원문: 甲木生于仲春、支逢祿刃、干透比肩、旺之極矣、時上庚金、無根爲忌、月干丁火爲用、通輝之氣、所以早登雲路、仕至觀察、惜無土之閑神、運至壬申、金水並傷體用、故不能免禍耳 — 「月干丁火爲用」 용신 명시(화, 상관). 十神 라벨(甲=比·丁=傷·庚=殺). 「仲春」 ↔ 卯月. 甲年→卯月 丁卯 · 甲日→午時 庚午 간지 규칙 일치. 大運 戊辰己巳庚午辛未壬申癸酉 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-144",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁丑",
+    "month": "癸卯",
+    "day": "丙戌",
+    "hour": "辛卯"
+   },
+   "expect": {
+    "yongsin": "수",
+    "strength": "신강"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 閑神",
+    "page": "卷三 p.88 (좌측 명식)",
+    "photo": "scans/JCS-144_k3p88.png"
+   },
+   "note": "원문: 丙火生于仲春、印正官清、日元生旺、足以用官、所嫌丙辛一合、不顧用神之輔我、辛金柔軟、丙火逢之而怯、柔能制剛、戀戀不捨、忌有爲之志、更嫌卯戌合而化刦 — 「足以用官」 → 일간 丙의 관성 = 수(月干 癸). 「日元生旺」 → 신강. 十神 라벨(丁=刦·癸=官·辛=財). 「仲春」 ↔ 卯月. 丁年→卯月 癸卯 · 丙日→卯時 辛卯 간지 규칙 일치. 大運 壬寅辛丑庚子己亥戊戌丁酉 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-145",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁卯",
+    "month": "辛亥",
+    "day": "丙寅",
+    "hour": "丙申"
+   },
+   "expect": {
+    "yongsin": "수",
+    "strength": "신강"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.90 (우측 명식)",
+    "photo": "scans/JCS-145_k3p90.png"
+   },
+   "note": "원문: 此造殺雖秉令、而印綬亦旺、兼之比刦並透、身旺足以用殺、用殺不宜合殺、合則不顯、加以辛金貼身、而日主之情、必貪戀羈絆、喜其丁火刦去辛金、使日主無貪戀之私、申金沖動寅木、使日主無牽制之意、更妙申金滋殺、日主依喜用而馳驟矣 — 「身旺足以用殺」 → 일간 丙의 칠살 = 수(月支 亥), 신강 명시. 十神 라벨(丁=刦·辛=財·丙=比). 丁年→亥月 辛亥 · 丙日→申時 丙申 간지 규칙 일치. 大運 庚戌己酉戊申丁未丙午乙巳 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-146",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "辛巳",
+    "month": "丙申",
+    "day": "壬寅",
+    "hour": "庚戌"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.90 (좌측 명식)",
+    "photo": "scans/JCS-146_k3p90.png"
+   },
+   "note": "원문: 壬水生于申月、雖秋水通源、而財殺並旺、以申金爲用、第天干丙辛、地支申巳皆合、合之能化、亦可幫身、合之不化、反爲羈絆、不顧日主、喜我爲用也、且金當令、火通根、只有貪戀之私、而無化合之意 — 「以申金爲用」 용신 명시(금, 편인·월령). 十神 라벨(辛=印·丙=才·庚=梟(口)). 「申月」 명시. 辛年→申月 丙申 · 壬日→戌時 庚戌 간지 규칙 일치. 大運 乙未甲午癸巳壬辰辛卯庚寅 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-147",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從財",
+    "yongsin": "토"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從象 편 — 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "戊戌",
+    "month": "丙辰",
+    "day": "乙未",
+    "hour": "丙戌"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.93",
+    "photo": "scans/JCS-147_k3p93.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從財 → 토. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 乙木生于季春、蟠根在未、餘氣在辰、似乎財多身弱、但四柱皆財、其勢必從、春土氣虛、得丙火以實之、且火乃木之秀氣、土乃火之秀氣、三者爲全、無金以洩之、無木以靡之、更喜運走南方火地、秀氣流行 — 十神 라벨(戊=財·丙=傷·丙=傷). 戊年→辰月 丙辰 · 乙日→戌時 丙戌 일치. 大運 丁巳戊午己未庚申辛酉壬戌 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-148",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從財",
+    "yongsin": "목"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從象 편 — 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "壬寅",
+    "month": "壬寅",
+    "day": "庚寅",
+    "hour": "戊寅"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.94 (우측 명식)",
+    "photo": "scans/JCS-148_k3p94.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從財 → 목. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 庚金生于孟春、四支皆寅、戊土雖生猶死、喜其兩壬透于年月、引通庚金、生扶嫩木而從財也、亦是秀氣流行、更喜運走東南不悖 — 十神 라벨(壬=食·壬=食·戊=印). 壬年→寅月 壬寅 · 庚日→寅時 戊寅 일치. 大運 癸卯甲辰乙巳丙午丁未戊申 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-149",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從財",
+    "yongsin": "화"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從象 편 — 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "丙寅",
+    "month": "庚寅",
+    "day": "壬午",
+    "hour": "乙巳"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.94 (좌측 명식)",
+    "photo": "scans/JCS-149_k3p94.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從財 → 화. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 壬水生于孟春、木當令、而火逢生、一點庚金臨絕、丙火力能煅之、從財格眞、水生木、木生火、秀氣流行、登科發甲 — 十神 라벨(丙=才·庚=梟(口)·乙=傷). 丙年→寅月 庚寅 · 壬日→巳時 乙巳 일치. 大運 辛卯壬辰癸巳甲午乙未丙申 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-150",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從殺(從象)",
+    "yongsin": "화"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從象 편 — 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "丁卯",
+    "month": "壬寅",
+    "day": "庚午",
+    "hour": "丙戌"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.95 (우측 명식)",
+    "photo": "scans/JCS-150_k3p95.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從殺(從象) → 화. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 庚生寅月、支全火局、財生殺旺、絕無一毫生扶之意、月干壬水、丁壬合而化木、又從火勢、皆成殺黨、從象斯眞 — 十神 라벨(丁=官·壬=食·丙=殺). 丁年→寅月 壬寅 · 庚日→戌時 丙戌 일치. 大運 辛丑庚子己亥戊戌丁酉丙申 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-151",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從殺",
+    "yongsin": "금"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從象 편 — 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "辛巳",
+    "month": "辛丑",
+    "day": "乙酉",
+    "hour": "乙酉"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.95 (좌측 명식)",
+    "photo": "scans/JCS-151_k3p95.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從殺 → 금. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 乙木生于季冬、支全金局、干透兩辛、從殺斯眞、戊戌運連登甲第、丁酉丙申、火截脚而金得地、仕版連登、乙未運沖破金局、木得蟠根、不祿 — 十神 라벨(辛=殺·辛=殺·乙=比). 「季冬」 ↔ 丑月. 辛年→丑月 辛丑 · 乙日→酉時 乙酉 일치. 大運 庚子己亥戊戌丁酉丙申乙未 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-152",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從強(順)",
+    "yongsin": "화"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從象 편 — 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "丙午",
+    "month": "甲午",
+    "day": "丙午",
+    "hour": "甲午"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 從象",
+    "page": "卷三 p.96 (좌측 명식)",
+    "photo": "scans/JCS-152_k3p96.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從強(順) → 화. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 丙生仲夏、四柱皆刃、天干並透甲丙、強旺極矣、可順而不可逆也、初運乙未、早遊泮水、丙運登科、申運大病危險、丁運發甲、酉運丁艱、戊戌己運、仕途坦平、亥運犯其旺神、死于軍前 — 十神 라벨(丙=比·甲=梟(口)·甲=梟(口)). 「仲夏」 ↔ 午月. 丙年→午月 甲午 · 丙日→午時 甲午 일치. 大運 乙未丙申丁酉戊戌己亥庚子 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-155",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁丑",
+    "month": "壬寅",
+    "day": "丙申",
+    "hour": "壬辰"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假從",
+    "page": "卷三 p.106 (우측 명식)",
+    "photo": "scans/JCS-155_k3p106.png"
+   },
+   "note": "원문: 丙火生于初春、火虛木嫩、嫩木逢金緊貼相沖、連根拔盡、申金又得辰土生扶、殺勢愈旺、格成從殺、用財更妙、年支丑土生金晦火、故身出官家、早登科甲、運走西北金水、仕至觀察、雖逢土運仍得金以化之、所以無險阻也 — 「格成從殺、用財更妙」 → 用 이 박힌 처방(일간 丙의 재성 = 금). 「格成從殺」은 격 서술이라 용신 칸에 넣지 않음. 十神 라벨(丁=刦·壬=殺·壬=殺). 「初春」 ↔ 寅月. 丁年→寅月 壬寅 · 丙日→辰時 壬辰 간지 규칙 일치. 大運 辛丑庚子己亥戊戌丁酉丙申 역행. ⚠️ 원전은 從殺로 보는데 엔진 강약은 0.464(중화)다 — 종격 문턱 무리에 속한다. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-153",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從官",
+    "yongsin": "토"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "丙戌",
+    "month": "壬辰",
+    "day": "癸巳",
+    "hour": "甲寅"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假從",
+    "page": "卷三 p.97 (좌측 명식)",
+    "photo": "scans/JCS-153_k3p97.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從官 → 토. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 癸水生于季春、柱中財官傷三者並旺、印星伏而無氣、日主休囚無根、惟官星當令、須從官星之勢、所喜坐下財星、引通傷官之氣、至甲午運會成火局、生官雲程直上、乙未出仕、申酉運有丙丁蓋頭、仕途平坦、戊戌運仕至觀察、至亥運幫身沖去巳火不祿、所謂弱之極者不可益也 — 十神 라벨(丙=財·壬=刦·甲=傷). 「季春」 ↔ 辰月. 丙年→辰月 壬辰 · 癸日→寅時 甲寅 일치. 大運 癸巳甲午乙未丙申丁酉戊戌 순행. 형식은 「須從」이라 JCS-104·110 과 같은 계열. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-154",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從殺(棄命從殺·不作眞從)",
+    "yongsin": "목"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "癸巳",
+    "month": "乙卯",
+    "day": "己亥",
+    "hour": "癸酉"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假從",
+    "page": "卷三 p.105",
+    "photo": "scans/JCS-154_k3p105.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從殺(棄命從殺·不作眞從) → 목. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 春土虛脫、殺勢當權、財遇旺支、喜其巳亥逢沖破印、成棄命從殺、第卯酉沖殺、巳酉丑會金局、不作眞從而論、所以出身寒微、妙在中隔亥水、謂源濁流清、故能崛起家聲、出類拔萃、早游泮水、壬子運中連登科甲 — 十神 라벨(癸=才·乙=殺·癸=才). 「春土」 ↔ 卯月. 癸年→卯月 乙卯 · 己日→酉時 癸酉 일치. 大運 甲寅癸丑壬子辛亥庚戌己酉 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-156",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從官",
+    "yongsin": "목"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "乙卯",
+    "month": "己卯",
+    "day": "戊辰",
+    "hour": "癸亥"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假從",
+    "page": "卷三 p.106 (좌측 명식)",
+    "photo": "scans/JCS-156_k3p106.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從官 → 목. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 戊土生于仲春、木正當權、坐下辰土蓄水養木、四柱絕無金氣、又得亥時水旺生木、又無火以生化之、格取從官、非身衰論也、雖非科甲出身、運走丙子乙亥連登仕版、位至封疆、至癸酉運落職而亡 — 「格取從官」은 격 서술(取)이라 용신 칸에 넣지 않음. 十神 라벨(乙=官·己=刦·癸=財). 「仲春」 ↔ 卯月. 乙年→卯月 己卯 · 戊日→亥時 癸亥 일치. 大運 戊寅丁丑丙子乙亥甲戌癸酉 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-157",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從殺",
+    "yongsin": "화"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "丁卯",
+    "month": "丙寅",
+    "day": "辛亥",
+    "hour": "庚寅"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假從",
+    "page": "卷三 p.107 (우측 명식)",
+    "photo": "scans/JCS-157_k3p107.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從殺 → 화. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 辛金生於孟春、天干丙丁庚辛陰陽相剋、且金絕火生、地支寅木當令、日時寅亥化木、格取從殺、運走水地生木助火、一無凶處、連登甲榜、由縣宰至郡守、生三子皆秀發 — 十神 라벨(丁=殺·丙=官·庚=刦). 「孟春」 ↔ 寅月. 丁年→寅月 壬寅?? 아니라 丙寅 — 丁年 寅月은 壬寅이므로 ⚠️ 간지 규칙 불일치로 보이나 판본 그대로 옮김(丙寅). 辛日→寅時 庚寅 일치. 大運 乙丑甲子癸亥壬戌辛酉庚申 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-158",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從殺",
+    "yongsin": "목"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "癸亥",
+    "month": "乙卯",
+    "day": "己未",
+    "hour": "丁卯"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假從",
+    "page": "卷三 p.107 (좌측 명식)",
+    "photo": "scans/JCS-158_k3p107.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從殺 → 목. 從 서술뿐 「用」 자 없음(09-17 원칙). 원문: 己土生於仲春、春木當令會局、時干丁火被年上癸水剋去、未土又會木局、不得不從殺矣、科甲出身、仕至觀察 — 十神 라벨(癸=才·乙=殺·丁=梟(口)). 「仲春」 ↔ 卯月. 癸年→卯月 乙卯 · 己日→卯時 丁卯 일치. 大運 甲寅癸丑壬子辛亥庚戌己酉 역행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-159",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "甲辰",
+    "month": "丁卯",
+    "day": "壬辰",
+    "hour": "辛亥"
+   },
+   "expect": {
+    "yongsinNot": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷三 六親論 假化",
+    "page": "卷三 p.112",
+    "photo": "scans/JCS-159_k3p112.png"
+   },
+   "note": "원문: 壬水生于仲春、雖時逢祿印而化神當令、又年干元神透出、時干辛金無根臨絕、丁火合神足以剋之、辛金不能生水、則亥水非壬之祿旺、乃甲之長生、日干不得不從合而化矣、運走南方火地、采芹食廩、戰勝棘闈、至壬申癸酉金水破局、不但不能出仕、而且刑傷破耗、此等假化最多、**若作身弱用印則悞矣** — 「若作身弱用印則悞矣」가 반례 명시(일간 壬의 인성 = 금, 用神 아님). 十神 라벨(甲=食·丁=財·辛=印). 「仲春」 ↔ 卯月. 甲年→卯月 丁卯 · 壬日→亥時 辛亥 간지 규칙 일치. 大運 戊辰己巳庚午辛未壬申癸酉 순행. ⚠️ 卷三 쪽번호는 卷三 기준(PDF = 판본 + 276)."
+  },
+  {
+   "id": "JCS-160",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "丁卯",
+    "month": "壬寅",
+    "day": "癸卯",
+    "hour": "丙辰"
+   },
+   "expect": {
+    "yongsin": "화"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.2",
+    "photo": "scans/JCS-160_k4p2.png"
+   },
+   "note": "원문: 癸水生于孟春、支全寅卯辰東方一氣、格成水木從兒、只嫌月干壬水爲病、**以時干丙火爲用**、所謂兒又生兒、喜丁火合壬化木、反生丙火、轉成生育之意、所以早登科甲、置身翰苑、仕至封彊、申運木火絕地、不祿 — 「以時干丙火爲用」이 용신 명시(화 = 일간 癸의 재성). 「格成水木從兒」는 격 서술이라 용신 칸에 넣지 않음. 十神 라벨(丁=才·壬=刦·丙=財). 「孟春」 ↔ 寅月. 丁年→寅月 壬寅 · 癸日→辰時 丙辰 간지 규칙 일치. 大運 辛丑庚子己亥戊戌丁酉丙申 역행. ⚠️ 從兒格인데 원전이 從神(식상)이 아니라 財를 用으로 잡은 사례 — JCS-155·162 와 같은 모양. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-161",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從兒(水木)",
+    "yongsin": "목"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從兒 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "丁巳",
+    "month": "癸卯",
+    "day": "癸卯",
+    "hour": "丙辰"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.3 (우측 명식)",
+    "photo": "scans/JCS-161_k4p3.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從兒(水木) → 식상 목. 從兒 서술뿐 「用」 자 없음(09-17 원칙). 원문: 癸水生于仲春、木旺乘權、四柱無金、亦水木從兒、寅運入泮、丙子年中鄉榜、其不及前造者、支類東方、甲戌年入泮、月干癸水爭財、無制合之美也、喜其財星有勢、仕路定可亨通 — 十神 라벨(丁=才·癸=比·丙=財). 「仲春」 ↔ 卯月. 丁年→卯月 癸卯 · 癸日→辰時 丙辰 일치. 大運 壬寅辛丑庚子己亥戊戌丁酉 역행. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-162",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "seenNote": "v14 동결 뒤 원전에서 새로 전사 — 어떤 규칙도 이 케이스를 본 적이 없다",
+   "pillars": {
+    "year": "己未",
+    "month": "丁丑",
+    "day": "丙戌",
+    "hour": "戊戌"
+   },
+   "expect": {
+    "yongsin": "금"
+   },
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.3 (좌측 명식)",
+    "photo": "scans/JCS-162_k4p3.png"
+   },
+   "note": "원문: 丙火生於季冬、滿局皆土、格成火土從兒、**丑中辛財爲用**、所謂一個玄機暗裏存也、所嫌丁火蓋頭、通根未戌、忌神深重、未能顯秩、妙在中運走癸酉壬申、喜用齊來、宦途順遂 — 「丑中辛財爲用」이 용신 명시(금 = 일간 丙의 재성). 十神 라벨(己=傷·丁=刦·戊=食). 「季冬」 ↔ 丑月. 己年→丑月 丁丑 · 丙日→戌時 戊戌 간지 규칙 일치. 大運 丙子乙亥甲戌癸酉壬申辛未 역행. ⚠️ 같은 쪽 우측 `丁巳 癸卯 癸卯 丙辰`(JCS-161)과 혼동 주의. 다음 쪽 `己未 辛未 丙戌 戊戌`(JCS-163)은 月柱만 다른 대조 명식이다. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-163",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從兒(火土)",
+    "yongsin": "토"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從兒 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "己未",
+    "month": "辛未",
+    "day": "丙戌",
+    "hour": "戊戌"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.4",
+    "photo": "scans/JCS-163_k4p4.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從兒(火土) → 식상 토. 從兒 서술뿐 「用」 자 없음(09-17 원칙). 원문: 丙火生於季夏、滿局皆土、格取從兒、月干辛金獨發、所謂從兒又見兒也、大象觀之勝於前造、其功名富貴反不及者何也、前造金雖不現、而丑內蓄藏三冬溼土、能晦火養金、此辛金顯露、而九夏鎔金、根氣不固、未戌丁火當權、所謂凶物深藏也 — JCS-162 와 月柱만 다른 대조쌍(저자가 직접 비교한다). 十神 라벨(己=傷·辛=財·戊=食). 「季夏」 ↔ 未月. 己年→未月 辛未 · 丙日→戌時 戊戌 일치. 大運 庚午己巳戊辰丁卯丙寅乙丑 역행. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-164",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從兒",
+    "yongsin": "화"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從兒 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "甲午",
+    "month": "丁丑",
+    "day": "甲午",
+    "hour": "丙寅"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.5 (우측 명식)",
+    "photo": "scans/JCS-164_k4p5.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從兒 → 식상 화. 從兒 서술뿐 「用」 자 없음(09-17 원칙). 원문: 甲木生於季冬、火虛而幸通根有焰、格取從兒、木雖進氣又逢祿比幫身、所謂從兒不論身強弱、非身弱論也、前造過於燥烈、此則溼土逢燥、地潤天和、生育不悖、聯登甲第、仕至侍郎 — 十神 라벨(甲=比·丁=傷·丙=食). 「季冬」 ↔ 丑月. 甲年→丑月 丁丑 · 甲日→寅時 丙寅 일치. 大運 戊寅己卯庚辰辛巳壬午癸未 순행. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-165",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從兒",
+    "yongsin": "금"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從兒 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "庚子",
+    "month": "庚辰",
+    "day": "戊申",
+    "hour": "辛酉"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.6 (우측 명식)",
+    "photo": "scans/JCS-165_k4p6.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從兒 → 식상 금. 從兒 서술뿐 「用」 자 없음(09-17 원칙). 원문: 此造戊生季春、局中層疊庚辛、格取從兒、喜其支會財局、生育有情、與前大同小異、此因中年運走土金生助財星、所以甲第聯登、仕至郡守、前造之不祿不仕、實運之背也 — 十神 라벨(庚=食·庚=食·辛=傷). 「季春」 ↔ 辰月. 庚年→辰月 庚辰 · 戊日→酉時 辛酉 일치. 大運 辛巳壬午癸未甲申乙酉丙戌 순행. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-166",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從兒",
+    "yongsin": "수"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從兒 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "壬寅",
+    "month": "辛亥",
+    "day": "辛亥",
+    "hour": "壬辰"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.6 (좌측 명식)",
+    "photo": "scans/JCS-166_k4p6.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從兒 → 식상 수. 從兒 서술뿐 「用」 자 없음(09-17 원칙). 원문: 辛金生於孟冬、壬水當權、財逢生旺、金水兩涵、格取從兒、讀書一目數行、至甲寅運登科發甲、乙卯運由署郎出守黃堂、一交丙辰官印齊來、又逢戊戌年沖動印綬、破其傷官不祿 — 十神 라벨(壬=傷·辛=比·壬=傷). 「孟冬」 ↔ 亥月. 壬年→亥月 辛亥 · 辛日→辰時 壬辰 일치. 大運 壬子癸丑甲寅乙卯丙辰丁巳 순행. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
+  },
+  {
+   "id": "JCS-167",
+   "school": "jeokcheonsu",
+   "seenBy": "none",
+   "ambiguous": true,
+   "refSet": "CONG_REF",
+   "refExpect": {
+    "cong": "從兒",
+    "yongsin": "수"
+   },
+   "seenNote": "v14 동결 뒤 전사. 從兒 서술만 있고 「用」 자 없음 → 비채점. CONG_REF(종격 문턱 v15 회귀 참고 세트)",
+   "pillars": {
+    "year": "壬子",
+    "month": "辛亥",
+    "day": "辛卯",
+    "hour": "辛卯"
+   },
+   "expect": {},
+   "source": {
+    "book": "적천수천미",
+    "chapter": "卷四 六親論 順局",
+    "page": "卷四 p.7",
+    "photo": "scans/JCS-167_k4p7.png"
+   },
+   "note": "[CONG_REF] ⚠️ 비채점 — 從兒 → 식상 수. 從兒 서술뿐 「用」 자 없음(09-17 원칙). 원문: 辛金生於孟冬、水勢當權、雖天干三透辛金、而地支臨絕、格取從兒、讀書過目成誦、早年入泮、甲寅拔貢出仕縣宰、乙卯運仕路順遂、丙辰詿誤、至戌年旺土剋水而歿、凡從兒格行運不背逢財者、未有不富貴者也 — 十神 라벨(壬=傷·辛=比·辛=比). 「孟冬」 ↔ 亥月. 壬年→亥月 辛亥 · 辛日→卯時 辛卯 일치. 大運 壬子癸丑甲寅乙卯丙辰丁巳 순행. ⚠️ 卷四 쪽번호는 卷四 기준(PDF = 판본 + 388)."
   }
  ],
  "_template": {
   "id": "",
   "school": "jeokcheonsu | japyeong | gungtong",
+  "seenBy": "none",
   "pillars": {
    "year": "",
    "month": "",
@@ -2648,8 +4808,11 @@
   "source": {
    "book": "",
    "chapter": "",
-   "page": ""
+   "page": "",
+   "photo": "판본 사진 경로(필수)",
+   "tier": "(원전이면 비움) secondary"
   },
-  "note": "판정 근거가 되는 원문 구절을 그대로 옮길 것"
+  "note": "판정 근거가 되는 원문 구절을 그대로 옮길 것",
+  "ambiguous": false
  }
 }
