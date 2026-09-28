@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
-import { yongsinRows, rate, newSampleRows, unseenRows, totalCases } from '@/lib/goldenReport';
+import { yongsinRows, rate, holdoutRows, tunedRows, primaryRows, totalCases, johuSample, JOHU_MIN_N, HOLDOUT_MIN_N } from '@/lib/goldenReport';
 
 export const metadata: Metadata = {
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
@@ -18,15 +18,18 @@ const num = { color: 'var(--gold)', fontWeight: 700 as const };
 
 export default function AccuracyPage() {
   const nCases = totalCases();
-  const rPrev = '75.0';  // v9 재현율 — 변경 폭을 그대로 보여주기 위한 고정값
-  const rPrev10 = '78.1'; // v10 재현율
-  const rPrev12 = '79.7'; // v12 재현율
   // 표는 손으로 쓰지 않는다 — 지금 배포된 엔진으로 원전 명식을 다시 판정해 만든다.
   const rows = yongsinRows();
   const r = rate(rows);
-  // 엔진을 맞출 때 쓴 표본과, 그 뒤 원전에서 새로 캔 표본을 나눠 본다.
-  const rNew = rate(newSampleRows(rows));
-  const rUnseen = rate(unseenRows(rows));
+  // 홀드아웃은 ID 순번이 아니라 seenBy 로 정한다 — 규칙을 고칠 때 정오답을 한 번이라도 본 명식은 튜닝 세트다.
+  const rHold = rate(holdoutRows(rows));
+  const johu = johuSample();
+  // 2026-09-17: 헤드라인을 두 세트로 나눈다. r(전체)에는 홀드아웃이 섞여 있어서
+  //   「전부 규칙을 고칠 때 본 명식」이라는 문장과 맞지 않았다.
+  //   S0 = 규칙을 고칠 때 정오답을 본 명식(낙관치) · S1 = 한 번도 본 적 없는 명식(일반화 지표).
+  const rTune = rate(tunedRows(rows));
+  const rPrim = rate(primaryRows(tunedRows(rows)));
+  const holdOpen = rHold.total >= HOLDOUT_MIN_N;
   return (
     <main className="wrap">
       <div className="hero" style={{ paddingTop: 40 }}>
@@ -130,18 +133,32 @@ export default function AccuracyPage() {
               </tr>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <td style={{ padding: '8px 10px' }}>신강·신약</td>
-                <td style={{ padding: '8px 10px' }}><b style={num}>88%</b> (22/25)</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>적천수천미 「旺衰」편 기준</td>
+                <td style={{ padding: '8px 10px' }}><b style={num}>87.5%</b> (21/24)</td>
+                <td style={{ padding: '8px 10px', fontSize: 13 }}>적천수천미 「旺衰」편 기준 · 개발 세트</td>
               </tr>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <td style={{ padding: '8px 10px' }}>용신(用神)</td>
-                <td style={{ padding: '8px 10px' }}><b style={num}>{r.pct}%</b> ({r.hit}/{r.total})</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>적천수천미 계열 · 아래 케이스별 전체 공개</td>
+                <td style={{ padding: '8px 10px' }}>
+                  <span style={{ fontSize: 13 }}>처음 보는 명식(홀드아웃)</span><br />
+                  {holdOpen
+                    ? <><b style={num}>{rHold.pct}%</b> ({rHold.hit}/{rHold.total})</>
+                    : <>{rHold.total}건 모으는 중</>}
+                  <br /><span style={{ fontSize: 13 }}>규칙을 고칠 때 본 명식(개발 세트) {rTune.pct}% ({rTune.hit}/{rTune.total})</span>
+                  {rPrim.total < rTune.total && <><br /><span style={{ fontSize: 13 }}>개발 세트 중 원전만 {rPrim.pct}% ({rPrim.hit}/{rPrim.total})</span></>}
+                </td>
+                <td style={{ padding: '8px 10px', fontSize: 13 }}>
+                  적천수천미 계열 · 아래 케이스별 전체 공개 ·
+                  {' '}<b>홀드아웃 숫자가 실력</b>이고, 개발 세트 숫자는 규칙을 맞출 때 본 명식이라 부풀어 있습니다
+                  {rPrim.total < rTune.total && <> · 개발 세트 {rTune.total - rPrim.total}건은 논문 재인용(원전 쪽 대조 전)</>}
+                </td>
               </tr>
               <tr>
                 <td style={{ padding: '8px 10px' }}>조후(調候)</td>
-                <td style={{ padding: '8px 10px' }}><b style={num}>100%</b> (2/2)</td>
-                <td style={{ padding: '8px 10px', fontSize: 13 }}>표본 확충 중</td>
+                <td style={{ padding: '8px 10px' }}>원전 {johu.primary}건 · 현대 사례 N={johu.n - johu.primary}</td>
+                <td style={{ padding: '8px 10px', fontSize: 13 }}>
+                  적천수 원전 기준으로는 아직 채점할 표본이 없습니다. 논문의 현대 명조는 참고로만 두고,
+                  원전 {JOHU_MIN_N}건이 모이기 전까지 비율을 적지 않습니다
+                </td>
               </tr>
             </tbody>
           </table>
@@ -152,26 +169,28 @@ export default function AccuracyPage() {
           이 숫자를 갱신합니다. 위 수치는 판정 엔진 v{ENGINE_VERSION} 기준입니다.
         </p>
         <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
-          ⚠️ 이 숫자는 <b>&lsquo;원전 재현율&rsquo;</b>입니다 — 고전에 실린 <b>{r.total}건</b>의 명식에서 원문이
+          ⚠️ 이 숫자는 <b>&lsquo;원전 재현율&rsquo;</b>입니다 — 고전에 실린 명식에서 원문이
           지목한 용신을 엔진이 다시 짚어내는 비율이고, 세상 모든 사주에 대한 &lsquo;정확도&rsquo;가 아닙니다.
           표본이 작다는 점을 그대로 밝히고, 표본은 계속 늘리는 중입니다.
-          {rNew.total > 0 && (
-            <> 그중 <b>엔진을 고친 뒤에 원전에서 새로 캔 {rNew.total}건</b>만 따로 보면{' '}
-            <b>{rNew.pct}%</b>({rNew.hit}/{rNew.total})입니다 — 규칙을 맞출 때 쓰지 않은 명식이라,
-            이 숫자가 실제 성능에 더 가깝습니다. 낮아 보여도 이렇게 나눠 적는 편이 정직합니다.</>
-          )}
+          {' '}개발 세트 <b>{rTune.total}건</b>은 <b>전부 엔진 규칙을 고치는 동안 채점에 쓰인 명식</b>입니다. 규칙을 맞출 때 본 명식으로
+          다시 채점하면 숫자는 부풀 수 있어서, 그 비율은 <b>튜닝 세트 재현율(낙관치)</b>로 읽어야 합니다.
         </p>
-        {rUnseen.total > 0 && (
-          <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
-            더 엄격하게, <b>지금 엔진(v{ENGINE_VERSION})을 확정한 뒤에 원전에서 캔 {rUnseen.total}건</b>만 보면{' '}
-            <b>{rUnseen.pct}%</b>({rUnseen.hit}/{rUnseen.total})입니다. 규칙을 만들 때 이 명식들은 존재하지도 않았으니,
-            어떤 규칙도 이 케이스를 본 적이 없다는 뜻입니다. <b>{rUnseen.total}건뿐이라 비율로 읽을 숫자는 아니지만</b>,
-            다음에 손댈 곳이 어디인지 알려주는 값이라 그대로 적습니다.
-          </p>
-        )}
+        <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
+          규칙이 한 번도 보지 못한 명식(홀드아웃)은{' '}
+          {rHold.total === 0
+            ? <><b>아직 0건</b>입니다.</>
+            : rHold.total < HOLDOUT_MIN_N
+              ? <><b>현재 {rHold.total}건 모으는 중</b>입니다 — 표본이 {HOLDOUT_MIN_N}건이 되기 전까지
+                  적중 수를 적지 않습니다. {rHold.total}건에서는 한 건이 비율을 크게 흔들어서,
+                  지금 숫자를 적으면 좋은 쪽이든 나쁜 쪽이든 실력이 아니라 표본의 우연입니다.</>
+              : <><b>{rHold.hit}/{rHold.total}건</b>입니다.</>}{' '}
+          엔진 판정을 v{ENGINE_VERSION}에서 멈춘 뒤 판본에서 새로 옮겨 적는 명식만 여기에 넣고, 따로 채점해 따로 공개합니다.
+          못 맞힌 케이스는 아직 못 고친 것이 맞습니다. 한 건만 맞는 규칙은 넣지 않고,
+          같은 유형이 세 건 모이면 그때 엔진을 엽니다.
+        </p>
         <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
           같은 사주가 논문과 원전에 각각 실려 있는 경우가 있어, <b>중복 명식은 한 번만 셉니다.</b>{' '}
-          세 쌍을 찾아 채점에서 뺐고, 그만큼 재현율이 내려갔습니다(용신 74.2%→{r.pct}%).
+          세 쌍을 찾아 채점에서 뺐고, 그만큼 재현율이 내려갔습니다(용신 74.2%→73.4%, 당시 v8.2 기준).
           숫자가 내려가는 쪽이라도 같은 사주를 두 번 세지 않는 편이 맞습니다.
         </p>
       </div>
@@ -183,25 +202,6 @@ export default function AccuracyPage() {
           명식인지까지 적습니다. 이 표는 손으로 쓴 게 아니라 <b>지금 배포된 엔진이 원전 명식을 다시 판정해</b>
           만든 것이라, 엔진이 바뀌면 이 표도 함께 바뀝니다.
         </p>
-        <div className="acc-gist">
-          <span>고전 명식 <b>{r.total}건</b></span>
-          <span>엔진이 같은 답 <b>{r.hit}건</b></span>
-          <span>다른 답 <b>{r.total - r.hit}건</b></span>
-          <span>재현율 <b>{r.pct}%</b></span>
-        </div>
-        <div className="acc-plain">
-          <b>쉽게 말하면</b> — 100년 전 명리학 고전에는 실제 사주와, 그 사주를 저자가 어떻게 풀었는지가
-          함께 실려 있습니다. 그 <b>{r.total}건</b>을 헤아림 엔진에 그대로 넣어 보고,
-          저자와 같은 결론이 나오는지 한 건씩 대조한 결과가 아래 표입니다.
-          <br />
-          <span style={{ opacity: 0.85 }}>
-            ※ <b>용신(用神)</b>은 그 사주에 가장 필요한 기운 한 가지를 말합니다.
-            운의 좋고 나쁨을 읽는 기준점이라, 여기가 어긋나면 풀이 전체가 어긋납니다.
-          </span>
-        </div>
-        <details className="acc-fold">
-          <summary>케이스 {r.total}건 전부 펼쳐 보기</summary>
-          <div className="acc-fold-body">
         <div style={{ overflowX: 'auto', marginTop: 14 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 600 }}>
             <thead>
@@ -218,7 +218,10 @@ export default function AccuracyPage() {
             <tbody style={{ opacity: 0.9 }}>
               {rows.map((row) => (
                 <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{row.id}</td>
+                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
+                    {row.id}
+                    {row.seenBy === 'none' && row.schemaOk && <><br /><span style={{ fontSize: 11.5, color: 'var(--gold)' }}>홀드아웃</span></>}
+                  </td>
                   <td style={{ padding: '8px 10px', fontSize: 12.5, lineHeight: 1.5 }}>
                     {row.book}<br />
                     <span style={{ opacity: 0.7 }}>{row.chapter} · {row.page}</span>
@@ -238,11 +241,9 @@ export default function AccuracyPage() {
         <p style={{ lineHeight: 1.8, marginTop: 12, fontSize: 13.5, color: 'var(--text-mute)' }}>
           불일치가 남아 있는 케이스는 &lsquo;아직 못 고친 것&rsquo;이 맞습니다. 다만 한 건을 맞히려고 그 한 건에만
           맞는 규칙을 넣지는 않습니다 — 같은 조건의 원전 사례가 여러 건 모여 규칙으로 확인될 때 반영합니다.
-          (직전에 보류해 두었던 <b>종격(從格) 문턱</b> 가설은 원전에서 근거 3건이 모여 v10에 반영했습니다.
-          지금 보류 중인 것: 원문이 &lsquo;작용하지 않는다&rsquo;고 못 박은 지지 속 기운을 세지 않는 기준.)
+          (지금 보류 중인 가설: <b>종격(從格) 문턱 재보정</b> — 대세를 따라야 할 명식을 안 따르기도 하고,
+          따르지 말아야 할 명식을 따르기도 합니다. 양방향 사례를 모으는 중입니다.)
         </p>
-          </div>
-        </details>
       </div>
 
       <div className="card">
@@ -251,15 +252,6 @@ export default function AccuracyPage() {
           해석 로직을 고치면 같은 사주의 풀이가 달라질 수 있습니다. 헤아림은 판정 엔진에
           버전 번호를 붙여 모든 리포트에 어떤 기준으로 쓰였는지 기록합니다. 현재 <b style={num}>v{ENGINE_VERSION}</b>.
         </p>
-        <div className="acc-plain">
-          <b>쉽게 말하면</b> — 판정 규칙을 고칠 때마다 번호를 하나씩 올립니다.
-          예전에 받은 리포트에는 그때의 번호가 찍혀 있어서, <b>어떤 기준으로 쓰인 풀이인지</b> 나중에도 알 수 있고
-          기준이 바뀌면 &lsquo;리포트함&rsquo;에 표시가 뜹니다. 아래는 지금까지 무엇을 왜 고쳤는지의 전체 기록입니다 —
-          <b>읽지 않으셔도 됩니다.</b> 고친 내역을 감추지 않는다는 것 자체가 요점입니다.
-        </div>
-        <details className="acc-fold">
-          <summary>고친 내역 전체 보기 (v2 ~ v{ENGINE_VERSION})</summary>
-          <div className="acc-fold-body">
         <ul style={{ margin: '10px 0 0', paddingLeft: 20, fontSize: 14, lineHeight: 1.9, opacity: 0.85 }}>
           <li><b>v2</b> — 조후용신 자격 규칙: 원국에 뿌리 없는 조후는 억부로 전환</li>
           <li><b>v3</b> — 격국 취용을 자평진전 원칙(월지 본기 우선)대로 교정 → 격국 일치율 80%→100%</li>
@@ -285,61 +277,14 @@ export default function AccuracyPage() {
             저희 채점 기준인 『적천수천미』는 통관을 &lsquo;다리 오행을 용신으로 삼는 법&rsquo;이 아니라
             &lsquo;기운이 막히지 않고 흐르는가&rsquo;라는 <b>상태 평가</b>로 씁니다(卷二 通神論 通關).
             실제로 통관으로 결정됐던 원전 케이스 3건이 모두 어긋나 있었습니다
-            → 용신 원전 재현율 74.2%, 그중 신규 표본은 66.7%</li>
+            → 용신 원전 재현율 74.2%, 그중 JCS-042 이후 표본은 66.7%(이 표본도 이후 튜닝에 쓰였습니다)</li>
           <li><b>v8.2</b> — <b>판정은 그대로이고, 채점을 고쳤습니다.</b> 같은 사주가 논문 재인용과
             원전 판본에 각각 실려 있는 경우를 세 쌍 찾아 <b>한 번만 세도록</b> 했습니다.
             둘 다 채점하면 그 한 사주의 정오답이 재현율에 두 번 반영됩니다.
             케이스는 표에 남겨 둡니다 — 논문과 원전이 같은 판정을 내렸다는 교차검증이기 때문입니다
-            → 용신 원전 재현율 74.2%→{r.pct}%, 적천수 강약 88.0%→87.5%.
+            → 용신 원전 재현율 74.2%→73.4%, 적천수 강약 88.0%→87.5%.
             <b>숫자가 내려가는 쪽이지만 이게 맞습니다.</b></li>
-          <li><b>v9</b> — 식상(食傷)이 판을 덮어 <b>기운이 새어 나가 몸이 무너지는</b> 경우에도
-            인성(印)을 방어 카드로 엽니다. v8에서 관살이 거셀 때 하던 것과 같은 처리를,
-            &lsquo;극(剋)&rsquo;이 아니라 &lsquo;설(洩)&rsquo;로 무너지는 자리에도 적용한 것입니다 —
-            원전이 「傷官太旺, 過於洩氣, 用神在土」라 한 자리입니다. 근거 명식 3건에서 결론이 모두 인성이었고,
-            그중 <b>중화 구간</b>의 1건만 못 맞히고 있었습니다(억부가 중화·신강에서 인성 후보를 만들지 않아서)
-            → 용신 원전 재현율 {r.pct}%, 그중 신규 표본은 {rNew.pct}%.
-            무작위 2만 건에서 이 규칙이 켜지는 비율은 5.4%로, 기본값이 아니라 예외입니다.</li>
-          <li><b>v10</b> — <b>&lsquo;대세를 따르는 사주(종격)&rsquo;로 보지 <u>않는</u> 조건</b>을 원전에서 옮겼습니다.
-            일간이 아무 데도 기댈 곳이 없을 때만 대세를 따르는 건데, 저희 엔진은 지지 속에 희미하게 남은
-            뿌리를 못 보고 너무 쉽게 &lsquo;따른다&rsquo;고 판정하고 있었습니다.
-            원전은 세 자리에서 <b>따르지 않는 이유를 직접</b> 밝힙니다 — 「通根身庫」·「火有餘氣」.
-            무엇이 그 셋을 가르는지는 지지 속 기운의 <b>깊이</b>가 정해 줬습니다
-            → 용신 원전 재현율 {rPrev}%→{r.pct}%, <b>가장 엄격한 &lsquo;미확인 세트&rsquo;는 59.1%→{rUnseen.pct}%</b>.
-            강약 판정은 한 자리도 건드리지 않았습니다.</li>
-          <li><b>v11</b> — <b>같은 &lsquo;흙&rsquo;이라도 젖은 흙과 마른 흙을 구별</b>합니다.
-            원전은 진(辰)·축(丑)을 <b>습토(濕土)</b>, 미(未)·술(戌)을 <b>난토(煖土)</b>로 나눠
-            &lsquo;젖은 흙은 물을 막지 못하고 오히려 머금는다&rsquo;고 여섯 번에 걸쳐 말합니다.
-            그래서 기운이 새어 나가는 사주에서 도와줄 흙이 <b>젖은 흙뿐이면</b>,
-            흙(인성) 대신 <b>같은 편(비겁)</b>으로 몸을 세우는 쪽을 택하도록 고쳤습니다 —
-            원전이 「全賴酉時扶身」이라 한 자리입니다
-            → 용신 원전 재현율 {rPrev10}%→{r.pct}%.
-            이 구분은 저희가 정한 게 아니라 <b>지지 속 기운의 구성이 정해 줍니다</b>
-            (진·축은 물을, 미·술은 불을 품습니다).</li>
-          <li><b>v12</b> — <b>말이 안 되는 판정 문장을 고쳤습니다.</b> 한쪽 기운이 지나치게 몰리면
-            그걸 &lsquo;병&rsquo;으로 보고 푸는 기운을 &lsquo;약&rsquo;으로 삼는데, 일부 사주에서
-            <b>병과 약이 같은 기운으로 나오고</b> 있었습니다 —
-            &ldquo;토가 병이고, 그 병을 푸는 토가 약&rdquo;처럼요. 정의상 있을 수 없는 일이라 바로잡았습니다.
-            재현율은 그대로지만, <b>약 0.3%의 사주에서 용신이 실제로 달라집니다</b>.
-            숫자가 오르지 않는 수정도 기록에 남깁니다.</li>
-          <li><b>v13</b> — <b>한쪽 기운이 몰렸을 때의 &lsquo;병약&rsquo; 판정을 뒤로 물렸습니다.</b>
-            원전에서 &lsquo;병(病)&rsquo;은 <b>용신을 고르는 방법이 아니라, 이미 고른 용신을 해치는 것이 무엇인지</b>를
-            가리키는 말로 쓰입니다. 실제로 병약이 결정했던 원전 명식 4건을 보니 3건은 기본 방식(억부)과
-            <b>같은 답</b>이었고, 다른 답을 낸 1건에서는 <b>틀렸습니다</b> — 억부보다 나은 적이 한 번도 없었습니다.
-            같은 방법으로 잰 <b>조후는 그대로 뒀습니다</b>(5건 중 3건 적중, 억부였다면 0건)
-            → 용신 원전 재현율 {rPrev12}%→{r.pct}%, 가장 엄격한 &lsquo;미확인 세트&rsquo;는 68.2%→{rUnseen.pct}%.
-            이 변경으로 드러난 별개 결함(물이 사주를 완전히 덮었는데도 뿌리 없는 불을 살려 두던 문제)도
-            원전 근거로 함께 고쳤습니다.</li>
-          <li><b>v14</b> — <b>&lsquo;억누르는 힘이 지나쳐 오히려 탈이 되는&rsquo; 구조</b>를 판정에 넣었습니다.
-            원전 근거는 처음부터 확실했지만(『적천수천미』 관살편) <b>조건식을 세 번 고쳐야</b> 경계가 닫혔습니다 —
-            처음엔 근거 사례 넷 중 <b>둘에서 발동조차 하지 않았고</b>, 고쳤더니 이번엔 너무 넓었습니다.
-            &lsquo;개수 하한&rsquo;과 &lsquo;세력 비율&rsquo;을 <b>둘 다</b> 걸어야 원전 사례만 정확히 걸리고
-            엉뚱한 사주는 전부 빠집니다. 재현율은 그대로지만
-            <b>약 1.3%의 사주에서 용신이 달라집니다</b> — 규칙을 넣을 때는
-            &lsquo;조건이 켜지는 비율&rsquo;(9%)이 아니라 <b>&lsquo;답이 실제로 바뀌는 비율&rsquo;</b>(1.3%)을 봐야 한다는 것도
-            이번에 알았습니다.</li>
         </ul>
-          </div>
-        </details>
       </div>
 
       <div className="card">
