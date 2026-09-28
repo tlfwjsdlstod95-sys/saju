@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { track } from '@/lib/track';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function FailInner() {
@@ -8,6 +9,7 @@ function FailInner() {
   const params = useSearchParams();
   const code = params.get('code');
   const message = params.get('message');
+  useEffect(() => { track('pay_fail'); }, []);
 
   return (
     <main className="wrap">
