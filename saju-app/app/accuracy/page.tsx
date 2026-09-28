@@ -1,14 +1,16 @@
 // 정확도·검증 페이지 — 헤아림이 명식을 어떻게 검증하는지 숫자 그대로 공개
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
 import { yongsinRows, rate, holdoutRows, tunedRows, primaryRows, totalCases, johuSample, JOHU_MIN_N, HOLDOUT_MIN_N } from '@/lib/goldenReport';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: '정확도·검증 — 헤아림 만세력은 이렇게 검증합니다 | 헤아림',
   description:
     'NASA JPL 행성력 대비 절기 오차 평균 6.8초, 1900~2100년 71,733일 만세력 교차검증 100% 일치. 헤아림이 명식 계산을 검증하는 방법과 결과를 숫자 그대로 공개합니다.',
-};
+  path: '/accuracy',
+});
 
 const stat = { border: '1px solid rgba(230,200,120,0.25)', borderRadius: 14, padding: '18px 16px', textAlign: 'center' as const, background: 'rgba(230,200,120,0.04)' };
 const statNum = { fontSize: 'clamp(22px, 4.5vw, 30px)', fontWeight: 800 as const, color: 'var(--gold)', fontFamily: 'var(--serif)', lineHeight: 1.2 };
