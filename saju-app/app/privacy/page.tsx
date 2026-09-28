@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { BIZ } from '../biz';
 
-export const metadata = { title: '개인정보처리방침 · 사주 명리' };
+export const metadata = { title: '개인정보처리방침 · 헤아림' };
 
 export default function PrivacyPage() {
   return (
