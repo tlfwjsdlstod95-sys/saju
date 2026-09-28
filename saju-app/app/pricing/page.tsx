@@ -35,7 +35,7 @@ export default function Pricing() {
       <div className="hero" style={{ paddingTop: 40 }}>
         <div className="hero-kr">利用券</div>
         <h1 style={{ fontSize: 40 }}>이용권 <span>안내</span></h1>
-        <p>명식·기본 풀이·오늘의 운세·행운 부적 카드는 <b>무료</b>입니다. 아래는 유료 상품이에요.</p>
+        <p>명식·기본 풀이·오늘의 운세·행운 카드는 <b>무료</b>입니다. 아래는 유료 상품이에요.</p>
         <Link href="/" className="backlink">← 내 사주 분석으로</Link>
       </div>
 
