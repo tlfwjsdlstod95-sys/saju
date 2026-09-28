@@ -176,6 +176,7 @@ export default function Home() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiErr, setAiErr] = useState('');
+  const [aiCut, setAiCut] = useState(false);   // 유료 풀이가 끝까지 오지 않았다(서버 시간 초과 등)
   // 실제로 분석한 입력값. 판매 단위가 "명식 1건"이라 이용권 판정의 기준이 된다.
   // (편집 중인 form 이 아니라 '분석된' 명식이어야 한다)
   const [analyzed, setAnalyzed] = useState<any>(null);
@@ -374,7 +375,7 @@ export default function Home() {
         if (parsed?.sections?.length && (tier !== 'premium' || isCompleteReading(parsed))) { setAi(fixReadingHanja(parsed)); setAiErr(''); setAiLoading(false); setAiStreaming(false); return; }
       }
     } catch {}
-    setAiErr(''); setAiLoading(true); setAiStreaming(true);
+    setAiErr(''); setAiCut(false); setAiLoading(true); setAiStreaming(true);
     setAi({ lead: '', sections: [] });
 
     // 서버 보관본 먼저 확인 — 폰에서 산 리포트를 PC에서 열어도 '그때 그 글'이 나와야 한다.
@@ -413,6 +414,7 @@ export default function Home() {
       }
       const final = parseReadingStream(acc);
       setAi(final);
+      if (tier === 'premium' && !isCompleteReading(final)) setAiCut(true);
       try { if (final.sections.length && (tier !== 'premium' || isCompleteReading(final))) localStorage.setItem(key, JSON.stringify(final)); } catch {}
     } catch (e: any) { setAiErr(e.message); setAi(null); }
     finally { setAiLoading(false); setAiStreaming(false); }
@@ -1007,6 +1009,12 @@ export default function Home() {
                 <div className="ai-cta-txt"><b>✨ AI 심층 풀이</b><span>{aiErr ? 'AI 풀이 생성에 실패했어요. 잠시 후 다시 시도해 주세요. (지금은 기본 풀이를 보여드려요)' : '지금 보시는 건 기본 풀이예요. 프리미엄은 당신 명식만을 위해 AI가 매번 새로 쓰고, 말투(선배/팩폭/따뜻)도 고를 수 있어요.'}</span></div>
                 <button className="btn ai-btn" onClick={onAiClick} disabled={aiLoading}>{aiLoading ? '명식을 읽는 중…' : premium ? 'AI 심층 풀이 생성 →' : 'AI 심층 풀이 받기 🔒'}</button>
                 {aiErr && <div className="warn" style={{ marginTop: 12 }}>{aiErr}</div>}
+              </div>
+            )}
+            {aiCut && !aiStreaming && (
+              <div className="warn" style={{ marginBottom: 12 }}>
+                풀이가 중간에 끊겼어요. 끊긴 글은 저장되지 않으니, 다시 받으면 처음부터 끝까지 새로 받아요.{' '}
+                <button className="mini-btn" onClick={() => askAI('premium', analyzed ?? undefined)}>다시 받기</button>
               </div>
             )}
             {ai && (
