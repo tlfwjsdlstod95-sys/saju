@@ -6,6 +6,7 @@ import { guardAI, clampInt } from '@/lib/apiGuard';
 import { chartId } from '@/lib/chartId';
 import { checkEntitled } from '@/lib/entitlement';
 import { saveReport } from '@/lib/reports';
+import { ENGINE_VERSION } from '@/lib/saju/version';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -131,6 +132,7 @@ export async function POST(req: Request) {
               name: input.name, year: safeYear,
               ilju: saju.pillars.day.ganKor + saju.pillars.day.jiKor,
               motif: saju.archetype.motif.name, emoji: saju.archetype.motif.emoji,
+              engine: ENGINE_VERSION,
             },
             body: full,
           });
