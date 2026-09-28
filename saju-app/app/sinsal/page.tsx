@@ -1,13 +1,15 @@
 // 12신살 사전 허브 — SEO 인덱스 페이지
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { SIN12_ORDER } from '@/lib/saju/advanced';
 import { SIN12_CONTENT } from '@/lib/saju/sin12Content';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: '12신살 사전 — 역마살·도화살·장성살 전체 정리 | 헤아림',
   description: '겁살·재살·천살·지살·연살(도화살)·월살·망신살·장성살·반안살·역마살·육해살·화개살 12신살의 정확한 뜻과 내 사주에 걸린 살을 무료로 확인하세요.',
-};
+  path: '/sinsal',
+});
 
 const TONE_LABEL = { good: '길', neutral: '중립', caution: '주의' } as const;
 const TONE_COLOR = { good: '#4ade80', neutral: '#a3a3a3', caution: '#fbbf24' } as const;
