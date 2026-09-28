@@ -52,6 +52,25 @@ export function fixReadingHanja<T extends { lead: string; sections: { title: str
 }
 
 /** 스트리밍 마커 텍스트(@@key@@)를 누적 파싱 → {lead, sections} */
+/**
+ * 풀이가 끝까지 왔는가 — 마지막 섹션(@@last@@)이 본문까지 있어야 완결로 본다.
+ * 2026-09-29: max_tokens 3000 에서 10개 섹션이 6번째(money) 근처에서 잘린 채 캐시·리포트함에 저장되던 결함.
+ *   잘린 글은 캐시·보관본에서 꺼내더라도 쓰지 않고 새로 받는다.
+ */
+export function isCompleteReadingText(text: string): boolean {
+  const i = text.lastIndexOf('@@last@@');
+  if (i < 0) return false;
+  // 마지막 섹션 안에서 잘리는 경우는 생성 시점의 stop_reason(max_tokens)으로 따로 막는다.
+  //   여기서 끝 글자까지 따지면 이모지·괄호로 끝난 정상 글이 매번 재생성되는 비용 사고가 난다.
+  const tail = text.slice(i + 8).trim();
+  const nl = tail.indexOf('\n');
+  return nl >= 0 && tail.slice(nl + 1).trim().length > 20;
+}
+export function isCompleteReading(r: { sections?: { key: string; body: string }[] } | null | undefined): boolean {
+  const last = r?.sections?.find((s) => s.key === 'last');
+  return !!last && last.body.trim().length > 20;
+}
+
 export function parseReadingStream(
   text: string,
   keys: readonly string[] = READING_KEYS,
