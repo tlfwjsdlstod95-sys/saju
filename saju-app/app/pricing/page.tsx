@@ -1,14 +1,16 @@
 // 상품 안내 페이지 — PG(토스페이먼츠) 심사 요건: '판매 가능한 상품 1개 이상 노출'
 // 전자상거래 표기(상품명/가격/제공방식/결제수단/환불) 한 곳에 정리.
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { BIZ } from '../biz';
 import PlanCompare from '../PlanCompare';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: '이용권 안내 · 가격 | 헤아림',
   description: '헤아림 정밀 사주 리포트와 AI 궁합 리포트 상품 안내 — 가격, 제공 방식, 결제 수단, 환불 규정.',
-};
+  path: '/pricing',
+});
 
 const ITEMS = [
   {
