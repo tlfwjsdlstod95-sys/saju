@@ -1,7 +1,9 @@
+import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import { BIZ } from '../biz';
 
-export const metadata = { title: '취소·환불 정책 · 헤아림' };
+export const metadata: Metadata = pageMeta({ title: '취소·환불 정책 · 헤아림', description: '헤아림 정밀 리포트 취소·환불 기준 — 풀이가 열람되지 않았거나 오류로 이용하지 못한 경우 전액 환불.', path: '/refund' });
 
 export default function RefundPage() {
   return (
