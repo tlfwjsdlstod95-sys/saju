@@ -1156,3 +1156,33 @@ a.ms-badge span { color: var(--gold); white-space: nowrap; }
   .case-table-note { display: block; }
 }
 .site-header + .wrap { padding-top: 28px; }
+
+/* ── 2026-09-29 2차 점검 ─────────────────────────────────────────
+   한국어 줄바꿈: 단어 중간에서 끊지 않는다(「출 생 도 시」「대 / 조」처럼 찢어지던 문제). 긴 URL 등은 overflow-wrap 이 받는다. */
+body { word-break: keep-all; overflow-wrap: break-word; }
+.field-hint { margin-top: 5px; font-size: 11.5px; color: var(--text-mute); line-height: 1.4; }
+.form-links { margin: 10px 0 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; }
+.form-links a { color: var(--gold); text-decoration: none; }
+.form-links a:hover { text-decoration: underline; }
+/* 폰 첫 화면: 슬로건 → 입력 → 분석 버튼까지 한 화면에 */
+@media (max-width: 560px) {
+  .wrap { padding-top: 22px; }
+  .hero { margin-bottom: 14px; }
+  .brand-name { margin-bottom: 4px; font-size: 19px; }
+  .hero-kr { display: none; }
+  .hero h1 { font-size: 28px !important; margin: 0 0 8px; }
+  .hero p { font-size: 13.5px; margin: 0; }
+  .trust { margin-bottom: 14px; }
+  .trust-badges { gap: 6px; }
+  .tb-3 { display: none; }
+  .trust .trust-sub { display: none; }        /* 같은 내용은 입력 카드 아래 「검증 방법과 숫자 →」로 */
+  #birth-form { padding-top: 16px; }
+  #birth-form h2 { margin-bottom: 10px; }
+  #birth-form .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  #birth-form input, #birth-form select { padding-top: 10px; padding-bottom: 10px; }
+  #birth-form .cal-toggle { margin-bottom: 10px; }
+}
+/* 데스크톱 입력 폼: 연·월·일·시·분·도시 한 줄 */
+@media (min-width: 561px) {
+  #birth-form .form-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.35fr); gap: 12px; }
+}

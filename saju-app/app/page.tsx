@@ -176,7 +176,9 @@ export default function Home() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiErr, setAiErr] = useState('');
-  const [aiCut, setAiCut] = useState(false);   // 유료 풀이가 끝까지 오지 않았다(서버 시간 초과 등)
+  const [aiCut, setAiCut] = useState(false);
+  /** 받침 있으면 「이」, 없으면 「가」 — 「화개살가」 같은 조사 오류 방지 */
+  const josaIGa = (w: string) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 ? '이' : '가'; };   // 유료 풀이가 끝까지 오지 않았다(서버 시간 초과 등)
   // 실제로 분석한 입력값. 판매 단위가 "명식 1건"이라 이용권 판정의 기준이 된다.
   // (편집 중인 form 이 아니라 '분석된' 명식이어야 한다)
   const [analyzed, setAnalyzed] = useState<any>(null);
@@ -214,9 +216,9 @@ export default function Home() {
   const [notice, setNotice] = useState('');
   // 누적 풀이 수 (실측 카운터 — 100 미만이면 표시 안 함)
   // 랜딩 사회적 증거 — 전부 서버 실측값. people=고유 명식 수(HLL), cases=/accuracy 와 같은 채점 표본 수.
-  const [stats, setStats] = useState<{ people: number; cases: number }>({ people: 0, cases: 0 });
+  const [stats, setStats] = useState<{ people: number; cases: number; transcribed: number }>({ people: 0, cases: 0, transcribed: 0 });
   useEffect(() => {
-    fetch('/api/stats').then((r) => r.json()).then((d) => setStats({ people: d?.people ?? 0, cases: d?.cases ?? 0 })).catch(() => {});
+    fetch('/api/stats').then((r) => r.json()).then((d) => setStats({ people: d?.people ?? 0, cases: d?.cases ?? 0, transcribed: d?.transcribed ?? 0 })).catch(() => {});
   }, []);
   useEffect(() => {
     setProfiles(listProfiles());
@@ -445,7 +447,7 @@ export default function Home() {
         <div className="trust-badges">
           <span className="tb">절기 오차 평균 <b>6.8초</b> · NASA JPL 대비</span>
           <span className="tb">1900~2100년 <b>71,733일</b> 만세력 100% 일치</span>
-          <span className="tb">진태양시·야자시·서머타임까지 계산</span>
+          <span className="tb tb-3">진태양시·야자시·서머타임까지 계산</span>
         </div>
         {stats.people >= 1000 && (
           <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-mute)', textAlign: 'center' }}>
@@ -454,7 +456,7 @@ export default function Home() {
         )}
         <p className="trust-sub">
           같은 생년월일인데 앱마다 사주가 다른 이유, 당신 명식에서 직접 보여드립니다.
-          {stats.cases > 0 && <> 저희 판정은 고전 원전 <b>{stats.cases}건</b>으로 채점해 <b>틀린 것까지</b> 공개하고 있어요.</>}
+          {stats.cases > 0 && <> 저희 판정은 고전 원전 {stats.transcribed > stats.cases ? <>{stats.transcribed}건 중 채점 기준이 있는 </> : null}<b>{stats.cases}건</b>으로 채점해 <b>틀린 것까지</b> 공개하고 있어요.</>}
           {' '}<a href="/accuracy" style={{ color: 'var(--gold)' }}>검증 방법과 숫자 전부 보기 →</a>
         </p>
       </div>
@@ -477,7 +479,7 @@ export default function Home() {
           <div><label>일</label><input type="number" value={form.day} onChange={(e) => set('day', e.target.value)} /></div>
           <div><label>시 (0~23)</label><input id="birth-hour" type="number" value={form.hour} disabled={form.unknownTime} onChange={(e) => set('hour', e.target.value)} /></div>
           <div><label>분</label><input type="number" value={form.minute} disabled={form.unknownTime} onChange={(e) => set('minute', e.target.value)} /></div>
-          <div><label>출생도시 <span className="hint">· 목록에 없으면 가장 가까운 도시를 선택</span></label>
+          <div><label>출생도시</label>
             <select value={form.city} onChange={(e) => set('city', e.target.value)}>
               {CITY_GROUPS.map((g) => (
                 <optgroup label={g.region} key={g.region}>
@@ -485,6 +487,7 @@ export default function Home() {
                 </optgroup>
               ))}
             </select>
+            <div className="field-hint">목록에 없으면 가장 가까운 도시</div>
           </div>
         </div>
         <div className="row">
@@ -507,6 +510,10 @@ export default function Home() {
         <button className="btn" onClick={submit} disabled={loading}>{loading ? '천문 데이터 분석 중…' : '내 사주 분석하기 →'}</button>
         <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', textAlign: 'center' }}>
           입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
+        </p>
+        <p className="form-links">
+          <a href="/sample">정밀 리포트 샘플 1쪽 보기 →</a>
+          <a href="/accuracy">검증 방법과 숫자 →</a>
         </p>
         <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
           {/* ⚠️ 2026-09-17 취소선(₩9,900)과 「런칭 기념·첫 500명 한정」 삭제.
@@ -680,7 +687,7 @@ export default function Home() {
                     {' '}이 판정은 용신이 서 있어야만 가능해서, 살 배치표만 가진 곳에서는 나올 수 없어요.
                   </p>
                   <p className="flip-gate-what">
-                    정밀 리포트에서 열리는 것 — <b>{flipLock.names.join(' · ')}</b>가 각각 어느 쪽으로 뒤집히는지,
+                    정밀 리포트에서 열리는 것 — <b>{flipLock.names.join(' · ')}</b>{josaIGa(flipLock.names[flipLock.names.length - 1] ?? '')} 각각 어느 쪽으로 뒤집히는지,
                     그 근거가 되는 글자(용신·희신·기신·구신)와 이유 한 줄씩.
                   </p>
                   <button className="btn" onClick={() => setPayOpen(true)}>내 신살이 어느 쪽인지 보기 →</button>

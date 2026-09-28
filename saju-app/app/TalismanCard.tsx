@@ -73,7 +73,7 @@ function draw(canvas: HTMLCanvasElement, r: SajuResult) {
   ctx.fillStyle = '#bfae8a'; ctx.font = '500 26px "Noto Sans KR", sans-serif';
   ctx.fillText('H E A R I M · L U C K Y   C H A R M', W / 2, 156);
   ctx.fillStyle = '#ffffff'; ctx.font = '800 62px "Nanum Myeongjo", serif';
-  ctx.fillText('나의 행운 부적', W / 2, 246);
+  ctx.fillText('나의 행운 카드', W / 2, 246);
 
   // 인장(Seal) — 이중 링 + 용신 한자
   const cx = W / 2, cy = 640, R = 250;
@@ -149,7 +149,7 @@ function draw(canvas: HTMLCanvasElement, r: SajuResult) {
 
   // 푸터
   ctx.fillStyle = '#ffffff'; ctx.font = '700 40px "Noto Sans KR", sans-serif';
-  ctx.fillText('내 행운 부적 만들기 ✨', W / 2, H - 150);
+  ctx.fillText('내 행운 카드 만들기', W / 2, H - 150);
   ctx.fillStyle = '#bfae8a'; ctx.font = '500 27px "Noto Sans KR", sans-serif';
   ctx.fillText(`${BIZ.name} · 틀린 사주로 인생을 정할 순 없으니까`, W / 2, H - 96);
 }
@@ -170,29 +170,29 @@ export default function TalismanCard({ result }: { result: SajuResult }) {
   async function save() {
     const blob = await getBlob(); if (!blob) return;
     const url = URL.createObjectURL(blob); const a = document.createElement('a');
-    a.href = url; a.download = `행운부적_${gaeun.yongsin}.png`; a.click(); URL.revokeObjectURL(url); flash('부적을 저장했어요');
+    a.href = url; a.download = `행운카드_${gaeun.yongsin}.png`; a.click(); URL.revokeObjectURL(url); flash('카드를 저장했어요');
   }
   async function share() {
     const blob = await getBlob(); if (!blob) return;
     const file = new File([blob], 'lucky-charm.png', { type: 'image/png' });
     const nav = navigator as any;
     if (nav.canShare && nav.canShare({ files: [file] })) {
-      try { await nav.share({ files: [file], title: '나의 행운 부적', text: `내 행운의 기운은 '${gaeun.yongsin}(${HANJA[gaeun.yongsin]})' — 행운 컬러는 ${t.colorShort}! ✨` }); return; } catch {}
+      try { await nav.share({ files: [file], title: '나의 행운 카드', text: `내 행운의 기운은 '${gaeun.yongsin}(${HANJA[gaeun.yongsin]})' — 행운 컬러는 ${t.colorShort}! ✨` }); return; } catch {}
     }
     save();
   }
   async function copyText() {
     try {
-      await navigator.clipboard.writeText(`내 행운의 기운은 '${gaeun.yongsin}(${HANJA[gaeun.yongsin]})' ✨\n행운 컬러 ${t.colorShort} · 행운 방위 ${gaeun.primary.direction}\n“${t.mantra}” #행운부적 #헤아림`);
+      await navigator.clipboard.writeText(`내 행운의 기운은 '${gaeun.yongsin}(${HANJA[gaeun.yongsin]})' ✨\n행운 컬러 ${t.colorShort} · 행운 방위 ${gaeun.primary.direction}\n“${t.mantra}” #행운카드 #헤아림`);
       flash('공유 문구를 복사했어요');
     } catch { flash('복사 실패'); }
   }
 
   return (
     <div className="card">
-      <h2>나의 행운 부적</h2>
+      <h2>나의 행운 카드</h2>
       <div className="meta" style={{ marginBottom: 14 }}>
-        {result.input.name ? `${result.input.name}님` : '당신'}에게 필요한 기운 <b>{gaeun.yongsin}({HANJA[gaeun.yongsin]})</b>을 담은 부적이에요.
+        {result.input.name ? `${result.input.name}님` : '당신'}에게 필요한 기운 <b>{gaeun.yongsin}({HANJA[gaeun.yongsin]})</b>을 담은 카드예요.
         배경화면·스토리에 올려 행운 컬러를 곁에 두세요.
       </div>
       <canvas ref={canvasRef} className="share-canvas" style={{ maxWidth: 300 }} />
