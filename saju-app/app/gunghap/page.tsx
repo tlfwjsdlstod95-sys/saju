@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { pairId } from '@/lib/chartId';
 import { cloudGetReport } from '@/lib/cloud';
 import { listProfiles, type Profile } from '@/lib/profiles';
-import type { SajuResult } from '@/lib/saju/types';
+// 궁합 응답의 명식도 무료 모양(판정 제거)으로 내려온다 — /api/gunghap 이 같은 게이트를 통과한다.
+import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
 import type { CompatResult } from '@/lib/saju/compatibility';
 import { parseReadingStream, GUNGHAP_KEYS, GUNGHAP_ICONS, GUNGHAP_LABELS } from '@/lib/saju/readingMeta';
 import GunghapCard from '../GunghapCard';
@@ -207,10 +208,22 @@ export default function Gunghap() {
 
   return (
     <main className="wrap">
+      {/* 궁합 랜딩 (2026-09-09 승격)
+          검색·공유로 들어온 사람이 **여기로 바로 떨어진다.** 그래서 메인의 축약판이 아니라
+          독립 랜딩이어야 한다 — 감정 진입 문장을 H1 으로 올리고, '링크로 완성된다'는 구조를
+          폼 사이에 묻어 두지 않고 첫 화면에서 말한다(이게 유일한 자발적 유통 경로다).
+          ⚠️ 메인 H1「틀린 사주로 인생을 정할 순 없으니까」는 그대로 둔다 —
+             그건 경계 진단·/accuracy 와 한 사슬이라, 감정 진입 문장으로 갈아끼우면 그 사슬이 끊긴다. */}
       <div className="hero">
-        <h1>사주 <span>궁합</span></h1>
-        <p>천간합·지지 육합/삼합·오행 보완으로 보는 두 사람의 상성</p>
-        <Link href="/" className="backlink">← 내 사주 분석으로</Link>
+        <h1>이 사람이랑, <span>진짜 괜찮은 걸까</span></h1>
+        <p>두 사람의 명식으로 보는 정통 사주 궁합 — 천간합·지지 육합/반합·충·형·해·원진·오행 보완까지 계산합니다</p>
+        <Link href="/" className="backlink">← 내 사주만 볼래요</Link>
+      </div>
+
+      <div className="card gh-lead">
+        <div className="gh-lead-row"><b>무료</b><span>점수·궁합 해설·두 사람 명식 비교까지 그냥 볼 수 있어요.</span></div>
+        <div className="gh-lead-row"><b>상대 생일 몰라도</b><span>내 정보만 넣고 링크를 보내면, 상대가 자기 정보를 채우는 순간 완성됩니다.</span></div>
+        <div className="gh-lead-row"><b>같은 명식이면 같은 답</b><span>진태양시·야자시·서머타임까지 보정한 만세력 위에서 계산해요.</span></div>
       </div>
 
       {fromInvite && (
@@ -292,6 +305,12 @@ export default function Gunghap() {
                 <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 6 }}>{it.comment}</div>
               </div>
             ))}
+            {res.compat.formula?.length ? (
+              <details className="daily-fold">
+                <summary>계산</summary>
+                <ul className="daily-formula">{res.compat.formula.map((l) => <li key={l}>{l}</li>)}</ul>
+              </details>
+            ) : null}
           </div>
 
           <div className="card">
