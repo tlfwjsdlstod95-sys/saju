@@ -1085,3 +1085,18 @@ a.ms-badge span { color: var(--gold); white-space: nowrap; }
 .sum-scenes { list-style: none; margin: -4px 0 14px; padding: 0; display: grid; gap: 6px; }
 .sum-scenes li { font-size: 14px; line-height: 1.55; color: var(--text-dim); padding-left: 14px; position: relative; word-break: keep-all; }
 .sum-scenes li::before { content: ''; position: absolute; left: 2px; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--gold-soft); }
+
+/* ── 결과 목차 칩 (2026-09-28) ──────────────────────────────
+   카드 26개를 장 여섯 개로 끊는다. 위에 붙어 따라오고 지금 장이 금색. 폰에서 넘치면 가로 스크롤. */
+.result-nav {
+  position: sticky; top: 0; z-index: 30; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  margin: 0 -4px 16px; padding: 10px 4px; background: rgba(12,10,22,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.result-nav::-webkit-scrollbar { display: none; }
+.result-nav a { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; font-size: 13.5px; font-weight: 700;
+  color: var(--text-dim); padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-card); white-space: nowrap; }
+.result-nav a em { font-style: normal; font-size: 11px; color: var(--text-mute); }
+.result-nav a.on { color: #1a1205; background: var(--gold); border-color: var(--gold); }
+.result-nav a.on em { color: #1a1205; }
+.sec-anchor { display: block; height: 0; scroll-margin-top: 64px; }

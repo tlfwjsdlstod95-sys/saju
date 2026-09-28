@@ -1,5 +1,6 @@
 'use client';
 
+import { fixSipsinHanja } from '@/lib/saju/readingMeta';
 import { useEffect, useRef, useState } from 'react';
 
 interface Msg { role: 'user' | 'assistant'; content: string }
@@ -111,7 +112,7 @@ export default function ChatPanel({
             {m.role === 'assistant' && <div className="chat-ava">선배</div>}
             <div className={`bubble ${m.role}`}>
               {m.content
-                ? m.content.split('\n').map((line, j) => <p key={j}>{line || ' '}</p>)
+                ? fixSipsinHanja(m.content).split('\n').map((line, j) => <p key={j}>{line || ' '}</p>)
                 : <span className="typing"><i /><i /><i /></span>}
             </div>
           </div>

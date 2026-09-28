@@ -29,6 +29,7 @@ import Paywall, { usePremium, PRICE } from './Paywall';
 import ReportShelf from './ReportShelf';
 import SummaryCard from './SummaryCard';
 import PlanCompare from './PlanCompare';
+import ResultNav from './ResultNav';
 import TimeUnknownCard from './TimeUnknownCard';
 import { usePremiumData } from './usePremiumData';
 import type { Gyeokguk, Yongsin, Johu } from '@/lib/saju/gyeokyong';
@@ -577,6 +578,9 @@ export default function Home() {
             <button className="save-btn" onClick={saveCurrent}>💾 이 사주 보관함에 저장</button>
           </div>
 
+          {/* 결과 목차 칩 (2026-09-28) — 장 여섯 개. 앵커(sec-*)는 각 장 첫 카드 바로 앞 */}
+          <ResultNav />
+          <span id="sec-myeongsik" className="sec-anchor" />
           {/* 결과 상단 요약 (§E-4 ②) — 상태 태그 · 한 줄 진단 · 경계 알림 · 계산 기준 · 엔진 버전 */}
           <SummaryCard result={result} />
 
@@ -790,6 +794,7 @@ export default function Home() {
             );
           })()}
 
+          <span id="sec-judge" className="sec-anchor" />
           <div className="card">
             <h2>오행 분포 (五行)</h2>
             <div className="meta" style={{ marginBottom: 10 }}>천간·지지 8자 기준 — 지지 속에 숨은 지장간(支藏干)의 기운은 격국·풀이에 별도로 반영됩니다.</div>
@@ -961,6 +966,7 @@ export default function Home() {
             </div>
           </div>
 
+          <span id="sec-reading" className="sec-anchor" />
           <div className="card reading">
             <h2>사주 풀이</h2>
             <div className="meta" style={{ marginBottom: 12 }}>{result.input.name ? `${result.input.name}님` : '당신'}을 꿰뚫어 보는 선배의 시선으로, 따뜻하지만 솔직하게 풀었습니다.</div>
@@ -1035,6 +1041,7 @@ export default function Home() {
             onLocked={() => setPayOpen(true)}
           />
 
+          <span id="sec-report" className="sec-anchor" />
           <div className="card premium">
             <h2>{premium ? '✓ 정밀 리포트 (구매 완료)' : '🔒 정밀 리포트 1건'}</h2>
             <p className="meta" style={{ marginBottom: 14 }}>이직·이사·계약·연애 — 진짜 결정을 앞뒀다면, 정밀 리포트에서 '언제, 어느 방향으로'까지 확인하세요.</p>
@@ -1067,6 +1074,7 @@ export default function Home() {
 
           <Receipts />
 
+          <span id="sec-luck" className="sec-anchor" />
           <div className="card">
             <h2>10년 대운 흐름 (大運)</h2>
             <div className="meta" style={{ marginBottom: 6 }}>
@@ -1109,6 +1117,7 @@ export default function Home() {
           <AuspiciousDates result={result} premium={premium} onLocked={() => setPayOpen(true)} reqBody={premiumBody} />
 
           {/* 바이럴 루프: 궁합은 상대를 데려와야 완성 — 결과 직후 최상단 배치 */}
+          <span id="sec-tools" className="sec-anchor" />
           <div className="card" style={{ textAlign: 'center' }}>
             <h2>💞 이 사주, 그 사람이랑은?</h2>
             <div className="meta" style={{ marginBottom: 14 }}>사주는 혼자 보지만 궁합은 둘이 봐야 완성돼요. 초대 문구를 보내서 서로의 명식으로 확인해 보세요. 궁합 점수는 무료!</div>

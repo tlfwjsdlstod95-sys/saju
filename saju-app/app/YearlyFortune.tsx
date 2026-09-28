@@ -1,5 +1,6 @@
 'use client';
 
+import { fixSipsinHanja } from '@/lib/saju/readingMeta';
 import { useState } from 'react';
 
 import type { FreeSajuResult as SajuResult } from '@/lib/saju/gate';
@@ -134,7 +135,7 @@ export default function YearlyFortune({
           <div className="yearly-ai-box">
             <div className="yearly-ai-head">✨ 선배의 {year}년 총평{streaming && <span className="caret" />}</div>
             {comments[year]
-              ? comments[year].split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)
+              ? fixSipsinHanja(comments[year]).split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)
               : <div className="read-wait">✍️ {year}년 흐름을 읽는 중…<span className="caret" /></div>}
           </div>
         ) : (
