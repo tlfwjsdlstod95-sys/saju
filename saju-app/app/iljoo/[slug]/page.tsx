@@ -1,6 +1,7 @@
 // 일주 60갑자 SEO 정적 페이지 — "○○일주 특징" 롱테일 검색 유입용 (릴스 대본 = SEO 페이지 원소스 멀티유즈)
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/pageMeta';
 import { CHEONGAN, CHEONGAN_HANJA, JIJI, JIJI_HANJA, JIJI_ANIMAL, GAN_OHAENG, JI_OHAENG } from '@/lib/saju/constants';
 import { iljuCharacter } from '@/lib/saju/ilju';
 
@@ -25,10 +26,11 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   const it = find(params.slug);
   if (!it) return { title: '일주 사전 | 헤아림' };
   const c = iljuCharacter(it.gan, it.ji);
-  return {
+  return pageMeta({
     title: `${c.name} 특징 — '${c.tag}' | 헤아림`,
     description: `${c.name}(${CHEONGAN_HANJA[it.gan]}${JIJI_HANJA[it.ji]}) 성격과 특징: ${c.trait} 정밀 만세력으로 내 명식을 무료로 확인하세요.`,
-  };
+    path: `/iljoo/${it.slug}`,
+  });
 }
 
 export default function IljuPage({ params }: { params: { slug: string } }) {
