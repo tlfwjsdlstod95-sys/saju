@@ -6,7 +6,7 @@ import { chartFromOrderId } from '@/lib/chartId';
 export const runtime = 'nodejs';
 
 // 우리 상품 가격(원). 클라이언트가 보낸 금액을 신뢰하지 않고 서버에서 검증한다.
-const PRODUCT_AMOUNT = 5900; // Paywall.tsx 의 PRICE 와 반드시 동일하게 유지
+const PRODUCT_AMOUNT = 9900; // Paywall.tsx 의 PRICE 와 반드시 동일하게 유지 (2026-09-28 5,900 → 9,900)
 
 export async function POST(req: Request) {
   const secretKey = process.env.TOSS_SECRET_KEY;
@@ -26,7 +26,12 @@ export async function POST(req: Request) {
   }
 
   // 금액 위변조 방지: 클라이언트가 보낸 금액이 우리 상품 가격과 일치하는지 확인
-  if (amount !== PRODUCT_AMOUNT) {
+  // 인상 전환 유예(2026-09-28): 인상 배포 직전에 5,900 결제창을 연 사람이 배포 뒤 승인되면 금액 불일치로 튕긴다.
+  //   그 사람에게 결제 실패를 보여주지 않으려고 **9-29 23:59(KST)까지만** 옛 금액도 받는다. 이후엔 PRODUCT_AMOUNT 하나.
+  //   ⚠️ 유예가 끝나면 이 블록을 지워도 된다(동작은 같다).
+  const LEGACY_AMOUNT = 5900, LEGACY_UNTIL = Date.parse('2026-09-29T23:59:59+09:00');
+  const legacyOk = amount === LEGACY_AMOUNT && Date.now() <= LEGACY_UNTIL;
+  if (amount !== PRODUCT_AMOUNT && !legacyOk) {
     return NextResponse.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
   }
 
