@@ -13,6 +13,7 @@ import GunghapCard from '../GunghapCard';
 import Paywall, { usePremium } from '../Paywall';
 import { CITY_GROUPS, CITIES } from '../cities';
 import AccountButton from '../AccountButton';
+import { track } from '@/lib/track';
 
 const OHAENG_COLOR: Record<string, string> = {
   목: '#22c55e', 화: '#ef4444', 토: '#eab308', 금: '#e2e8f0', 수: '#3b82f6',
@@ -151,7 +152,7 @@ export default function Gunghap() {
     setError('');
     const url = `${window.location.origin}/gunghap?invite=1#p=${encodeURIComponent(encodeP(a))}`;
     navigator.clipboard.writeText(`우리 궁합 몇 점인지 볼래?ㅋㅋ 내 정보는 미리 넣어놨어 — 너는 네 것만 입력하면 바로 나와 💞 (AI 심층 궁합도 1번 무료) ${url}`)
-      .then(() => setNotice('초대 문구를 복사했어요 — 카톡에 붙여넣어 보내세요!'))
+      .then(() => { setNotice('초대 문구를 복사했어요 — 카톡에 붙여넣어 보내세요!'); track('gunghap_share'); })
       .catch(() => setNotice('복사 실패 — 주소창의 링크를 직접 공유해주세요.'));
     setTimeout(() => setNotice(''), 4000);
   }
@@ -200,6 +201,7 @@ export default function Gunghap() {
       if (!r.ok) throw new Error(data.error);
       setRes(data);
       setAnalyzed({ a: pa, b: pb }); // 이용권 판정 기준이 되는 '분석된 쌍'
+      track('gunghap_complete');
     } catch (e: any) { setError(e.message); }
     finally { setLoading(false); }
   }
