@@ -1,6 +1,7 @@
 // 12신살 개별 SEO 정적 페이지 — "역마살 뜻", "도화살 있는 사주" 등 롱테일 검색 유입용
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/pageMeta';
 import { SIN12_ORDER } from '@/lib/saju/advanced';
 import { SIN12_CONTENT, findSin12, sin12ByBase } from '@/lib/saju/sin12Content';
 
@@ -13,10 +14,11 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   if (!name) return { title: '12신살 사전 | 헤아림' };
   const c = SIN12_CONTENT[name];
   const aliasPart = c.alias ? `(${c.alias})` : '';
-  return {
+  return pageMeta({
     title: `${c.name}${aliasPart} 뜻과 특징 — ${c.oneLine.split('—')[0].trim()} | 헤아림`,
     description: `${c.name}(${c.hanja})${aliasPart}의 정확한 뜻: ${c.trait.slice(0, 90)} 내 사주에 걸린 12신살을 정밀 만세력으로 무료 확인.`,
-  };
+    path: `/sinsal/${name}`,
+  });
 }
 
 const TONE_LABEL = { good: '길한 편', neutral: '중립 — 쓰는 사람에 달림', caution: '주의가 필요한 편' } as const;
