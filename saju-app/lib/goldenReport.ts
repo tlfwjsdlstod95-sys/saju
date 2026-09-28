@@ -85,8 +85,19 @@ export function rate(rows: GoldenRow[]): { hit: number; total: number; pct: stri
   return { hit, total, pct: total ? ((hit / total) * 100).toFixed(1) : '0.0' };
 }
 
-/** 골든 케이스 총 건수(학파·채점축 무관). 페이지 문구의 '몇 건으로 채점했나'에 쓴다. */
+/**
+ * 채점에 쓰는 명식 수 — 페이지 문구의 「고전 원전 N건으로 채점」에 쓴다.
+ * 2026-09-29: 옮겨 적기만 하고 채점 기준(expect)을 아직 달지 않은 명식(당시 29건)까지 세고 있었다.
+ *   「192건으로 채점」은 사실보다 크게 말한 것이라, 기준이 하나라도 있는 명식만 센다(중복 명식 제외).
+ *   한 명식이 격국·강약·용신에 겹쳐 쓰이므로 표의 항목별 건수를 더해도 이 숫자가 되지 않는다.
+ */
 export function totalCases(): number {
+  return ((goldenRaw as { cases: { dupOf?: string; expect?: Record<string, unknown> }[] }).cases ?? [])
+    .filter((c) => !c.dupOf && c.expect && Object.keys(c.expect).length > 0).length;
+}
+
+/** 옮겨 적은 명식 전체(채점 기준 유무 무관, 중복 제외). */
+export function transcribedCases(): number {
   return ((goldenRaw as { cases: { dupOf?: string }[] }).cases ?? []).filter((c) => !c.dupOf).length;
 }
 
