@@ -86,7 +86,7 @@ export default function ReportShelf() {
 
   return (
     <div className="card">
-      <h2>📜 내 리포트함<span className="shelf-count">{items.length}</span></h2>
+      <h2>내 리포트함<span className="shelf-count">{items.length}</span></h2>
       <div className="meta" style={{ marginBottom: 14 }}>
         받아보신 리포트의 <b style={{ color: 'var(--gold)' }}>원문 그대로</b> 계정에 보관돼요. 다른 기기에서 로그인해도 같은 글이 열립니다.
       </div>

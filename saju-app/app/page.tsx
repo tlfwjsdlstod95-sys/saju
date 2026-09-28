@@ -7,7 +7,7 @@ import type { Pillar, LuckPillar } from '@/lib/saju/types';
 // 클라이언트가 받는 건 **판정이 빠진** 결과다(무료 응답). 타입으로 그 사실을 못 박아 둔다 —
 // 그래야 화면 코드가 실수로 `yongsin.primary` 를 참조하는 순간 컴파일이 막는다.
 import type { FreeSajuResult } from '@/lib/saju/gate';
-import { parseReadingStream, fixReadingHanja } from '@/lib/saju/readingMeta';
+import { parseReadingStream, fixReadingHanja, isCompleteReading } from '@/lib/saju/readingMeta';
 import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
@@ -232,7 +232,7 @@ export default function Home() {
   //   옛 스냅샷(v1)을 복원하면 없는 필드를 읽어 결과 화면이 통째로 깨진다 — 배포 직후 재방문자가 정확히 그 경우다.
   const SESSION_KEY = 'saju_session_v2';
   const [restored, setRestored] = useState(false);
-  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(fixReadingHanja(s.ai)); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
+  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai && isCompleteReading(s.ai)) setAi(fixReadingHanja(s.ai)); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
   useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone, analyzed })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form, analyzed]);
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
@@ -370,7 +370,8 @@ export default function Home() {
       const cached = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed?.sections?.length) { setAi(fixReadingHanja(parsed)); setAiErr(''); setAiLoading(false); setAiStreaming(false); return; }
+        // 무료 풀이는 섹션 구성이 달라 완결 판정을 유료에만 건다(잘린 유료 글은 버리고 새로 받는다 — 2026-09-29).
+        if (parsed?.sections?.length && (tier !== 'premium' || isCompleteReading(parsed))) { setAi(fixReadingHanja(parsed)); setAiErr(''); setAiLoading(false); setAiStreaming(false); return; }
       }
     } catch {}
     setAiErr(''); setAiLoading(true); setAiStreaming(true);
@@ -382,7 +383,7 @@ export default function Home() {
       try {
         const saved = await cloudGetReport('reading', chartId(base), tn);
         const parsed = saved ? parseReadingStream(saved) : null;
-        if (parsed && parsed.sections.length) {
+        if (parsed && parsed.sections.length && isCompleteReading(parsed)) {
           setAi(fixReadingHanja(parsed)); setAiLoading(false); setAiStreaming(false);
           try { localStorage.setItem(key, JSON.stringify(parsed)); } catch {}
           return;
@@ -412,7 +413,7 @@ export default function Home() {
       }
       const final = parseReadingStream(acc);
       setAi(final);
-      try { if (final.sections.length) localStorage.setItem(key, JSON.stringify(final)); } catch {}
+      try { if (final.sections.length && (tier !== 'premium' || isCompleteReading(final))) localStorage.setItem(key, JSON.stringify(final)); } catch {}
     } catch (e: any) { setAiErr(e.message); setAi(null); }
     finally { setAiLoading(false); setAiStreaming(false); }
   }
@@ -440,8 +441,9 @@ export default function Home() {
              차별점은 주장이 아니라 **명식을 넣은 뒤 나오는 개인화된 증거**(경계 진단)로 옮겼다. */}
       <div className="trust">
         <div className="trust-badges">
-          <span className="tb">◷ 진태양시·야자시·서머타임까지 계산</span>
-          <span className="tb">🔎 내 명식이 다른 곳과 갈리는 지점을 그대로 공개</span>
+          <span className="tb">절기 오차 평균 <b>6.8초</b> · NASA JPL 대비</span>
+          <span className="tb">1900~2100년 <b>71,733일</b> 만세력 100% 일치</span>
+          <span className="tb">진태양시·야자시·서머타임까지 계산</span>
         </div>
         {stats.people >= 1000 && (
           <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-mute)', textAlign: 'center' }}>
@@ -502,7 +504,7 @@ export default function Home() {
         )}
         <button className="btn" onClick={submit} disabled={loading}>{loading ? '천문 데이터 분석 중…' : '내 사주 분석하기 →'}</button>
         <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', textAlign: 'center' }}>
-          🔒 입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
+          입력한 정보는 풀이 계산에만 쓰이고, 제3자에게 제공되지 않아요.
         </p>
         <p style={{ marginTop: 4, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>
           {/* ⚠️ 2026-09-17 취소선(₩9,900)과 「런칭 기념·첫 500명 한정」 삭제.
@@ -516,7 +518,7 @@ export default function Home() {
       </div>
 
       <Link href="/gunghap" className="card gh-entry">
-        <div className="gh-entry-t">💞 이 사람이랑, 진짜 괜찮은 걸까</div>
+        <div className="gh-entry-t">이 사람이랑, 진짜 괜찮은 걸까</div>
         <p>두 사람의 명식으로 보는 정통 사주 궁합 — <b>무료</b>예요.
           {' '}상대방 생일을 몰라도 <b>내 정보만 넣고 링크를 보내면</b> 상대가 채우는 순간 완성됩니다.</p>
         <span className="gh-entry-cta">궁합 보러 가기 →</span>
@@ -526,10 +528,12 @@ export default function Home() {
       {!result && (
         <div className="card">
           <h2>이런 풀이를 받아요</h2>
-          <div className="meta" style={{ marginBottom: 12 }}>실제 무료 풀이 예시 — 무인(戊寅)일주 · 신약</div>
+          {/* 2026-09-29: 엔진이 실제로 내는 첫 줄로 교체(1992-03-03 10:30 · 이름 「지현」 · 무인일주 · 강약 11%).
+              예전 문장(「~한 사람입니다」)은 성격 단정형이라 풀이 규칙과도, 실제 출력과도 달랐다. 문구를 바꾸면 여기서도 다시 뽑을 것. */}
+          <div className="meta" style={{ marginBottom: 12 }}>실제 무료 풀이 첫 줄 — 무인(戊寅)일주 · 신약</div>
           <div className="lead-card" style={{ marginTop: 0 }}>
             <div className="lead-mark">✦ 당신의 사주</div>
-            <p className="lead-quote">당신은 산처럼 버티면서 정작 자기 무게에 짓눌리는 사람입니다 — 혼자 버티려 하지만, 물이 흘러야 비로소 빛나는 구조로 태어났어요.</p>
+            <p className="lead-quote">지현님, 이 명식은 편재가 겉에 있습니다. 계산이 끝나기 전에 몸이 먼저 나갑니다.</p>
           </div>
           <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-mute)', textAlign: 'center' }}>명식표 · 오행 개수 · 용신이 갈리는 지점 · 오늘의 운세는 무료입니다. 엔진의 확정 판정과 근거는 리포트에 있어요.</p>
         </div>
@@ -538,7 +542,7 @@ export default function Home() {
       <Reviews />
 
       <div className="card shelf-card">
-        <h2>📁 내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
+        <h2>내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
         {profiles.length > 0 ? (
           <>
             <div className="meta" style={{ marginBottom: 14 }}>저장한 사주를 눌러 바로 다시 보고, <a href="/gunghap" style={{ color: 'var(--gold)' }}>궁합</a>에도 쓸 수 있어요.</div>
@@ -1056,7 +1060,7 @@ export default function Home() {
 
           <span id="sec-report" className="sec-anchor" />
           <div className="card premium">
-            <h2>{premium ? '✓ 정밀 리포트 (구매 완료)' : '🔒 정밀 리포트 1건'}</h2>
+            <h2>{premium ? '✓ 정밀 리포트 (구매 완료)' : '정밀 리포트 1건'}</h2>
             <p className="meta" style={{ marginBottom: 14 }}>이직·이사·계약·연애 — 진짜 결정을 앞뒀다면, 정밀 리포트에서 '언제, 어느 방향으로'까지 확인하세요.</p>
             {/* §E-4 ④ (2026-09-23) 6줄 목차 → 무료·유료 차이표. 칸 하나하나가 실제 게이팅과 맞아야 한다(PlanCompare.tsx 머리말) */}
             <PlanCompare />
@@ -1066,7 +1070,7 @@ export default function Home() {
             </Link>
             {/* 스펙 숫자는 여기가 제자리다 — 결제 직전, 「이거 믿어도 되나」 하는 순간. */}
             <p className="prem-verify">
-              🔎 이 리포트가 읽는 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산합니다 —{' '}
+              이 리포트가 읽는 명식은 <b>판정 엔진 v{ENGINE_VERSION}</b>으로 계산합니다 —{' '}
               NASA JPL 행성력 대비 <b>절기 오차 평균 6.8초</b> · 1900~2100 만세력 <b>71,733일 교차검증 100%</b>
               {stats.cases > 0 && <> · 고전 원전 <b>{stats.cases}건</b>으로 판정을 채점(틀린 것까지 공개)</>}.{' '}
               <Link href="/accuracy">검증 방법과 숫자 보기 →</Link>
@@ -1132,7 +1136,7 @@ export default function Home() {
           {/* 바이럴 루프: 궁합은 상대를 데려와야 완성 — 결과 직후 최상단 배치 */}
           <span id="sec-tools" className="sec-anchor" />
           <div className="card" style={{ textAlign: 'center' }}>
-            <h2>💞 이 사주, 그 사람이랑은?</h2>
+            <h2>이 사주, 그 사람이랑은?</h2>
             <div className="meta" style={{ marginBottom: 14 }}>사주는 혼자 보지만 궁합은 둘이 봐야 완성돼요. 초대 문구를 보내서 서로의 명식으로 확인해 보세요. 궁합 점수는 무료!</div>
             <div className="share-actions" style={{ justifyContent: 'center' }}>
               <Link href="/gunghap" className="btn share-btn" style={{ textDecoration: 'none' }}>💞 우리 궁합 보러 가기</Link>
@@ -1163,7 +1167,7 @@ export default function Home() {
       </div>
 
       <div className="foot">
-        만세력 엔진: VSOP87 천문 알고리즘 기반 절기·균시차 자체 연산 · 절기 시각 KASI 공표값 1분 이내 일치 · 일주 60갑자 국제표준 보정
+        만세력 엔진: 절기 시각 오차 평균 6.8초(NASA JPL DE440 대비) · 1900~2100년 71,733일 만세력 교차검증 100% 일치 · KASI 공표 절기 ±1분 · 진태양시·균시차 자체 연산
         {' '}· <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 상세</a>
         {/* 결과가 있으면 위 「경계 진단」 카드가 이 명식 기준으로 같은 말을 한다 — 두 번 말하지 않는다 */}
         {!result && <><br />※ 경계 시각(절기 전후·자정 무렵) 출생은 한국천문연구원(KASI) 교차검증 권장</>}

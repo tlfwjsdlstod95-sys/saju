@@ -1120,3 +1120,39 @@ a.ms-badge span { color: var(--gold); white-space: nowrap; }
 .card[id] { scroll-margin-top: 20px; }
 /* 판정 표 첫 열(판정 항목)이 모바일에서 한 글자씩 세로로 쪼개지던 문제 */
 #judge table th:first-child, #judge table td:first-child { white-space: nowrap; }
+
+/* ── 2026-09-29 외부 점검 반영 ─────────────────────────────────── */
+/* 상단 헤더(하위 페이지) */
+.site-header { max-width: 760px; margin: 0 auto; padding: 14px 20px 0; display: flex; align-items: center; gap: 16px; }
+.site-logo { font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 17px; letter-spacing: 0.14em; color: var(--gold); text-decoration: none; }
+.site-header nav { margin-left: auto; display: flex; gap: 14px; }
+.site-header nav a { font-size: 13.5px; color: var(--text-mute); text-decoration: none; white-space: nowrap; }
+.site-header nav a.on, .site-header nav a:hover { color: var(--gold); }
+@media (max-width: 420px) { .site-header { padding: 12px 16px 0; gap: 10px; } .site-header nav { gap: 11px; } .site-header nav a { font-size: 13px; } }
+.tb b { color: var(--gold); font-weight: 700; }
+
+/* /accuracy 기준일 */
+.acc-asof { margin-top: 10px !important; font-size: 13px !important; color: var(--text-mute); }
+.acc-asof b { color: var(--text-dim); }
+
+/* /accuracy 재현율 — 표 대신 카드(항목 / 숫자 / 한 줄 주석) */
+.acc-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.acc-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; background: rgba(255,255,255,0.02); }
+.acc-card-main { grid-column: 1 / -1; border-color: var(--gold-soft); background: rgba(230,200,120,0.05); }
+.acc-card-k { font-size: 13.5px; color: var(--text-dim); font-weight: 600; }
+.acc-card-v { font-family: var(--serif); font-size: 26px; font-weight: 800; color: var(--gold); margin: 4px 0 6px; white-space: nowrap; }
+.acc-card-v small { font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.acc-card-n { font-size: 13.5px; line-height: 1.65; color: var(--text-mute); }
+.acc-card-n b { color: var(--text-dim); }
+.acc-card-sub { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 12.5px; line-height: 1.65; color: var(--text-mute); }
+@media (max-width: 520px) { .acc-cards { grid-template-columns: 1fr; } }
+
+/* /accuracy 106건 표 — 넓은 화면은 7열, 폰은 4열 */
+.case-table { min-width: 600px; }
+.case-table-note { display: none; font-size: 12.5px; color: var(--text-mute); margin: 0 0 8px; }
+@media (max-width: 600px) {
+  .case-table { min-width: 0; }
+  .case-table .opt { display: none; }
+  .case-table-note { display: block; }
+}
+.site-header + .wrap { padding-top: 28px; }

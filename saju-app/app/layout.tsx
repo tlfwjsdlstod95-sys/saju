@@ -8,11 +8,13 @@ import AccountSync from './AccountSync';
 // 릴스 발행 전에 이게 붙어 있어야 baseline(유입 전 평상시 수치)을 잡을 수 있다.
 import { Analytics } from '@vercel/analytics/react';
 import TrackInit from './TrackInit';
+import SiteHeader from './SiteHeader';
 
 import { SITE_URL } from '@/lib/siteUrl';
 
 const TITLE = '헤아림 · 정밀 만세력 사주';
-const DESC = '틀린 사주로 인생을 정할 순 없으니까. 야자시·균시차까지 보정한 정밀 만세력 위에서, 이직·이사·계약의 시기와 방향을 짚어주는 AI 사주 가이드.';
+// 2026-09-29: 「AI 사주 가이드」 → 「계산이 맞는 곳」 포지션으로. 검색·공유에서 가장 먼저 보이는 문장이다.
+const DESC = '같은 생년월일시인데 앱마다 사주가 다른 이유 — 진태양시·절기·야자시까지 계산해 당신 명식이 갈리는 지점을 보여드립니다. 절기 오차 평균 6.8초, 71,733일 만세력 100% 일치.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -66,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <AccountSync />
+          <SiteHeader />
           {children}
           <Footer />
         </Providers>
