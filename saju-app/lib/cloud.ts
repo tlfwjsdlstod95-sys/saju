@@ -36,7 +36,7 @@ export interface CloudReportSummary {
   chart: string;
   variant: string;
   title: string;
-  meta: { name?: string; birth?: string; ilju?: string; motif?: string; emoji?: string; partner?: string; year?: number; free?: boolean };
+  meta: { name?: string; birth?: string; ilju?: string; motif?: string; emoji?: string; partner?: string; year?: number; free?: boolean; engine?: number };
   createdAt: number;
   updatedAt: number;
 }

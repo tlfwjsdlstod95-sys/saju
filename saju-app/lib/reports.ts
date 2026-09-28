@@ -22,6 +22,7 @@ export interface ReportMeta {
   partner?: string;    // 궁합 상대 이름
   year?: number;       // 신년운세 대상 연도
   free?: boolean;      // 초대 프로모션 등 무료 제공분
+  engine?: number;     // 작성 당시 ENGINE_VERSION — 판정 기준이 바뀌면 옛 리포트를 구분해야 한다
 }
 
 export interface ReportRow {

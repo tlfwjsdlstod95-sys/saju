@@ -21,6 +21,12 @@ export interface GoldenRow {
   method: string;   // 엔진이 채택한 판정 방법(억부/조후우선/병약/통관/종격)
   match: boolean;
   engine: number;
+  /** 채점에 들어간 채로 규칙이 바뀐 첫 버전. 'none' 만 홀드아웃 */
+  seenBy: string;
+  /** 홀드아웃 자격(원문 인용·쪽수·사진). 기존 튜닝 세트는 판단 대상이 아니라 true */
+  schemaOk: boolean;
+  /** 'secondary' = 논문 표·재인용에서 온 명식(원전 쪽 미대조) */
+  tier: 'primary' | 'secondary';
 }
 
 interface RawCase {
@@ -28,7 +34,11 @@ interface RawCase {
   school: string;
   pillars?: { year: string; month: string; day: string; hour?: string };
   expect?: { yongsin?: string; strength?: string; gyeokguk?: string; johu?: string };
-  source: { book: string; chapter?: string; page?: string };
+  source: { book: string; chapter?: string; page?: string; photo?: string; tier?: 'secondary' };
+  note?: string;
+  seenBy?: string;
+  /** 용신이 둘 이상인데 원문에 우선이 없다 → 채점 분모에서 뺀다 */
+  ambiguous?: boolean;
   /** 같은 명식이 다른 출전으로 한 번 더 실려 있을 때, 정본(1차 사료) 케이스의 id. 채점에서 뺀다. */
   dupOf?: string;
 }
@@ -43,6 +53,7 @@ export function yongsinRows(): GoldenRow[] {
     //   논문 재인용과 원전이 같은 명식을 싣는 경우가 있는데, 둘 다 채점하면
     //   그 한 사주의 정오답이 재현율에 두 번 반영돼 숫자가 부풀거나 깎인다.
     if (c.dupOf) continue;
+    if (c.ambiguous) continue;
     try {
       const { dayGan, pillars } = chartFromGanji(c.pillars);
       const strength = dayMasterStrength(dayGan, pillars);
@@ -57,24 +68,15 @@ export function yongsinRows(): GoldenRow[] {
         method: gy.yongsin.method,
         match: gy.yongsin.primary === c.expect.yongsin,
         engine: ENGINE_VERSION,
+        seenBy: c.seenBy ?? 'unknown',
+        schemaOk: c.seenBy !== 'none' || holdoutEligible(c),
+        tier: c.source.tier === 'secondary' ? 'secondary' : 'primary',
       });
     } catch {
       // 입력이 깨진 케이스는 표에서 빼되 조용히 넘어간다(페이지가 죽으면 안 된다)
     }
   }
   return rows.sort((a, b) => a.id.localeCompare(b.id));
-}
-
-/**
- * 튜닝 뒤에 원전에서 새로 캔 표본만 추린다(JCS-042 이후).
- * 엔진 규칙은 JCS-041 까지의 표본으로 맞췄으므로, 그 뒤 케이스의 성적이 **일반화 성능**에 가깝다.
- * 이 둘을 나눠 보여주는 게 정직하다 — 같은 표본으로 맞추고 같은 표본으로 채점하면 숫자가 부풀기 때문.
- */
-export function newSampleRows(rows: GoldenRow[]): GoldenRow[] {
-  return rows.filter((r) => {
-    const n = Number((r.id.match(/(\d+)$/) ?? [])[1] ?? 0);
-    return r.id.startsWith('JCS-') && n >= 42;
-  });
 }
 
 export function rate(rows: GoldenRow[]): { hit: number; total: number; pct: string } {
@@ -89,21 +91,44 @@ export function totalCases(): number {
 }
 
 /**
- * v7 을 확정한 **뒤에** 원전에서 캔 표본(JCS-071~).
- * 규칙을 만들 때 이 명식들은 존재하지도 않았다 — 어떤 규칙도 이 케이스를 본 적이 없다는 뜻이라
- * 표본은 작지만 가장 엄격한 일반화 지표다. 고정 세트(JCS-001~070)와 반드시 나눠 읽는다.
+ * 홀드아웃 자격 — 원문 한자 인용(4자 이상) · 원전 쪽수 · 판본 사진이 모두 있어야 한다.
+ * 모델 기억·블로그·논문 표로 채운 8자가 홀드아웃에 섞이는 순간 이 숫자는 81.3% 와 같은 거짓이 된다.
  */
-export function unseenRows(rows: GoldenRow[]): GoldenRow[] {
-  return rows.filter((r) => {
-    const n = Number((r.id.match(/(\d+)$/) ?? [])[1] ?? 0);
-    return r.id.startsWith('JCS-') && n >= 71;
-  });
+export function holdoutEligible(c: { note?: string; source: { page?: string; photo?: string } }): boolean {
+  return /[\u4e00-\u9fff]{4,}/.test(c.note ?? '') && /\d/.test(c.source.page ?? '') && !!c.source.photo;
 }
 
-/** v7 을 만들 때 쓴 고정 세트(JCS-001~070). 여기 숫자는 부풀 수 있다는 전제로 읽어야 한다. */
-export function fixedRows(rows: GoldenRow[]): GoldenRow[] {
-  return rows.filter((r) => {
-    const n = Number((r.id.match(/(\d+)$/) ?? [])[1] ?? 0);
-    return !(r.id.startsWith('JCS-') && n >= 71);
-  });
+/**
+ * 홀드아웃(S1) — seenBy:'none' 이고 자격을 갖춘 적천수 명식만.
+ * ⚠️ ID 순번으로 정하지 않는다. 예전 「미확인(JCS-071~)」 22건은 v8~v14 를 채택할 때마다 채점에 쓰였다 → 튜닝 세트다.
+ * 2026-09-10 기준 0건. v14 동결 뒤 판본에서 새로 전사하는 명식(JCS-093~)부터 쌓인다.
+ */
+export function holdoutRows(rows: GoldenRow[]): GoldenRow[] {
+  return rows.filter((r) => r.seenBy === 'none' && r.schemaOk);
 }
+
+/** 튜닝 세트(S0) — 규칙을 고칠 때 정오답을 본 명식. 여기 재현율은 낙관치로 읽는다. */
+export function tunedRows(rows: GoldenRow[]): GoldenRow[] {
+  return rows.filter((r) => r.seenBy !== 'none');
+}
+
+/** 원전(primary)에서 온 명식만. 2차 출처(논문 표·재인용)를 빼고 나란히 적는 숫자 */
+export function primaryRows(rows: GoldenRow[]): GoldenRow[] {
+  return rows.filter((r) => r.tier === 'primary');
+}
+
+/** 조후 채점 표본 — 원전 건수와 전체 건수. 원전 N<30 이면 비율을 공개하지 않는다. */
+export function johuSample(): { n: number; primary: number } {
+  const cs = ((goldenRaw as { cases: RawCase[] }).cases ?? []).filter((c) => c.expect?.johu && !c.dupOf && !c.ambiguous);
+  return { n: cs.length, primary: cs.filter((c) => c.source.tier !== 'secondary').length };
+}
+
+/** 조후 비율을 공개하는 최소 표본 */
+export const JOHU_MIN_N = 30;
+
+/**
+ * 홀드아웃(S1) 적중 수를 공개하는 최소 표본.
+ * N 이 작으면 한 건이 비율을 크게 흔든다(N=9 면 한 건이 11%p). 표본 수만 밝히고 적중은 적지 않는다.
+ * 조후의 JOHU_MIN_N 과 같은 규칙 — 근거는 `헤아림_용신_채점정의.md` §1·§5.
+ */
+export const HOLDOUT_MIN_N = 30;
