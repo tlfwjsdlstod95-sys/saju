@@ -3,6 +3,7 @@ import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ENGINE_VERSION } from '@/lib/saju/version';
+import TermNote from '../TermNote';
 import { yongsinRows, rate, holdoutRows, tunedRows, primaryRows, totalCases, johuSample, JOHU_MIN_N, HOLDOUT_MIN_N } from '@/lib/goldenReport';
 
 export const metadata: Metadata = pageMeta({
@@ -59,13 +60,41 @@ export default function AccuracyPage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card acc-summary">
+        <h2>헤아림은 무엇을 검증하나요?</h2>
+        <ol className="acc-steps">
+          <li>
+            <b>① 만세력 계산</b>
+            <span>1900~2100년의 날짜와 절기 계산을 천문 표준과 대조합니다.</span>
+            <a href="#calc">자세히 ↓</a>
+          </li>
+          <li>
+            <b>② 명리 판정</b>
+            <span>고전 원전 명식 {nCases}건으로 판정 로직을 채점하고, 케이스마다 공개합니다.</span>
+            <a href="#judge">자세히 ↓</a>
+          </li>
+          <li>
+            <b>③ 중요한 한계</b>
+            <span>
+              해석에는 학파 차이가 있어, 모든 사주의 정답을 보장하지 않습니다.
+              공개하는 숫자는 &lsquo;원전 재현율&rsquo;이고,{' '}
+              {holdOpen
+                ? <>처음 보는 명식(홀드아웃)에서는 {rHold.hit}/{rHold.total}건을 맞혔습니다.</>
+                : <>처음 보는 명식(홀드아웃)은 {HOLDOUT_MIN_N}건이 모일 때까지 비율을 적지 않습니다.</>}
+            </span>
+          </li>
+        </ol>
+      </div>
+
+      <div className="card" id="calc">
         <h2>1. 만세력(천문 계산) — 3중으로 검증합니다</h2>
         <p style={{ lineHeight: 1.8 }}>
           사주의 출발점은 명식(팔자) 계산입니다. 여기가 틀리면 그 위의 모든 해석이 무의미해서,
           헤아림은 이 층을 세 방향에서 검증합니다.
         </p>
-        <div style={{ display: 'grid', gap: 14, marginTop: 14 }}>
+        <details className="acc-fold">
+        <summary>세 가지 검증 방법 자세히</summary>
+        <div className="acc-fold-body" style={{ display: 'grid', gap: 14 }}>
           <div style={{ borderLeft: '3px solid var(--gold)', paddingLeft: 14 }}>
             <div style={row}><b>① 절대 정확도 — 천문학계 표준과 직접 비교</b></div>
             <p style={{ margin: '6px 0 0', fontSize: 14.5, lineHeight: 1.8, opacity: 0.9 }}>
@@ -93,6 +122,7 @@ export default function AccuracyPage() {
             </p>
           </div>
         </div>
+        </details>
       </div>
 
       <div className="card">
@@ -108,9 +138,10 @@ export default function AccuracyPage() {
           <li><b>표준자오선 이력</b> — 동경 127.5도(1908~1912, 1954~1961) 시기까지 반영</li>
           <li><b>야자시·조자시</b> — 밤 11시대 출생의 일주 처리, 학파 선택 가능 (기본: 야자시 인정)</li>
         </ul>
+        <TermNote terms={['진태양시']} />
       </div>
 
-      <div className="card">
+      <div className="card" id="judge">
         <h2>3. 해석(명리 판정) — 고전 원전으로 채점하고, 결과를 그대로 공개합니다</h2>
         <p style={{ lineHeight: 1.8 }}>
           계산과 달리 해석에는 &lsquo;하나의 정답&rsquo;이 없습니다. 학파마다 강약·용신을 다르게 봅니다.
@@ -170,7 +201,11 @@ export default function AccuracyPage() {
           뜻이기 쉽습니다. 헤아림은 어긋난 케이스를 하나씩 문헌과 대조해 엔진을 고치고, 고칠 때마다
           이 숫자를 갱신합니다. 위 수치는 판정 엔진 v{ENGINE_VERSION} 기준입니다.
         </p>
-        <p style={{ lineHeight: 1.8, marginTop: 10, fontSize: 13.5, color: 'var(--text-mute)' }}>
+        <TermNote terms={['원전재현율', '홀드아웃']} />
+        <details className="acc-fold">
+        <summary>이 숫자를 읽는 법 — 재현율 · 홀드아웃 · 중복 명식</summary>
+        <div className="acc-fold-body">
+        <p style={{ lineHeight: 1.8, marginTop: 0, fontSize: 13.5, color: 'var(--text-mute)' }}>
           ⚠️ 이 숫자는 <b>&lsquo;원전 재현율&rsquo;</b>입니다 — 고전에 실린 명식에서 원문이
           지목한 용신을 엔진이 다시 짚어내는 비율이고, 세상 모든 사주에 대한 &lsquo;정확도&rsquo;가 아닙니다.
           표본이 작다는 점을 그대로 밝히고, 표본은 계속 늘리는 중입니다.
@@ -195,6 +230,8 @@ export default function AccuracyPage() {
           세 쌍을 찾아 채점에서 뺐고, 그만큼 재현율이 내려갔습니다(용신 74.2%→73.4%, 당시 v8.2 기준).
           숫자가 내려가는 쪽이라도 같은 사주를 두 번 세지 않는 편이 맞습니다.
         </p>
+        </div>
+        </details>
       </div>
 
       <div className="card">
@@ -204,7 +241,17 @@ export default function AccuracyPage() {
           명식인지까지 적습니다. 이 표는 손으로 쓴 게 아니라 <b>지금 배포된 엔진이 원전 명식을 다시 판정해</b>
           만든 것이라, 엔진이 바뀌면 이 표도 함께 바뀝니다.
         </p>
-        <div style={{ overflowX: 'auto', marginTop: 14 }}>
+        <div className="acc-gist">
+          <span>고전 명식 <b>{r.total}건</b></span>
+          <span>같은 답 <b>{r.hit}건</b></span>
+          <span>다른 답 <b>{r.total - r.hit}건</b></span>
+          <span>재현율 <b>{r.pct}%</b></span>
+        </div>
+        <TermNote terms={['용신']} />
+        <details className="acc-fold">
+        <summary>케이스 {r.total}건 전체 표 펼치기</summary>
+        <div className="acc-fold-body">
+        <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 600 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', textAlign: 'left', whiteSpace: 'nowrap' }}>
@@ -246,6 +293,8 @@ export default function AccuracyPage() {
           (지금 보류 중인 가설: <b>종격(從格) 문턱 재보정</b> — 대세를 따라야 할 명식을 안 따르기도 하고,
           따르지 말아야 할 명식을 따르기도 합니다. 양방향 사례를 모으는 중입니다.)
         </p>
+        </div>
+        </details>
       </div>
 
       <div className="card">
@@ -254,7 +303,10 @@ export default function AccuracyPage() {
           해석 로직을 고치면 같은 사주의 풀이가 달라질 수 있습니다. 헤아림은 판정 엔진에
           버전 번호를 붙여 모든 리포트에 어떤 기준으로 쓰였는지 기록합니다. 현재 <b style={num}>v{ENGINE_VERSION}</b>.
         </p>
-        <ul style={{ margin: '10px 0 0', paddingLeft: 20, fontSize: 14, lineHeight: 1.9, opacity: 0.85 }}>
+        <details className="acc-fold">
+        <summary>버전별 변경 이력</summary>
+        <div className="acc-fold-body">
+        <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, lineHeight: 1.9, opacity: 0.85 }}>
           <li><b>v2</b> — 조후용신 자격 규칙: 원국에 뿌리 없는 조후는 억부로 전환</li>
           <li><b>v3</b> — 격국 취용을 자평진전 원칙(월지 본기 우선)대로 교정 → 격국 일치율 80%→100%</li>
           <li><b>v4</b> — 억부용신 중화 구간을 적천수천미 원전 집계에 맞춰 교정 → 용신 일치율 50%→67%</li>
@@ -287,6 +339,8 @@ export default function AccuracyPage() {
             → 용신 원전 재현율 74.2%→73.4%, 적천수 강약 88.0%→87.5%.
             <b>숫자가 내려가는 쪽이지만 이게 맞습니다.</b></li>
         </ul>
+        </div>
+        </details>
       </div>
 
       <div className="card">
