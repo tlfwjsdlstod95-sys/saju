@@ -10,7 +10,8 @@ import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+// 2026-09-29: 60 → 300. 10개 섹션을 쓰는 데 70~100초가 걸려, 60초에서 함수가 끊기며 글이 중간에 잘렸다(돈 섹션 근처).
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const blocked = await guardAI(req, 'reading');
