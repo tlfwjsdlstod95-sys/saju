@@ -1,7 +1,9 @@
+import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import { BIZ } from '../biz';
 
-export const metadata = { title: '개인정보처리방침 · 헤아림' };
+export const metadata: Metadata = pageMeta({ title: '개인정보처리방침 · 헤아림', description: '헤아림 개인정보처리방침 — 수집 항목, 이용 목적, 보관 기간과 파기 절차.', path: '/privacy' });
 
 export default function PrivacyPage() {
   return (
