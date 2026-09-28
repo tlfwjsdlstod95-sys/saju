@@ -27,6 +27,24 @@ export const GUNGHAP_LABELS: Record<string, string> = {
 
 export interface ReadingSection { key: string; icon: string; label: string; title: string; body: string; }
 
+/**
+ * 십신 한자 고정표 (2026-09-28) — AI 가 「상관(相官)」처럼 **틀린 한자**를 쓰는 일이 라이브에서 확인됐다(정답 傷官).
+ * 프롬프트(STYLE_GUARD)에도 같은 표를 넣지만, 모델이 어겨도 화면에는 틀린 한자가 나가지 않게 표시 단계에서 한 번 더 바로잡는다.
+ * 규칙: 「십신명(한자)」 괄호 안이 **한자만**이고 정답과 다르면 정답으로 바꾼다. 한글 풀이 괄호(「상관(규칙을 고치는 기운)」)는 건드리지 않는다.
+ */
+export const SIPSIN_HANJA: Record<string, string> = {
+  비견: '比肩', 겁재: '劫財', 식신: '食神', 상관: '傷官', 편재: '偏財',
+  정재: '正財', 편관: '偏官', 정관: '正官', 편인: '偏印', 정인: '正印',
+};
+/** 편관의 다른 이름(七殺)처럼 **맞는 이표기**는 그대로 둔다 */
+const HANJA_ALT: Record<string, string[]> = { 편관: ['七殺', '七煞'], 편인: ['梟神'] };
+export function fixSipsinHanja(text: string): string {
+  return text.replace(/(비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인)\(([\u4E00-\u9FFF]{1,4})\)/g, (all, name: string, han: string) => {
+    const ok = SIPSIN_HANJA[name];
+    return han === ok || (HANJA_ALT[name] ?? []).includes(han) ? all : `${name}(${ok})`;
+  });
+}
+
 /** 스트리밍 마커 텍스트(@@key@@)를 누적 파싱 → {lead, sections} */
 export function parseReadingStream(
   text: string,
@@ -34,7 +52,7 @@ export function parseReadingStream(
   icons: Record<string, string> = READING_ICONS,
   labels: Record<string, string> = READING_LABELS,
 ): { lead: string; sections: ReadingSection[] } {
-  const parts = text.split(/@@(\w+)@@/); // [pre, key, content, key, content, ...]
+  const parts = fixSipsinHanja(text).split(/@@(\w+)@@/); // [pre, key, content, key, content, ...]
   let lead = '';
   const map: Record<string, { title: string; body: string }> = {};
   for (let i = 1; i < parts.length; i += 2) {

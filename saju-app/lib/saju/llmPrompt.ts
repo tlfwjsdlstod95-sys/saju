@@ -4,6 +4,7 @@ import type { SajuResult } from './types';
 import { iljuCharacter, sipsinPatterns } from './ilju';
 import { edgeKeywordSet, luckInteractions } from './dynamics';
 import { BANNED } from './cardLint';
+import { SIPSIN_HANJA } from './readingMeta';
 
 // 명식의 '구조 사실'(일주 캐릭터 + 십신 패턴 + 엣지 키워드세트)을 한 덩어리로 — AI가 일간 원형으로 회귀하지 않게 박아준다.
 function structureFacts(r: SajuResult): string {
@@ -59,6 +60,7 @@ export const STYLE_GUARD = `
 - 금지어: ${BANNED.join(', ')}. 부정문으로도 쓰지 않습니다(예: "운명이 아니라" 대신 "정해진 결말이 아니라").
 - 예언 금지: 일어날 일을 단정하지 않습니다("~하게 됩니다", "만납니다", "헤어집니다", "잘될 것", "성공합니다"). 명식 근거로 "~할 때 ~하는 편"처럼 경향을 말합니다.
 - 사람 규정 금지: "당신은 ~한 사람입니다", "당신은 ~형", "전형적인 ~". 주어는 "이 명식은 / 이 구조는", 사람은 장면 속에서만("~할 때 ~하는 편입니다").
+- 십신 한자는 이 표 그대로만 씁니다: ${Object.entries(SIPSIN_HANJA).map(([k, v]) => `${k} ${v}`).join(' · ')}. 확실하지 않은 한자는 쓰지 말고 한글만 씁니다.
 - 명식에 없는 사실로 문장을 만들지 않습니다. 근거(간지·십신·강약·합충·대운·세운)를 댈 수 없는 문장은 지웁니다.
 - 출력 전 점검: 금지어 없음 · 예언 동사 없음 · "당신은 ~한 사람" 없음 · 근거 없는 문장 없음. 하나라도 걸리면 그 문장을 고쳐 쓰고 출력합니다.`;
 
