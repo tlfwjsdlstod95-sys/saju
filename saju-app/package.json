@@ -7,12 +7,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:engine": "tsx scripts/test-engine.ts"
+    "test:engine": "tsx scripts/test-engine.ts",
+    "test:invariants": "tsx scripts/test-invariants.ts",
+    "test:golden": "tsx scripts/test-golden.ts",
+    "test:daewoon": "tsx scripts/test-daewoon.ts",
+    "test:daily": "tsx --tsconfig tsconfig.json scripts/test-daily.ts",
+    "test:yearly": "tsx scripts/test-yearly-ausp.ts",
+    "test:gunghap": "tsx scripts/test-gunghap.ts",
+    "baseline": "tsx scripts/engine-baseline.ts",
+    "baseline:compare": "tsx scripts/engine-baseline.ts --compare"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/analytics": "^2.0.1",
     "next": "14.2.5",
     "next-auth": "5.0.0-beta.20",
     "react": "^18.3.1",
@@ -22,6 +31,7 @@
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "lunar-javascript": "^1.7.7",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0"
   }
