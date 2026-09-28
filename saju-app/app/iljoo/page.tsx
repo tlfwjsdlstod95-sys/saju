@@ -1,13 +1,15 @@
 // 일주 사전 목록 — 60갑자 인덱스 (SEO 허브 페이지)
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { CHEONGAN, CHEONGAN_HANJA, JIJI } from '@/lib/saju/constants';
 import { iljuCharacter } from '@/lib/saju/ilju';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: '일주 사전 — 60갑자 일주별 특징 총정리 | 헤아림',
   description: '갑자일주부터 계해일주까지, 60일주 전체의 물상과 성격 특징. 내 일주는 정밀 만세력으로 무료 확인.',
-};
+  path: '/iljoo',
+});
 
 export default function IljuIndex() {
   const groups: { gan: number; items: { slug: string; tag: string }[] }[] = [];
