@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { addReceipt } from '@/lib/receipts';
+import { track } from '@/lib/track';
 
 const ENT_PREFIX = 'saju_ent_v2:'; // 명식별 이용권 로컬 캐시 (진짜 권한은 서버)
 const RETURN_KEY = 'saju_pay_return';
@@ -51,6 +52,7 @@ function SuccessInner() {
           isTest: !!data.isTest,
         });
         setState('ok');
+        if (!data.isTest) track('pay_success');   // 상품·경계 상태는 결제 직전 값이 자동으로 붙는다
 
         const back = (() => { try { return localStorage.getItem(RETURN_KEY) || '/'; } catch { return '/'; } })();
         try { localStorage.removeItem(RETURN_KEY); } catch {}
