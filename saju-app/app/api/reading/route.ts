@@ -5,6 +5,7 @@ import { guardAI, clampInt } from '@/lib/apiGuard';
 import { chartId } from '@/lib/chartId';
 import { checkEntitled } from '@/lib/entitlement';
 import { saveReport } from '@/lib/reports';
+import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import type { BirthInput } from '@/lib/saju/types';
 
 export const runtime = 'nodejs';
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
     ilju: saju.pillars.day.ganKor + saju.pillars.day.jiKor,
     motif: saju.archetype.motif.name,
     emoji: saju.archetype.motif.emoji,
+    engine: ENGINE_VERSION, // 어떤 판정 기준으로 쓰인 글인지
   };
   const reportTitle = `${input.name?.trim() || '이름 없음'} · 정밀 사주 리포트`;
 
@@ -73,7 +75,9 @@ export async function POST(req: Request) {
   const tone = normalizeTone(body.tone);
   const kvUrl = process.env.UPSTASH_REDIS_REST_URL;
   const kvTok = process.env.UPSTASH_REDIS_REST_TOKEN;
-  const cacheKey = `reading:v1:${input.year}-${input.month}-${input.day}-${input.hour}-${input.minute}-${input.sex ?? ''}-${Math.round((input.longitude ?? 126.978) * 100)}-${input.jasiMode ?? 'yaja'}-${(input.name ?? '').trim()}:${tone}`;
+  // ⚠️ READING_TAG(판정+문장 버전)를 쓴다. 예전엔 ENGINE_TAG 만 넣어서, 판정은 그대로인데 프롬프트에 들어가는
+  //    숫자(대운 나이·대운/세운 길흉지수)가 바뀌어도 서버 캐시가 60일간 옛 글을 돌려줬다(2026-09-11 발견).
+  const cacheKey = `reading:v1:${READING_TAG}:${input.year}-${input.month}-${input.day}-${input.hour}-${input.minute}-${input.sex ?? ''}-${Math.round((input.longitude ?? 126.978) * 100)}-${input.jasiMode ?? 'yaja'}-${(input.name ?? '').trim()}:${tone}`;
   if (kvUrl && kvTok) {
     try {
       const g = await fetch(`${kvUrl}/get/${encodeURIComponent(cacheKey)}`, {
