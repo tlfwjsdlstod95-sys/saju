@@ -8,7 +8,7 @@
 //   문구(「N명이 명식을 확인했어요」)는 그대로 두고 **숫자를 사실로** 만든 것. 임계값은 1,000.
 //   `readings_total` 은 내부 지표로 계속 센다(공개는 unique 쪽).
 import { NextResponse } from 'next/server';
-import { totalCases } from '@/lib/goldenReport';
+import { totalCases, transcribedCases } from '@/lib/goldenReport';
 
 export const runtime = 'nodejs';
 
@@ -18,10 +18,11 @@ export async function GET() {
   //   숫자로 신뢰를 파는 사이트가 첫 화면에서 숫자를 어긋내면 검증 페이지 전체가 의심받는다.
   //   근본 수정은 문구를 고치는 게 아니라 **한 곳에서만 계산하는 것**이다.
   const cases = totalCases();
+  const transcribed = transcribedCases();   // 「원전 192건 중 채점 기준이 있는 163건」 — 두 숫자를 한 문장에
 
   const kvUrl = process.env.UPSTASH_REDIS_REST_URL;
   const kvTok = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!kvUrl || !kvTok) return NextResponse.json({ total: 0, people: 0, cases });
+  if (!kvUrl || !kvTok) return NextResponse.json({ total: 0, people: 0, cases, transcribed });
   const h = { Authorization: `Bearer ${kvTok}` };
   try {
     const [tRes, pRes] = await Promise.all([
@@ -32,8 +33,8 @@ export async function GET() {
     const pJ = await pRes.json().catch(() => ({}));
     const total = parseInt(tJ?.result ?? '0', 10) || 0;
     const people = parseInt(pJ?.result ?? '0', 10) || 0;
-    return NextResponse.json({ total, people, cases }, { headers: { 'cache-control': 'public, s-maxage=300' } });
+    return NextResponse.json({ total, people, cases, transcribed }, { headers: { 'cache-control': 'public, s-maxage=300' } });
   } catch {
-    return NextResponse.json({ total: 0, people: 0, cases });
+    return NextResponse.json({ total: 0, people: 0, cases, transcribed });
   }
 }
