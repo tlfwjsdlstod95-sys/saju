@@ -39,9 +39,10 @@ export const SIPSIN_HANJA: Record<string, string> = {
 /** 편관의 다른 이름(七殺)처럼 **맞는 이표기**는 그대로 둔다 */
 const HANJA_ALT: Record<string, string[]> = { 편관: ['七殺', '七煞'], 편인: ['梟神'] };
 export function fixSipsinHanja(text: string): string {
-  return text.replace(/(비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인)\(([\u4E00-\u9FFF]{1,4})\)/g, (all, name: string, han: string) => {
+  // 괄호 안이 「相官)」처럼 한자로 끝나든, 「相官 — 자유·표현…)」처럼 한자 뒤에 풀이가 이어지든 한자 부분만 바꾼다(라이브에서 둘 다 확인)
+  return text.replace(/(비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인)\(([\u4E00-\u9FFF]{1,4})(?=[)\s—–\-·,:])/g, (all, name: string, han: string) => {
     const ok = SIPSIN_HANJA[name];
-    return han === ok || (HANJA_ALT[name] ?? []).includes(han) ? all : `${name}(${ok})`;
+    return han === ok || (HANJA_ALT[name] ?? []).includes(han) ? all : `${name}(${ok}`;
   });
 }
 
