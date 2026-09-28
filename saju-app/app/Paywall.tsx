@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Script from 'next/script';
 import { useSession, signIn } from 'next-auth/react';
 import { makeOrderId } from '@/lib/chartId';
+import { track } from '@/lib/track';
 
 // ── 판매 단위 ────────────────────────────────────────────────────
 // 헤아림은 "생년월일시 1건에 대한 정밀 리포트 1건"을 판다.
@@ -119,6 +120,9 @@ export default function Paywall(
   const { data: session, status } = useSession();
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
   const loggedIn = !!(session as any)?.uid;
+  const product = productName?.includes('궁합') ? 'gunghap' : 'report';
+
+  useEffect(() => { if (open) track('paywall_open', { product }); }, [open, product]);
 
   if (!open) return null;
 
@@ -130,6 +134,7 @@ export default function Paywall(
     if (!window.TossPayments) { setErr('결제 모듈을 불러오는 중이에요. 잠시 후 다시 눌러주세요.'); return; }
 
     setPaying(true);
+    track('pay_click', { product });
     try {
       // 돌아올 경로 저장 (메인/궁합 어디서 눌렀든 그 자리로 복귀)
       try { localStorage.setItem(RETURN_KEY, window.location.pathname); } catch {}

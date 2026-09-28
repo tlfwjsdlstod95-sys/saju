@@ -7,6 +7,7 @@ import AccountSync from './AccountSync';
 // Vercel Analytics — 대시보드는 2026-09-04에 켰는데 **수집 스크립트가 없어 계속 0** 이었다.
 // 릴스 발행 전에 이게 붙어 있어야 baseline(유입 전 평상시 수치)을 잡을 수 있다.
 import { Analytics } from '@vercel/analytics/react';
+import TrackInit from './TrackInit';
 
 import { SITE_URL } from '@/lib/siteUrl';
 
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Providers>
         <PwaSetup />
         <Analytics />
+        <TrackInit />
       </body>
     </html>
   );

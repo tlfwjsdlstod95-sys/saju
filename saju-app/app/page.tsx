@@ -29,6 +29,7 @@ import Paywall, { usePremium, PRICE } from './Paywall';
 import ReportShelf from './ReportShelf';
 import SummaryCard from './SummaryCard';
 import TermNote from './TermNote';
+import { track } from '@/lib/track';
 import PlanCompare from './PlanCompare';
 import ResultNav from './ResultNav';
 import TimeUnknownCard from './TimeUnknownCard';
@@ -286,6 +287,12 @@ export default function Home() {
       if (elapsed < 2000) await sleep(2000 - elapsed); // 정밀 분석 연출 최소 노출
       setResult(data);
       setAnalyzed(bodyObj); // 이용권 판정 기준이 되는 '분석된 명식'
+      {
+        // 경계 판정은 결과 요약 카드(lib/saju/summary.ts)와 같은 기준
+        const b = data?.boundary;
+        const changed = !!b && (b.anyChange || Math.abs(b.jeolgi?.deltaMin ?? 999) <= 60);
+        track('saju_complete', { has_hour: bodyObj.unknownTime ? 'n' : 'y', boundary: bodyObj.unknownTime ? 'unknown' : changed ? 'changed' : 'stable' });
+      }
       // 비용 원칙: AI 실시간 호출은 결제 사용자만. 무료는 규칙 엔진 풀이 즉시 표시(API 0원).
       // 이 명식의 리포트를 구매했는지는 서버 확인이 비동기라, 아래 useEffect 가 대신 띄운다.
     } catch (e: any) { setError(e.message); }
