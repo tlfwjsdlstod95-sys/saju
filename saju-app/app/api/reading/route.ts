@@ -5,6 +5,7 @@ import { guardAI, clampInt } from '@/lib/apiGuard';
 import { chartId } from '@/lib/chartId';
 import { checkEntitled } from '@/lib/entitlement';
 import { saveReport } from '@/lib/reports';
+import { isCompleteReadingText } from '@/lib/saju/readingMeta';
 import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import type { BirthInput } from '@/lib/saju/types';
 
@@ -85,7 +86,8 @@ export async function POST(req: Request) {
       });
       if (g.ok) {
         const j = await g.json();
-        if (typeof j?.result === 'string' && j.result.length > 200) {
+        // 잘린 글(마지막 섹션 없음)이 캐시에 남아 있으면 쓰지 않고 새로 만든다.
+        if (typeof j?.result === 'string' && j.result.length > 200 && isCompleteReadingText(j.result)) {
           // 캐시에서 왔더라도 "내 리포트"로는 계정에 남겨야 재열람이 된다.
           await saveReport({ uid, kind: 'reading', chart, variant: tone, title: reportTitle, meta: reportMeta, body: j.result });
           return new Response(j.result, {
@@ -99,7 +101,8 @@ export async function POST(req: Request) {
   const nowYear = new Date().getFullYear();
   const age = nowYear - input.year;
   const model = process.env.SAJU_MODEL || 'claude-sonnet-4-6';
-  const maxTokens = 3000;
+  // 2026-09-29: 3000 → 8000. 10개 섹션(연애 7~9문장 포함)이 3000 토큰을 넘어 money 근처에서 잘리고 있었다.
+  const maxTokens = 8000;
 
   let upstream: Response;
   try {
@@ -139,6 +142,7 @@ export async function POST(req: Request) {
       let buf = '';
       let full = ''; // 캐시 저장용 전체 텍스트
       let broken = false;
+      let stopReason = '';
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -153,6 +157,7 @@ export async function POST(req: Request) {
             if (!payload || payload === '[DONE]') continue;
             try {
               const j = JSON.parse(payload);
+              if (j.type === 'message_delta' && j.delta?.stop_reason) stopReason = j.delta.stop_reason;
               if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
                 full += j.delta.text;
                 controller.enqueue(encoder.encode(j.delta.text));
@@ -164,8 +169,13 @@ export async function POST(req: Request) {
         broken = true;
         controller.enqueue(encoder.encode('\n\n(스트림이 중단되었어요. 다시 시도해 주세요.)'));
       } finally {
+        // 끝까지 온 풀이만 저장한다 — 토큰 한도에 걸려 잘렸거나 마지막 섹션이 없으면 캐시·보관 둘 다 하지 않는다.
+        const complete = !broken && stopReason !== 'max_tokens' && isCompleteReadingText(full);
+        if (!complete && !broken) {
+          controller.enqueue(encoder.encode('\n\n(풀이를 끝까지 받지 못했어요. 새로고침하면 처음부터 다시 받아요.)'));
+        }
         // 완결된 풀이만 캐시에 저장 (TTL 60일). 실패해도 무시.
-        if (!broken && full.length > 500 && kvUrl && kvTok) {
+        if (complete && full.length > 500 && kvUrl && kvTok) {
           try {
             await fetch(`${kvUrl}/set/${encodeURIComponent(cacheKey)}?EX=5184000`, {
               method: 'POST', headers: { Authorization: `Bearer ${kvTok}` }, body: full,
@@ -173,7 +183,7 @@ export async function POST(req: Request) {
           } catch {}
         }
         // 계정 보관 — 약관에 적은 "구매한 리포트 재열람"의 실체. 캐시(TTL 60일)와 달리 만료되지 않는다.
-        if (!broken) {
+        if (complete) {
           await saveReport({ uid, kind: 'reading', chart, variant: tone, title: reportTitle, meta: reportMeta, body: full });
         }
         controller.close();
