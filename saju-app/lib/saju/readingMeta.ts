@@ -45,6 +45,11 @@ export function fixSipsinHanja(text: string): string {
   });
 }
 
+/** 이미 파싱돼 저장된 풀이(브라우저 캐시·세션 복원)에도 같은 교정을 건다 — 캐시는 parseReadingStream 을 다시 거치지 않는다 */
+export function fixReadingHanja<T extends { lead: string; sections: { title: string; body: string }[] }>(r: T): T {
+  return { ...r, lead: fixSipsinHanja(r.lead), sections: r.sections.map((x) => ({ ...x, title: fixSipsinHanja(x.title), body: fixSipsinHanja(x.body) })) };
+}
+
 /** 스트리밍 마커 텍스트(@@key@@)를 누적 파싱 → {lead, sections} */
 export function parseReadingStream(
   text: string,
