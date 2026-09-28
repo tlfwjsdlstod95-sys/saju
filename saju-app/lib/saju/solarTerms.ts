@@ -70,3 +70,28 @@ export function listJeol(year: number) {
     return { ...j, kstJd: jd, date: jdToDate(jd - 9 / 24 + 9 / 24) };
   });
 }
+
+/** 출생 순간에서 **가장 가까운 절입**과 그 시간차.
+ *
+ *  「당신은 절기 경계에서 며칠 몇 시간 떨어져 있습니다」를 말하기 위한 값이다.
+ *  새 알고리즘이 아니라 **기존 `solarTermKSTjd` 를 두 번 부르는 것뿐** —
+ *  절기 계산 자체는 손대지 않는다(v14 재현율이 움직이면 안 된다).
+ *
+ *  뉴턴 반복이 목표 황경의 **가장 가까운 해**로 수렴하므로,
+ *  지금 구간의 시작 황경으로 부르면 직전 절입, 다음 구간 황경으로 부르면 다음 절입이 나온다.
+ */
+export interface JeolPoint { name: string; hanja: string; longitude: number; kstJd: number; deltaMin: number; }
+export function nearestJeol(jdKST: number): { prev: JeolPoint; next: JeolPoint; nearest: JeolPoint } {
+  const lon = sunLongitudeAtKST(jdKST);
+  const seg = Math.floor(((((lon - 315) % 360) + 360) % 360) / 30);
+  const startLon = (315 + seg * 30) % 360;
+  const nextLon = (startLon + 30) % 360;
+  const g = jdToDate(jdKST - 9 / 24);
+  const mk = (targetLon: number): JeolPoint => {
+    const kstJd = solarTermKSTjd(targetLon, g.year, g.month, g.day);
+    const j = JEOL.find((x) => x.longitude === targetLon)!;
+    return { name: j.name, hanja: j.hanja, longitude: targetLon, kstJd, deltaMin: Math.round((jdKST - kstJd) * 1440) };
+  };
+  const prev = mk(startLon), next = mk(nextLon);
+  return { prev, next, nearest: Math.abs(prev.deltaMin) <= Math.abs(next.deltaMin) ? prev : next };
+}

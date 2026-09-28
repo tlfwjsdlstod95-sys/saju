@@ -7,6 +7,7 @@
 //   판정 로직이 두 벌이 되지 않도록 gaeun.ts 도 이 파일을 쓴다(단일 출처).
 
 import { SAENG, GEUK, type Ohaeng } from './constants';
+import { strengthTier } from './elements';
 
 /** 오행별 색·방위 — 무료로 공개해도 되는 상식 수준의 상징 정보 */
 export const OHAENG_LOOK: Record<Ohaeng, { color: string; colorHex: string; direction: string }> = {
@@ -24,7 +25,8 @@ export const OHAENG_LOOK: Record<Ohaeng, { color: string; colorHex: string; dire
  */
 export function luckyOhaeng(dayO: Ohaeng, strength: number): Ohaeng {
   const generator = (Object.keys(SAENG) as Ohaeng[]).find((o) => SAENG[o] === dayO)!; // 인성
-  if (strength < 0.45) return generator;
-  if (strength > 0.55) return SAENG[dayO];  // 식상
+  const t = strengthTier(strength);          // 2026-09-11: 0.45 → 화면 라벨 경계로 통일
+  if (t === 'weak') return generator;
+  if (t === 'strong') return SAENG[dayO];   // 식상
   return GEUK[dayO];                        // 재성
 }

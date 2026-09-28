@@ -15,6 +15,17 @@ export interface BirthInput {
   unknownTime?: boolean; // 시간 모름
   name?: string;         // 이름(선택) — 풀이 문구에 반영
   jasiMode?: 'yaja' | 'jeongja'; // 자시 학파: yaja(기본)=야자시 인정(23시대 일주 유지) / jeongja=정자시(23시부터 다음날 일주)
+
+  // ── 계산 스위치 (2026-09-09) ─────────────────────────────────────
+  // 「명식 비교표」가 **반사실 명식**을 만들 때만 끈다 — 「이 보정을 안 하는 곳에서는 당신 시주가 X가 아니라 Y」.
+  // ⚠️ 기본값은 전부 **현행 동작**이다. 옵션이 추가됐다고 기존 명식이 1비트라도 바뀌면 그건 버그다
+  //    (`scripts/test-boundary.ts` 가 기본값 불변을 매번 확인한다).
+  /** 진태양시 보정(출생지 경도 시차 + 균시차). false = 시계 시각을 그대로 쓴다 */
+  trueSolar?: boolean;
+  /** 서머타임 환원. false = 시계가 1시간 앞당겨져 있던 사실을 무시한다 */
+  dst?: boolean;
+  /** 절입 판정: instant(기본)=절기 '시각'까지 본다 / date_only=절입을 그날 00:00 으로 본다(날짜만 보는 방식) */
+  jieqi?: 'instant' | 'date_only';
 }
 
 export interface Pillar {
@@ -50,7 +61,14 @@ export interface LuckPillar {
 
 export interface LuckResult {
   direction: '순행' | '역행';
-  daewoonAge: number;        // 대운수
+  daewoonAge: number;        // 대운수 원값(소수 1자리) — 표시에는 startAge 를 쓴다
+  /** 대운수(정수, 첫 대운 나이) — 원값에서 한 번만 반올림, 최소 1 */
+  startAge?: number;
+  /** 起運 정밀값 — 3일=1년. approx=true 면 시각 모름(정오 가정) */
+  qiyun?: {
+    yearsFloat: number; years: number; months: number; days: number;
+    deltaDays: number; targetJeolKSTjd: number; approx: boolean;
+  };
   daewoon: LuckPillar[];     // 10년 단위 대운
   sewoon: LuckPillar[];      // 올해부터 10년 세운
 }
@@ -85,3 +103,10 @@ export interface SajuResult {
   luck: LuckResult;
   warnings: string[];
 }
+
+/**
+ * 판정(`gyeokYong`)에 **기대지 않는** 결과 부분.
+ *   무료 응답(`FreeSajuResult`)도 이 모양을 만족한다. 오늘의 운세·작명처럼
+ *   클라이언트에서 도는 무료 기능은 이 타입만 받게 해서, 판정이 빠진 응답으로도 안전하게 돌게 한다.
+ */
+export type SajuCore = Omit<SajuResult, 'gyeokYong'>;

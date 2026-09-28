@@ -6,6 +6,18 @@ import {
 import type { OhaengCount, Pillar } from './types';
 
 /** 일간 대비 어떤 천간의 십신(十神) */
+/**
+ * 신강·신약 경계 — 화면 명식 라벨(interpret·gyeokyong 의 ≤0.38 / ≥0.55)과 같은 값.
+ * 강약을 쓰는 **모든 식**(신년·택일·대운 그래프·보완 오행·작명)이 이 상수를 쓴다.
+ * ⚠️ 2026-09-11 전엔 이 식들만 0.45 로 갈라서, 0.38~0.45 명식은 화면엔 「중화」인데 점수는 신약으로 나왔다.
+ * (판정 엔진 gyeokyong·interpret 은 v14 동결이라 리터럴을 그대로 두되 값은 같다 — test-yearly 가 확인)
+ */
+export const STRENGTH_CUT = { weak: 0.38, strong: 0.55 } as const;
+export type StrengthTier = 'weak' | 'mid' | 'strong';
+export function strengthTier(s: number): StrengthTier {
+  return s <= STRENGTH_CUT.weak ? 'weak' : s >= STRENGTH_CUT.strong ? 'strong' : 'mid';
+}
+
 export function sipsin(dayGan: number, otherGan: number): Sipsin {
   const oDay = GAN_OHAENG[dayGan];
   const oOther = GAN_OHAENG[otherGan];

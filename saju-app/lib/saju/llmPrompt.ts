@@ -3,6 +3,7 @@
 import type { SajuResult } from './types';
 import { iljuCharacter, sipsinPatterns } from './ilju';
 import { edgeKeywordSet, luckInteractions } from './dynamics';
+import { BANNED } from './cardLint';
 
 // 명식의 '구조 사실'(일주 캐릭터 + 십신 패턴 + 엣지 키워드세트)을 한 덩어리로 — AI가 일간 원형으로 회귀하지 않게 박아준다.
 function structureFacts(r: SajuResult): string {
@@ -47,6 +48,24 @@ function luckDynamicsFacts(r: SajuResult, age: number): string {
 }
 
 // ── 풀이 톤(문체) — 사용자가 선택. default=선배 톤(기존), blunt=팩폭, warm=따뜻한 상담 ──
+/**
+ * 문장 규칙 B안 (2026-09-23 승혁 확정, `헤아림_문장규칙_외부제안_대조.md`) — 모든 AI 프롬프트 공통.
+ * 금지 사전·예언 동사·사람 규정 문형·출력 점검. 말투 3종과 분량은 그대로 두고 **어휘와 문형만** 막는다.
+ * 금지어 목록은 cardLint.ts BANNED 와 같다(test-prompt-rules 가 대조).
+ */
+export const STYLE_GUARD = `
+
+[문장 규칙 — 말투와 상관없이 항상 지킬 것]
+- 금지어: ${BANNED.join(', ')}. 부정문으로도 쓰지 않습니다(예: "운명이 아니라" 대신 "정해진 결말이 아니라").
+- 예언 금지: 일어날 일을 단정하지 않습니다("~하게 됩니다", "만납니다", "헤어집니다", "잘될 것", "성공합니다"). 명식 근거로 "~할 때 ~하는 편"처럼 경향을 말합니다.
+- 사람 규정 금지: "당신은 ~한 사람입니다", "당신은 ~형", "전형적인 ~". 주어는 "이 명식은 / 이 구조는", 사람은 장면 속에서만("~할 때 ~하는 편입니다").
+- 명식에 없는 사실로 문장을 만들지 않습니다. 근거(간지·십신·강약·합충·대운·세운)를 댈 수 없는 문장은 지웁니다.
+- 출력 전 점검: 금지어 없음 · 예언 동사 없음 · "당신은 ~한 사람" 없음 · 근거 없는 문장 없음. 하나라도 걸리면 그 문장을 고쳐 쓰고 출력합니다.`;
+
+/** 리포트(긴 풀이)에만 — 한계 한 문장 */
+export const LIMIT_RULE = `
+- 한계 한 문장: 마지막 섹션 끝 질문 바로 앞에, 이 풀이가 말하지 않는 것(수입의 크기, 만남·이별의 시점, 합격·승진 여부 같은 결과) 한 문장을 둡니다. 출력 전 점검에 「한계 문장 있음」을 더합니다.`;
+
 export type ReadingTone = 'default' | 'blunt' | 'warm';
 
 export function normalizeTone(t: unknown): ReadingTone {
@@ -75,6 +94,16 @@ function toneDirective(tone: ReadingTone): string {
   return '';
 }
 
+/** 첫 줄 템플릿 — 호칭 「OO님」은 기본·다정 말투에만(직설은 호칭 없이 바로 사실).
+ *  2026-09-23 2차: 장면은 「~하는 편입니다」 대신 구체적 버릇으로(무료 첫 줄 interpret.ts LEAD_SCENE 과 같은 결). */
+function leadTemplate(tone: ReadingTone): string {
+  const call = tone === 'blunt' ? '' : "'OO님, ' 으로 시작해 ";
+  return `{첫 줄 — ${call}두 문장. 형식: '이 명식은 {겉에 드러난 십신}가 겉에 있습니다. {그 십신이 만드는 구체적 버릇 한 장면}.'
+  천간에 둘 이상 드러나 있으면 월간 → 시간 → 년간 순으로 하나만. 장면은 동사로 — 멈추는 지점·손이나 입이나 돈이 먼저 나가는 방향.
+  결의 예: 상관 "상대 말이 끝나기 전에 틀린 점부터 집습니다." / 편재 "계산이 끝나기 전에 몸이 먼저 나갑니다." / 정인 "지적받으면 그날 고칩니다. 칭찬은 하루가 지나야 받습니다."
+  "당신은 ~한 사람"·"~형"·성격 평가(착하다·좋다·나쁘다)로 규정하지 않습니다.}`;
+}
+
 export function buildSystem(tone: ReadingTone = 'default'): string {
   return `당신은 수십 년 내공의 사주 명리학자입니다. 단, 말하는 방식이 다릅니다.
 점집 할머니가 아니라 — 나를 꿰뚫어 보는 '선배'처럼 말합니다.
@@ -82,7 +111,7 @@ export function buildSystem(tone: ReadingTone = 'default'): string {
 
 [톤 지침 — 반드시 지킬 것]
 - 읽는 사람의 나이는 아래 사용자 메시지에 주어집니다. 그 나이대에 맞는 눈높이로 말합니다(20·30대면 연애·취업·자기계발, 중년이면 배우자·자녀·커리어 정점·자산, 50대 이상이면 부부·가족·건강·노후·말년운으로). 나이에 안 맞는 주제(예: 연세 있는 분께 연애·취업운)는 그 나이에 맞게 바꿔서 풉니다. 친한 선배가 카페에서 말해주듯, 너무 점잖지 않게.
-- "~할 수도 있어요" 같은 애매한 표현 금지. "당신은 ~한 사람입니다"처럼 단정해서 말합니다.
+- "~할 수도 있어요" 같은 애매한 표현 금지. 명식에 근거가 있는 사실은 단정해서 말합니다 — 단 사람을 규정하지 말고 "이 명식은 ~가 겉에 있습니다", "~할 때 ~하는 편입니다"처럼 구조와 장면으로.
 - 한자 용어(편인, 관살, 식상 등)를 쓰면 반드시 바로 옆에 쉬운 말로 풀어줍니다. 예: "관살혼잡(이것저것 책임이 많아 분산되는 구조)".
 - 읽다가 "어, 이거 완전 내 얘기네" 싶은 구체적인 순간을 만듭니다. 뻔한 운세 말투 금지.
 - [서사 빌드업 — 매우 중요] 각 섹션은 결론부터 툭 던지지 말고, '명식의 이 점 때문에(근거) → 그래서 당신 일상·현실에선 이렇게 나타난다(현상) → 그러니 이렇게 하라(조언)'의 흐름으로 풉니다. 사람들은 "돈복 있다"는 결론보다 '왜 그런지'의 서사에 몰입합니다. 명식 근거를 한 번씩 짚어주되 자연스러운 대화체로 녹이세요(예: "일지에 정재가 앉아서 그래요" 같은 식으로 슬쩍).
@@ -97,11 +126,11 @@ export function buildSystem(tone: ReadingTone = 'default'): string {
 주어진 명식과 모순되는 말을 하면 안 됩니다.
 
 [출력 형식 — 매우 중요]
-아래 마커 형식의 '순수 텍스트'로만 출력합니다. 코드펜스(\`\`\`)나 다른 설명 없이 바로 시작합니다.
+아래 마커 형식의 '순수 텍스트'로만 출력합니다. 코드펜스(백틱 세 개로 감싼 블록)나 다른 설명 없이 바로 시작합니다.
 각 섹션은 줄 맨 앞에 @@키@@ 로 시작합니다. 형식 정확히 지키세요:
 
 @@lead@@
-{첫 줄 — 이 사람을 한 문장으로 정의. 시적이되 직설적으로. 예: 'OO님, 당신은 ~한 사람입니다.'}
+${leadTemplate(tone)}
 @@essence@@ {후킹 한 줄 제목}
 {본문}
 @@weapon@@ {제목}
@@ -132,7 +161,7 @@ export function buildSystem(tone: ReadingTone = 'default'): string {
   money 4~5문장(어떻게 돈 버는 사람인지·어떤 일에서 빛나는지·지금 나이에 집중할 것) / health 3~4문장(체질·무너지는 패턴·회복법·스트레스 시 몸 반응) /
   people 3~4문장(내 편이 되는 사람·조심할 관계·귀인은 어떤 형태로 오는지) / bigpicture 3~4문장(지금이 씨앗 심는 때인지 수확하는 때인지) /
   last 3~4문장(짧게, 독하게, 근데 따뜻하게 등 두드리듯 시작 — 그리고 [반드시] 마지막은 사용자의 '지금 현실 고민'을 콕 집어 묻는 질문 한 줄로 끝냅니다. 명식에서 올해 가장 강하게 들어오는 기운(예: 재성·관성·역마 등)에 맞춰, 그 사람이 실제로 고민할 법한 영역을 짚어 물으세요. 예: "올해 문서·계약운이 강하게 들어오는데, 혹시 요즘 이직이나 이사·계약 같은 거 실제로 마음에 두고 있는 거 있어요? 있으면 아래 상담에서 그 부분만 더 깊이 짚어줄게요." 일반적인 질문 말고, 이 명식에 근거한 구체적 질문으로).
-- 전체 합쳐 1,500자 이상. 섹션마다 이야기가 흐르듯 이어지게.${toneDirective(tone)}`;
+- 전체 합쳐 1,500자 이상. 섹션마다 이야기가 흐르듯 이어지게.${toneDirective(tone)}${STYLE_GUARD}${LIMIT_RULE}`;
 }
 
 export function buildUser(r: SajuResult, age: number, nowYear: number): string {
@@ -198,7 +227,7 @@ export function buildYearlySystem(): string {
 
 [흐름]
 ① 올해(또는 내년) 전체 기운을 세운 십신으로 한 문장에 정의 → ② 기회의 달에 뭘 하면 좋은지 구체적으로 → ③ 조심할 달에 뭘 피해야 하는지 → ④ 한 해를 관통하는 한마디 조언으로 마무리.
-코드펜스나 머리말 없이 본문만 바로 시작합니다.`;
+코드펜스나 머리말 없이 본문만 바로 시작합니다.${STYLE_GUARD}`;
 }
 
 export function buildYearlyUser(r: SajuResult, y: YearlyFortune, age: number): string {
@@ -240,7 +269,7 @@ export function buildChatSystem(r: SajuResult, age: number, nowYear: number, ton
 
 [대화 방식 — 반드시 지킬 것]
 - 채팅입니다. 한 번에 길게 늘어놓지 말고, 핵심을 짚어 3~6문장 정도로 답합니다. 사람이 카페에서 대답하듯 자연스럽게.
-- "~할 수도 있어요" 같은 애매한 표현 금지. "당신은 ~한 사람입니다"처럼 단정해서 말합니다. 단, 명식에 근거가 있을 때만.
+- "~할 수도 있어요" 같은 애매한 표현 금지. 명식에 근거가 있는 사실은 단정해서 말합니다 — 사람을 규정하지 말고 "이 명식은 ~", "~할 때 ~하는 편"처럼.
 - 한자 용어(편인, 관살, 식상 등)를 쓰면 반드시 바로 옆에 쉬운 말로 풀어줍니다. 예: "관살혼잡(책임이 이것저것 분산되는 구조)".
 - 질문에 '직접' 답합니다. 동문서답·일반론 금지. 사용자가 연애를 물으면 연애를, 돈을 물으면 돈을 명식 근거로 답합니다.
 - 부정적인 내용도 반드시 "그러니까 이렇게 해"로 끝맺습니다. 겁만 주고 끝내지 않습니다.
@@ -263,7 +292,7 @@ ${structureFacts(r)}
 현재 대운(${dw.age}세~): ${dw.ganKor}${dw.jiKor}(길흉 ${dw.score}/100) · 올해 세운(${nowYear}): ${thisY.ganKor}${thisY.jiKor} ${thisY.ganSipsin}운(길흉 ${thisY.score}/100)
 ${r.pillars.hour ? '' : '※ 출생시간 미상이므로 시주는 언급하지 말고 일간 중심으로 답하세요.'}
 
-이 명식을 근거로, ${nm === '이분' ? '상대' : nm + '님'}의 질문에 선배 톤으로 답하세요.${toneDirective(tone)}`;
+이 명식을 근거로, ${nm === '이분' ? '상대' : nm + '님'}의 질문에 선배 톤으로 답하세요.${toneDirective(tone)}${STYLE_GUARD}`;
 }
 
 // ── 궁합 AI 풀이 ──
@@ -293,10 +322,10 @@ export function buildGunghapSystem(): string {
 {본문 3~4문장: 오래가려면 각자 뭘 해야 하는지}
 @@last@@ {제목}
 {본문 2~3문장: 짧고 따뜻한 한마디}
-- 위 6개 키를 이 순서로 모두 포함. @@lead@@는 제목 없이 본문만. 본문 문단 구분은 빈 줄.`;
+- 위 6개 키를 이 순서로 모두 포함. @@lead@@는 제목 없이 본문만. 본문 문단 구분은 빈 줄.${STYLE_GUARD}`;
 }
 
-export function buildGunghapUser(a: SajuResult, b: SajuResult, compat: { total: number; tier: string; items: { label: string; score: number; max: number }[] }): string {
+export function buildGunghapUser(a: SajuResult, b: SajuResult, compat: { total: number; tier: string; items: { label: string; score: number; max: number; comment?: string }[]; cautions?: string[] }): string {
   const who = (r: SajuResult, fallback: string) => r.input.name || fallback;
   const brief = (r: SajuResult, label: string) => {
     const p = r.pillars;
@@ -307,7 +336,8 @@ ${brief(b, 'B')}
 
 [궁합 분석 결과 — 이미 계산된 사실]
 총점: ${compat.total}/100 (${compat.tier})
-${compat.items.map((it) => `- ${it.label}: ${it.score}/${it.max}`).join('\n')}
+${compat.items.map((it) => `- ${it.label}: ${it.score}/${it.max}${it.comment ? ` — ${it.comment}` : ''}`).join('\n')}
+${compat.cautions?.length ? `주의(이미 계산됨, 빼거나 부풀리지 말 것): ${compat.cautions.join(' / ')}` : ''}
 
 위 두 사람의 명식과 궁합 결과를 근거로, '연애 고수 선배' 톤으로 두 사람의 궁합을 풀어주세요. 각자 이름(없으면 'A님/B님')으로 부르세요. 지정한 마커 형식으로만 출력하세요.`;
 }

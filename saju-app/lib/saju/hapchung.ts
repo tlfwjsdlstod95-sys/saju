@@ -16,26 +16,30 @@ export interface Hapchung {
 const POS = ['년', '월', '일', '시'] as const;
 
 // 천간합: [간A, 간B, 화한 오행]
-const GAN_HAP: [number, number, string][] = [
+export const GAN_HAP: [number, number, string][] = [
   [0, 5, '토'], [1, 6, '금'], [2, 7, '수'], [3, 8, '목'], [4, 9, '화'],
 ];
 // 지지 육합: [지A, 지B, 화한 오행]
-const YUKHAP: [number, number, string][] = [
+export const YUKHAP: [number, number, string][] = [
   [0, 1, '토'], [2, 11, '목'], [3, 10, '화'], [4, 9, '금'], [5, 8, '수'], [6, 7, '화'],
 ];
 // 지지 삼합: [세 지지, 국(局) 오행]
-const SAMHAP: [number[], string][] = [
+export const SAMHAP: [number[], string][] = [
   [[8, 0, 4], '수'], [[2, 6, 10], '화'], [[5, 9, 1], '금'], [[11, 3, 7], '목'],
 ];
 // 충: 6 (인덱스 차 6)
 // 형: 삼형 두 세트 + 자형 + 상형
-const SAMHYEONG: number[][] = [[2, 5, 8], [1, 10, 7]]; // 寅巳申, 丑戌未
-const SANGHYEONG: [number, number] = [0, 3];           // 子卯 상형
-const JAHYEONG = [4, 6, 9, 11];                         // 辰午酉亥 자형
+export const SAMHYEONG: number[][] = [[2, 5, 8], [1, 10, 7]]; // 寅巳申, 丑戌未
+export const SANGHYEONG: [number, number] = [0, 3];           // 子卯 상형
+export const JAHYEONG = [4, 6, 9, 11];                         // 辰午酉亥 자형
 // 해(害): 6쌍
-const HAE: [number, number][] = [
+export const HAE: [number, number][] = [
   [0, 7], [1, 6], [2, 5], [3, 4], [8, 11], [9, 10],
 ];
+// 천간충: 甲庚 乙辛 丙壬 丁癸 (戊己는 충이 없다) — 오늘의 운세(일진×원국)에서 쓴다
+export const GAN_CHUNG: [number, number][] = [[0, 6], [1, 7], [2, 8], [3, 9]];
+// 원진(怨嗔): 子未 丑午 寅酉 卯申 辰亥 巳戌 — 오늘의 운세에서 쓴다(원국 분석엔 아직 안 씀)
+export const WONJIN: [number, number][] = [[0, 7], [1, 6], [2, 9], [3, 8], [4, 11], [5, 10]];
 // 파(破): 6쌍 — 子酉 丑辰 寅亥 卯午 巳申 戌未
 const PA: [number, number][] = [
   [0, 9], [1, 4], [2, 11], [3, 6], [5, 8], [7, 10],

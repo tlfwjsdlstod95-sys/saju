@@ -35,10 +35,32 @@ function standardMeridian(y: number, m: number, d: number): number {
   return meridian;
 }
 
-/** 서머타임 적용 여부 */
-function isSummerTime(y: number, m: number, d: number): boolean {
-  const ds = dateStr(y, m, d);
-  return SUMMER_TIME_PERIODS.some(([s, e]) => ds >= s && ds < e);
+/** 서머타임 적용 여부 — **시각까지** 본다(1987·1988 은 02:00 시작 / 03:00 종료). */
+function isSummerTime(y: number, m: number, d: number, hour: number, minute: number): boolean {
+  const ts = `${dateStr(y, m, d)} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  return SUMMER_TIME_PERIODS.some(([s, e]) => ts >= s && ts < e);
+}
+
+/**
+ * 서머타임 전환 순간에 생기는 **두 가지 이상한 시각**을 알린다.
+ *   · 시작(02:00→03:00): 그 사이 한 시간은 **존재하지 않는다.**
+ *   · 종료(03:00→02:00): 02~03시가 **두 번 찍힌다** — 입력만으로는 어느 쪽인지 알 수 없다.
+ * 추측으로 시주를 확정하지 않고 사실대로 알린다(우리는 첫 번째, 즉 서머타임 쪽으로 계산한다).
+ */
+function summerTimeEdge(y: number, m: number, d: number, hour: number, minute: number): string | null {
+  const ts = `${dateStr(y, m, d)} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  for (const [s, e] of SUMMER_TIME_PERIODS) {
+    if (!s.endsWith('02:00')) continue;              // 1987·1988 만 해당
+    const skipFrom = s, skipTo = `${s.slice(0, 11)}03:00`;
+    if (ts >= skipFrom && ts < skipTo) {
+      return '서머타임이 시작되던 날이라 이 시각(02시대)은 시계에 존재하지 않았습니다. 03시 이후로 다시 확인해 주세요.';
+    }
+    const dupFrom = `${e.slice(0, 11)}02:00`;
+    if (ts >= dupFrom && ts < e) {
+      return '서머타임이 끝나던 날이라 이 시각(02시대)은 시계에 두 번 찍혔습니다 — 겹치는 구간이라 어느 쪽인지 입력만으로는 알 수 없어, 서머타임 쪽(먼저 지나간 02시)으로 계산했습니다.';
+    }
+  }
+  return null;
 }
 
 /** 60갑자 인덱스 → Pillar 객체 (일간 기준 십신 포함) */
@@ -73,9 +95,14 @@ export function computeSaju(input: BirthInput): SajuResult {
   const hour = input.unknownTime ? null : (input.hour ?? null);
   const minute = input.minute ?? 0;
 
+  // ── 계산 스위치 — 기본값은 전부 현행 동작. 끄는 건 「명식 비교표」의 반사실 계산뿐이다 ──
+  const useTrueSolar = input.trueSolar !== false;
+  const useDst = input.dst !== false;
+  const jieqiMode: 'instant' | 'date_only' = input.jieqi === 'date_only' ? 'date_only' : 'instant';
+
   // --- 1) 시간대 보정: 출생 시각(시계) → UTC ---
   const meridian = standardMeridian(year, month, day);
-  const summer = isSummerTime(year, month, day);
+  const summer = isSummerTime(year, month, day, hour ?? 12, minute) && useDst;
   const civilOffsetHours = (meridian === 135 ? 9 : 8.5) + (summer ? 1 : 0);
 
   // 시각 미상이면 정오(12:00)로 가정해 일주/년월주만 신뢰
@@ -89,9 +116,12 @@ export function computeSaju(input: BirthInput): SajuResult {
   const jde = birthUTCjd + dt / 86400;
   const eot = equationOfTime(jde); // 분
   // 진태양시 JD = UTC + 경도/360일 + 균시차
-  const apparentJd = birthUTCjd + lon / 360 + eot / 1440;
-  const ast = jdToDate(apparentJd); // 진태양시 로컬 시계
-  const longitudeCorrectionMin = (lon - meridian) * 4;
+  //   ⚠️ 보정을 끄면(변종) 시계 시각을 그대로 쓴다 — 경도 시차도 균시차도 없다.
+  const apparentJd = useTrueSolar
+    ? birthUTCjd + lon / 360 + eot / 1440
+    : birthUTCjd + civilOffsetHours / 24;
+  const ast = jdToDate(apparentJd); // 진태양시 로컬 시계 (보정을 끈 변종에서는 그냥 시계 시각)
+  const longitudeCorrectionMin = useTrueSolar ? (lon - meridian) * 4 : 0;
 
   // --- 3) 일주(日柱): 진태양시 달력일 기준 60갑자 ---
   const jdnDay = gregorianToJDN(ast.year, ast.month, ast.day);
@@ -115,13 +145,18 @@ export function computeSaju(input: BirthInput): SajuResult {
   const dayJi = dayIndex % 12;
 
   // --- 4) 년주(年柱): 입춘 기준 ---
-  const sajuYear = getSajuYear(birthKSTjd, year);
+  //   절입 판정 기준 순간. date_only 변종은 **출생일 23:59** 로 비교한다 —
+  //   절입이 그날 몇 시에 들든 '그 날짜면 이미 넘어간 것'으로 보는 방식(날짜만 보는 만세력)과 같아진다.
+  const jieqiJd = jieqiMode === 'date_only'
+    ? dateToJD(year, month, day, 23 - 9, 59, 59) + 9 / 24
+    : birthKSTjd;
+  const sajuYear = getSajuYear(jieqiJd, year);
   const yearIdx = ((sajuYear - 4) % 60 + 60) % 60;
   const yearGan = yearIdx % 10;
   const yearJi = yearIdx % 12;
 
   // --- 5) 월주(月柱): 절기 황경으로 월지 → 월두법 천간 ---
-  const monthJi = getMonthBranch(birthKSTjd);
+  const monthJi = getMonthBranch(jieqiJd);
   const monthOrder = (monthJi - 2 + 12) % 12; // 인월=0
   const monthGan = (MONTH_STEM_START[yearGan] + monthOrder) % 10;
 
@@ -134,6 +169,14 @@ export function computeSaju(input: BirthInput): SajuResult {
   } else {
     warnings.push('출생 시각이 없어 시주(時柱)는 제외하고 분석합니다. 시간을 알면 정확도가 크게 올라갑니다.');
   }
+
+  const stEdge = useDst ? summerTimeEdge(year, month, day, hour ?? 12, minute) : null;
+  if (stEdge && hour !== null) warnings.push(stEdge);
+
+  // 보정을 끈 계산은 **비교용 변종**이다. 결과만 떼어 보면 진짜 명식과 구분이 안 되므로 경고로 못 박는다.
+  if (!useTrueSolar) warnings.push('[비교용 변종] 진태양시 보정(경도 시차·균시차)을 생략하고 계산했습니다. 헤아림의 실제 명식이 아닙니다.');
+  if (!useDst) warnings.push('[비교용 변종] 서머타임 환원을 생략하고 계산했습니다. 헤아림의 실제 명식이 아닙니다.');
+  if (jieqiMode === 'date_only') warnings.push('[비교용 변종] 절입을 시각이 아니라 날짜로만 판정했습니다. 헤아림의 실제 명식이 아닙니다.');
 
   // --- 7) Pillar 조립 ---
   const yearPillar = buildPillar(yearGan, yearJi, dayGan);
@@ -161,7 +204,7 @@ export function computeSaju(input: BirthInput): SajuResult {
   const luck = computeLuck({
     birthKSTjd, birthYear: year, birthMonth: month, birthDay: day,
     yearGan, monthGan, monthJi, dayGan, strength,
-    sex: input.sex ?? 'M', nowYear,
+    sex: input.sex ?? 'M', nowYear, timeUnknown: hour === null, natal: pillars,
   });
 
   // --- 10) 명식 고도화 + 선배 톤 풀이 ---
@@ -190,7 +233,7 @@ export function computeSaju(input: BirthInput): SajuResult {
     corrected: {
       standardMeridian: meridian,
       longitudeCorrectionMin: Math.round(longitudeCorrectionMin * 10) / 10,
-      equationOfTimeMin: Math.round(eot * 10) / 10,
+      equationOfTimeMin: useTrueSolar ? Math.round(eot * 10) / 10 : 0,
       summerTimeApplied: summer,
       apparentSolarDateTime: `${ast.year}-${String(ast.month).padStart(2, '0')}-${String(ast.day).padStart(2, '0')} ${String(ast.hour).padStart(2, '0')}:${String(ast.minute).padStart(2, '0')}`,
       jasiType,

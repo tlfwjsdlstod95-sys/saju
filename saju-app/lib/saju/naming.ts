@@ -1,7 +1,8 @@
 // 작명/개명 도움말 — 소리오행(발음오행) 기반 규칙 엔진 (외부 의존 0, 클라이언트 안전)
 // 원리: 한글 초성을 오음(아·설·순·치·후)으로 분류 → 오행에 대응. 사주에 보완할 오행을 소리로 채운다.
 import { SAENG, GEUK, type Ohaeng } from './constants';
-import type { SajuResult } from './types';
+import { strengthTier } from './elements';
+import type { SajuCore } from './types';
 
 // 한글 초성 19개 순서 (유니코드 조합 순)
 const CHOSEONG = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'] as const;
@@ -57,12 +58,13 @@ function yongsinElement(dayO: Ohaeng, strength: number): Ohaeng {
   const generator = (Object.keys(SAENG) as Ohaeng[]).find((o) => SAENG[o] === dayO)!; // 인성
   const output = SAENG[dayO];   // 식상
   const wealth = GEUK[dayO];    // 재성
-  if (strength < 0.45) return generator; // 신약 → 도와주는 인성
-  if (strength > 0.55) return output;     // 신강 → 빼주는 식상
+  const t = strengthTier(strength);       // 2026-09-11: 0.45 → 화면 라벨 경계로 통일
+  if (t === 'weak') return generator;     // 신약 → 도와주는 인성
+  if (t === 'strong') return output;      // 신강 → 빼주는 식상
   return wealth;                          // 중화 → 재성
 }
 
-export function computeNaming(r: SajuResult): NamingResult {
+export function computeNaming(r: SajuCore): NamingResult {
   const dayO = r.dayMaster.ohaeng;
   const strength = r.dayMasterStrength;
   const counts = r.ohaeng;

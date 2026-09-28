@@ -1,12 +1,14 @@
 // 신년운세 + 월별 길흉 캘린더 — 규칙 기반 결정론 엔진 (외부 의존 0, 클라이언트 안전)
 // 핵심: 각 월의 15일은 항상 절입(節入) 이후라 월지가 그레고리력 월로 고정된다.
 //       → VSOP/절기 계산 없이 월두법 상수만으로 12개월 월운을 정확히 도출.
+//       점수는 favor.ts 의 결정론 식(무작위 0). 식은 결과의 formula 로 화면 「계산」칸에 그대로 나간다.
 import {
   CHEONGAN, CHEONGAN_HANJA, JIJI, JIJI_HANJA,
-  GAN_OHAENG, JI_OHAENG, type Sipsin, type Ohaeng,
+  type Sipsin, type Ohaeng,
 } from './constants';
 import { sipsin } from './elements';
-import { favor, mapScore } from './daily';
+import { pillarRaw, favorToScore, favorFormula, FAVOR_RULE } from './favor';
+import { pillarRelations, relationSum, relationTags, DAILY_RULE } from './daily';
 import type { SajuResult } from './types';
 
 // 월두법(月頭法/五虎遁): 년간별 인월(寅) 천간 시작 — index.ts 와 동일
@@ -16,8 +18,36 @@ const MONTH_STEM_START = [2, 4, 6, 8, 0, 2, 4, 6, 8, 0];
 const MONTH_BRANCH = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
 
 type Grade = '대길' | '길' | '평' | '주의';
+/** 등급 경계·기회/주의 달 기준 — 화면 「계산」칸과 같은 상수 */
+export const YEARLY_RULE = {
+  grade: { 대길: 76, 길: 60, 평: 42 },
+} as const;
 function gradeOf(score: number): Grade {
-  return score >= 76 ? '대길' : score >= 60 ? '길' : score >= 42 ? '평' : '주의';
+  const G = YEARLY_RULE.grade;
+  return score >= G.대길 ? '대길' : score >= G.길 ? '길' : score >= G.평 ? '평' : '주의';
+}
+
+/** 신년운세 「계산」칸 — favor 공통 식 + 원국 관계 + 연·월 적용 규칙 */
+export function yearlyFormula(): string[] {
+  const Y = YEARLY_RULE, R = DAILY_RULE.rel;
+  const sgn = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
+  return [
+    ...favorFormula().map((l) => l.replace(/^점수 = /, '오행 점수 = ')),
+    `관계 가감 = 그 달 월주(그해는 세운) × 원국 네 기둥 — 합 ${sgn(R.합)} · 충 ${sgn(R.충)} · 삼형 완성 ${sgn(R.삼형완성)} · 형 ${sgn(R.형)} · 해 ${sgn(R.해)} · 원진 ${sgn(R.원진)}, ` +
+      `원국 한 자리에 겹치면 가장 센 마찰 하나와 합만, 일간·일지 자리면 ×${DAILY_RULE.selfMul} (오늘의 운세와 같은 표)`,
+    `달·해 점수 = 오행 점수 + 관계 가감 (${FAVOR_RULE.min}~${FAVOR_RULE.max}로 자름). 달 간지는 월두법, 1월은 전년 천간`,
+    `등급 ${Y.grade.대길}↑ 대길 · ${Y.grade.길}↑ 길 · ${Y.grade.평}↑ 평 · 그 아래 주의`,
+    `기회의 달 = 그해 12달 중 최고점인 달 전부 · 조심할 달 = 최저점인 달 전부. 동점을 임의로 자르지 않습니다`,
+  ];
+}
+
+/** 간지 한 기둥의 점수 = 오행 점수(favor) + 원국과의 관계 가감 */
+function pillarScore(gan: number, ji: number, dayOhaeng: Ohaeng, strength: number, P: SajuResult['pillars']) {
+  const oheng = favorToScore(pillarRaw(gan, ji, dayOhaeng, strength));
+  const rel = pillarRelations(gan, ji, P);
+  const relations = relationSum(rel);
+  const score = Math.max(FAVOR_RULE.min, Math.min(FAVOR_RULE.max, Math.round(oheng + relations)));
+  return { score, parts: { oheng, relations }, tags: relationTags(rel) };
 }
 
 // 십신 → 그 달/해의 테마 한 줄
@@ -36,6 +66,10 @@ export interface MonthFortune {
   theme: string;
   score: number;       // 0~100
   grade: Grade;
+  /** 점수 분해 — 오행 점수 + 관계 가감 */
+  parts: { oheng: number; relations: number };
+  /** 그 달 월주 × 원국 관계 태그 */
+  relations: string[];
 }
 
 export interface YearlyFortune {
@@ -45,16 +79,15 @@ export interface YearlyFortune {
   yearSipsin: Sipsin;
   yearScore: number;
   yearGrade: Grade;
+  yearParts: { oheng: number; relations: number };
+  yearRelations: string[];
   headline: string;
   summary: string;
   months: MonthFortune[];
   bestMonths: number[];     // 점수 높은 달(최대 3)
   cautionMonths: number[];  // 점수 낮은 달(최대 2)
-}
-
-function pillarFavorScore(gan: number, ji: number, dayOhaeng: Ohaeng, strength: number, seed: number): number {
-  const raw = (0.4 * favor(GAN_OHAENG[gan], dayOhaeng, strength) + 0.6 * favor(JI_OHAENG[ji], dayOhaeng, strength)) * 100;
-  return mapScore(raw, seed);
+  /** 화면 「계산」칸 — 이 점수를 만든 식(코드와 같은 상수) */
+  formula: string[];
 }
 
 export function computeYearlyFortune(r: SajuResult, year: number): YearlyFortune {
@@ -65,8 +98,8 @@ export function computeYearlyFortune(r: SajuResult, year: number): YearlyFortune
   // --- 세운(연간) 간지: 입춘 기준 해. 연도 그대로 사용 ---
   const yIdx = ((year - 4) % 60 + 60) % 60;
   const yGan = yIdx % 10, yJi = yIdx % 12;
-  const yearSeed = (year * 31 + dayGan * 7) >>> 0;
-  const yearScore = pillarFavorScore(yGan, yJi, dayOhaeng, strength, yearSeed);
+  const Y0 = pillarScore(yGan, yJi, dayOhaeng, strength, r.pillars);
+  const yearScore = Y0.score;
   const yearGrade = gradeOf(yearScore);
   const yearSipsin = sipsin(dayGan, yGan);
 
@@ -79,8 +112,8 @@ export function computeYearlyFortune(r: SajuResult, year: number): YearlyFortune
     const yearStem = ((sajuYear - 4) % 10 + 10) % 10;
     const monthOrder = (branch - 2 + 12) % 12;          // 인월=0
     const mGan = (MONTH_STEM_START[yearStem] + monthOrder) % 10;
-    const seed = (year * 100 + m) * 13 + dayGan;
-    const score = pillarFavorScore(mGan, branch, dayOhaeng, strength, seed);
+    const M = pillarScore(mGan, branch, dayOhaeng, strength, r.pillars);
+    const score = M.score;
     const ss = sipsin(dayGan, mGan);
     months.push({
       month: m,
@@ -91,12 +124,20 @@ export function computeYearlyFortune(r: SajuResult, year: number): YearlyFortune
       theme: SIPSIN_THEME[ss],
       score,
       grade: gradeOf(score),
+      parts: M.parts,
+      relations: M.tags,
     });
   }
 
-  const byScore = [...months].sort((a, b) => b.score - a.score);
-  const bestMonths = byScore.filter((m) => m.score >= 58).slice(0, 3).map((m) => m.month).sort((a, b) => a - b);
-  const cautionMonths = byScore.filter((m) => m.score <= 44).slice(-2).map((m) => m.month).sort((a, b) => a - b);
+  // 기회·조심 = 그 사람의 12달 안에서 최고점·최저점인 달 **전부**. 절대 점수 컷(예전 58/44)은 쓰지 않는다 —
+  //   중화 명식은 최저가 46이라 조심 달이 늘 비고, 신약은 28만 조심이 되는 식이었다.
+  //   「차이가 작으면 없음」 규칙은 뺐다(2026-09-11) — 합충을 넣은 뒤 최소 차이가 41점이라 한 번도 걸리지 않는 죽은 가지였다.
+  //   남는 가드는 12달이 전부 같은 점수인 퇴화 경우뿐(그땐 기회=조심이 되므로 둘 다 비운다).
+  const scores = months.map((m) => m.score);
+  const maxS = Math.max(...scores), minS = Math.min(...scores);
+  const distinct = maxS > minS;
+  const bestMonths = distinct ? months.filter((m) => m.score === maxS).map((m) => m.month) : [];
+  const cautionMonths = distinct ? months.filter((m) => m.score === minS).map((m) => m.month) : [];
 
   const headline = ({
     대길: `${year}년, 크게 펼쳐도 좋은 해입니다.`,
@@ -111,7 +152,8 @@ export function computeYearlyFortune(r: SajuResult, year: number): YearlyFortune
 
   return {
     year, yearGanji: `${CHEONGAN[yGan]}${JIJI[yJi]}`, yearGanjiHanja: `${CHEONGAN_HANJA[yGan]}${JIJI_HANJA[yJi]}`,
-    yearSipsin, yearScore, yearGrade, headline, summary,
+    yearSipsin, yearScore, yearGrade, yearParts: Y0.parts, yearRelations: Y0.tags, headline, summary,
     months, bestMonths, cautionMonths,
+    formula: yearlyFormula(),
   };
 }

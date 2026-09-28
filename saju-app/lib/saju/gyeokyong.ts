@@ -81,6 +81,29 @@ export function computeGyeokguk(
   return { name: d.name, key: ss, via, desc: origin(d.name, via.includes('투출')) + d.desc };
 }
 
+/**
+ * 격국 **후보** — 월지 지장간(정기·중기·여기)이 각각 격이 된다면 무엇이 되는가.
+ *
+ * 무료 구간에 내려보내는 값이라 **확정 판정을 담지 않는다.** 대신 이건 지어낸 후보가 아니라
+ * 실제로 곳마다 답이 갈리는 자리다 — 우리는 자평진전 「用神專尋月令」에 따라 **정기(본기)** 를
+ * 격으로 잡지만(v3), 투출한 여기·중기를 격으로 잡는 곳도 많다. 그래서 후보를 여는 것 자체가
+ * 「여기서 갈린다」는 우리 프레임의 증거가 된다. 어느 것이 채택됐는지는 호출 측에서 섞어 지운다.
+ */
+export function gyeokCandidates(
+  pillars: { month: Pillar },
+  dayGan: number,
+): string[] {
+  const jjg = JIJANGGAN[pillars.month.ji];
+  const gans = [jjg.jeonggi.gan, ...(jjg.junggi ? [jjg.junggi.gan] : []), jjg.yeogi.gan];
+  const names = gans.map((g) => {
+    const ss = sipsin(dayGan, g);
+    if (ss === '비견') return GYEOK_DESC.건록.name;
+    if (ss === '겁재') return GYEOK_DESC.양인.name;
+    return GYEOK_DESC[ss].name;
+  });
+  return [...new Set(names)];
+}
+
 // ── 조후(調候) — 계절 한난조습 ──
 export type Climate = '한습' | '조열' | '서늘' | '온화';
 export interface Johu { climate: Climate; need: Ohaeng | null; desc: string; urgent: boolean; }
