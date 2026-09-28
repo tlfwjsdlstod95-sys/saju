@@ -151,7 +151,7 @@ input:focus, select:focus { outline: none; border-color: var(--gold); }
 .chip { background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-size: 13px; }
 .chip b { color: var(--gold); }
 
-.meta { font-size: 13px; color: var(--text-mute); line-height: 1.9; }
+.meta { font-size: 14px; color: var(--text-mute); line-height: 1.8; }
 .meta b { color: var(--text-dim); }
 
 .warn { background: rgba(230,200,120,.07); border: 1px solid rgba(230,200,120,.28); color: #f0dca0; border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-top: 12px; }
@@ -1101,3 +1101,22 @@ a.ms-badge span { color: var(--gold); white-space: nowrap; }
 .result-nav a.on { color: #1a1205; background: var(--gold); border-color: var(--gold); }
 .result-nav a.on em { color: #1a1205; }
 .sec-anchor { display: block; height: 0; scroll-margin-top: 64px; }
+
+/* ── 용어 한 줄 풀이 (TermNote) ─────────────────────────────────
+   전문 용어는 지우지 않고, 바로 아래에 한 줄씩. 용어는 금색, 풀이는 흐린 글자 — 강조색은 이 둘만. */
+.term-note { margin: 12px 0 0; padding: 10px 12px; border-left: 2px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; line-height: 1.7; }
+.term-note > div { display: flex; gap: 8px; }
+.term-note dt { flex: none; color: var(--gold); font-weight: 600; }
+.term-note dd { margin: 0; color: var(--text-mute); }
+@media (max-width: 420px) { .term-note > div { flex-direction: column; gap: 0; } }
+
+/* ── /accuracy 맨 위 요약 — 세 줄로 먼저 답하고, 상세는 아래 카드와 접기 */
+.acc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.acc-steps li { display: flex; flex-direction: column; gap: 4px; padding-left: 12px; border-left: 3px solid var(--gold-soft); }
+.acc-steps b { font-size: 16px; color: var(--text); }
+.acc-steps span { font-size: 15px; line-height: 1.7; color: var(--text-dim); }
+.acc-steps a { font-size: 13px; color: var(--gold); text-decoration: none; }
+.card[id] { scroll-margin-top: 20px; }
+/* 판정 표 첫 열(판정 항목)이 모바일에서 한 글자씩 세로로 쪼개지던 문제 */
+#judge table th:first-child, #judge table td:first-child { white-space: nowrap; }

@@ -28,6 +28,7 @@ import GuidebookPrint from './GuidebookPrint';
 import Paywall, { usePremium, PRICE } from './Paywall';
 import ReportShelf from './ReportShelf';
 import SummaryCard from './SummaryCard';
+import TermNote from './TermNote';
 import PlanCompare from './PlanCompare';
 import ResultNav from './ResultNav';
 import TimeUnknownCard from './TimeUnknownCard';
@@ -651,6 +652,9 @@ export default function Home() {
                   );
                 })}
               </div>
+              {(result.advanced.sin12.byYear.some((x) => flipOf(x.name)) || (!premium && flipLock && flipLock.flips > 0)) && (
+                <TermNote terms={['용신', '희신', '기신']} />
+              )}
               {!premium && flipLock && flipLock.flips > 0 && (
                 <div className="flip-gate">
                   <div className="flip-gate-h">
@@ -817,6 +821,7 @@ export default function Home() {
             <h2>일간 강약 (신강·신약)</h2>
             <div className="gauge"><div style={{ width: `${result.dayMasterStrength * 100}%` }} /></div>
             <div className="gauge-row"><span>신약 (관계·환경 활용형)</span><span>{Math.round(result.dayMasterStrength * 100)}%</span><span>신강 (주관·추진형)</span></div>
+            <TermNote terms={['일간', '신강신약']} />
           </div>
 
           <div className="card">
@@ -836,6 +841,7 @@ export default function Home() {
               )}
               <div className="chip">조후 <b>{(yq?.johu ?? result.gyeokYong.johu)?.climate ?? '—'}</b></div>
             </div>
+            <TermNote terms={['격국', '용신', '조후']} />
 
             {yq ? (
               <>
@@ -1151,8 +1157,9 @@ export default function Home() {
 
       <div className="foot">
         만세력 엔진: VSOP87 천문 알고리즘 기반 절기·균시차 자체 연산 · 절기 시각 KASI 공표값 1분 이내 일치 · 일주 60갑자 국제표준 보정
-        {' '}· <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 상세</a><br />
-        ※ 경계 시각(절기 전후·자정 무렵) 출생은 한국천문연구원(KASI) 교차검증 권장
+        {' '}· <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 상세</a>
+        {/* 결과가 있으면 위 「경계 진단」 카드가 이 명식 기준으로 같은 말을 한다 — 두 번 말하지 않는다 */}
+        {!result && <><br />※ 경계 시각(절기 전후·자정 무렵) 출생은 한국천문연구원(KASI) 교차검증 권장</>}
       </div>
 
       <Paywall
