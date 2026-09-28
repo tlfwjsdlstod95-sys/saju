@@ -6,6 +6,7 @@
 //   · 이 명식은 개발 세트(seenBy v7)다. 맞힌 걸 자랑하지 않고 **그 사실을 화면에 적는다.**
 //   · 원문 번역은 헤아림이 풀어 옮긴 것이라고 밝힌다.
 // 판정 코드는 서버에서만 돈다(이 페이지는 서버 컴포넌트 · 골든 JSON 이 클라이언트 번들에 안 들어간다).
+import { pageMeta } from '@/lib/pageMeta';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import goldenRaw from '@/scripts/golden-cases.json';
@@ -15,10 +16,11 @@ import { computeGyeokYong } from '@/lib/saju/gyeokyong';
 import { ENGINE_VERSION } from '@/lib/saju/version';
 import { READING_KEYS, READING_ICONS, READING_LABELS } from '@/lib/saju/readingMeta';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: '정밀 리포트 샘플 — 용신 판정 1쪽 | 헤아림',
   description: '『적천수천미』 원전 명식으로 뽑은 헤아림 정밀 리포트의 실제 1쪽. 다섯 가지 법 중 어느 기준을 왜 채택했는지, 원전은 뭐라고 했는지 그대로 보여드립니다.',
-};
+  path: '/sample',
+});
 
 const SAMPLE_ID = 'JCS-044';
 // 원문 풀어 옮김(헤아림). 원문은 케이스 note 에 있다.
