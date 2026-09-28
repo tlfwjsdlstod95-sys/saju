@@ -7,7 +7,7 @@ import type { Pillar, LuckPillar } from '@/lib/saju/types';
 // 클라이언트가 받는 건 **판정이 빠진** 결과다(무료 응답). 타입으로 그 사실을 못 박아 둔다 —
 // 그래야 화면 코드가 실수로 `yongsin.primary` 를 참조하는 순간 컴파일이 막는다.
 import type { FreeSajuResult } from '@/lib/saju/gate';
-import { parseReadingStream } from '@/lib/saju/readingMeta';
+import { parseReadingStream, fixReadingHanja } from '@/lib/saju/readingMeta';
 import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
 import { lunarToSolar, solarToLunar } from '@/lib/saju/lunar';
@@ -230,7 +230,7 @@ export default function Home() {
   //   옛 스냅샷(v1)을 복원하면 없는 필드를 읽어 결과 화면이 통째로 깨진다 — 배포 직후 재방문자가 정확히 그 경우다.
   const SESSION_KEY = 'saju_session_v2';
   const [restored, setRestored] = useState(false);
-  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(s.ai); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
+  useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai) setAi(fixReadingHanja(s.ai)); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
   useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone, analyzed })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form, analyzed]);
 
   const reqBody = (override?: { year: number; month: number; day: number }) => ({
@@ -362,7 +362,7 @@ export default function Home() {
       const cached = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed?.sections?.length) { setAi(parsed); setAiErr(''); setAiLoading(false); setAiStreaming(false); return; }
+        if (parsed?.sections?.length) { setAi(fixReadingHanja(parsed)); setAiErr(''); setAiLoading(false); setAiStreaming(false); return; }
       }
     } catch {}
     setAiErr(''); setAiLoading(true); setAiStreaming(true);
@@ -375,7 +375,7 @@ export default function Home() {
         const saved = await cloudGetReport('reading', chartId(base), tn);
         const parsed = saved ? parseReadingStream(saved) : null;
         if (parsed && parsed.sections.length) {
-          setAi(parsed); setAiLoading(false); setAiStreaming(false);
+          setAi(fixReadingHanja(parsed)); setAiLoading(false); setAiStreaming(false);
           try { localStorage.setItem(key, JSON.stringify(parsed)); } catch {}
           return;
         }
