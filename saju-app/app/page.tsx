@@ -359,7 +359,7 @@ export default function Home() {
   async function copyInviteLink() {
     const who = result?.archetype?.motif?.name;
     try {
-      await navigator.clipboard.writeText(`나 사주 봤는데 완전 소름이야${who ? ` (나 "${who}"래ㅋㅋ)` : ''}. 우리 궁합도 볼래? 이 링크로 오면 AI 심층 궁합도 1번 무료래 👉 ${window.location.origin}/gunghap?invite=1`);
+      await navigator.clipboard.writeText(`${who ? `나 "${who}"래ㅋㅋ` : '나 사주 봤는데'} 너는 뭐 나오는지 궁금함. 우리 궁합도 볼래? 이 링크로 오면 AI 심층 궁합도 1번 무료래 👉 ${window.location.origin}/gunghap?invite=1`);
       flash('초대 문구를 복사했어요 — 붙여넣어 보내세요!');
     } catch { flash('복사 실패'); }
   }

@@ -14,6 +14,8 @@ export default function Footer() {
         <Link href="/pricing">이용권 안내</Link>
         <span aria-hidden>·</span>
         <Link href="/accuracy">정확도·검증</Link>
+        <span aria-hidden>·</span>
+        <Link href="/dict">사주 용어 사전</Link>
       </nav>
       <div className="footer-biz">
         <p>상호 {BIZ.corpName} (서비스명 {BIZ.name}) · 대표 {BIZ.owner}</p>
