@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { buildSummary } from '@/lib/saju/summary';
 import { ENGINE_VERSION } from '@/lib/saju/version';
+import { iljuCharacter } from '@/lib/saju/ilju';
+import { SIPSIN_PLAIN } from '@/lib/glossary';
 import type { SajuCore } from '@/lib/saju/types';
 import type { BoundaryDiag } from '@/lib/saju/boundary';
 
@@ -13,14 +15,17 @@ const TONE_IC = { safe: '✓', warn: '⚠', mute: '○' } as const;
 
 export default function SummaryCard({ result }: { result: SajuCore & { boundary?: BoundaryDiag } }) {
   const s = useMemo(() => buildSummary(result, result.boundary), [result]);
-  // 「신미(辛未) 일주 · 신강 · 겉에 편재·상관」 — % 와 결손 오행은 뺀다
-  const short = useMemo(() => {
-    const out = [s.diagnosis[0]];
-    if (s.diagnosis[1]) out.push(s.diagnosis[1].replace(/\s*\d+%$/, ''));
-    const m = s.scenes[0]?.match(/겉에는 ([^.]+?)입니다/);
-    if (m) out.push(`겉에 ${m[1]}`);
-    return out;
-  }, [s]);
+  // 2026-09-30 쉬운 말이 먼저 — 「신미일주 — '흙 속의 옥'」 + 한 문장, 강약·십신은 뜻으로 풀고 용어는 괄호에
+  const plain = useMemo(() => {
+    const d = result.pillars.day;
+    const c = iljuCharacter(d.gan, d.ji);
+    const trait = (c.trait.match(/^[^.!?]+[.!?]/)?.[0] ?? c.trait).trim();
+    const tier = s.diagnosis[1]?.replace(/\s*\d+%$/, '') ?? '';
+    const tierPlain = tier === '신강' ? '기운이 센 편' : tier === '신약' ? '기운이 여린 편' : tier ? '기운이 고른 편' : '';
+    const names = s.scenes[0]?.match(/겉에는 ([^.]+?)입니다/)?.[1].split('·').filter((n) => SIPSIN_PLAIN[n]) ?? [];
+    const outer = names.map((n) => `${SIPSIN_PLAIN[n].replace(/\(.*\)$/, '')}(${n})`).join(' · ');
+    return { title: `${c.name} — '${c.tag}'`, trait, tier, tierPlain, outer };
+  }, [s, result]);
   return (
     <div className="card sum-card">
       <h2>이 명식 한눈에</h2>
@@ -33,10 +38,13 @@ export default function SummaryCard({ result }: { result: SajuCore & { boundary?
         </div>
       )}
 
-      {/* 2026-09-30 세 줄로 — 강약 %·오행 결손·합충 개수는 2 판정 탭에 있다 */}
-      <p className="sum-diag">{short.map((d, i) => (
-        <span key={i}>{i > 0 && <i> · </i>}{i === 0 ? <b>{d}</b> : d}</span>
-      ))}</p>
+      {/* 2026-09-30 쉬운 말 — 비유 한 줄 → 한 문장 → 뜻으로 푼 강약·겉에 드러난 힘 (용어는 괄호) */}
+      <p className="sum-title">{plain.title}</p>
+      <p className="sum-trait">{plain.trait}</p>
+      <ul className="sum-plain">
+        {plain.tierPlain && <li><span>타고난 기운</span>{plain.tierPlain}{plain.tier && <em>({plain.tier})</em>}</li>}
+        {plain.outer && <li><span>겉으로 드러난 힘</span>{plain.outer}</li>}
+      </ul>
 
       {s.notes.length > 0 ? (
         <div className="ms-badges">

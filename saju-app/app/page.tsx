@@ -647,6 +647,7 @@ export default function Home() {
                 {omit.length > 0 && (
                   <div className="bd-block">
                     <h3 className="bd-h">▸ 이 계산을 생략하면</h3>
+                    <p className="bd-plain">기둥 글자가 하나만 바뀌어도 그 위에 쌓이는 풀이(성향·시기·궁합)가 함께 달라져요. 그래서 명식부터 맞추는 게 먼저입니다.</p>
                     {omit.map((v) => (
                       <div className="bd-row" key={v.key}>
                         <div className="bd-row-h"><b>{v.label}</b><span>{v.changed.join(' · ')}가 달라집니다</span></div>
@@ -738,15 +739,17 @@ export default function Home() {
             {/* 엔진 버전 띠도 요약 카드로 옮겼다(2026-09-23) */}
             {result.warnings.map((w, i) => <div className="warn" key={i}>⚠️ {w}</div>)}
             <div className="adv">
+              {lunarBirth && (
+                <div className="adv-row"><span className="adv-k">음력 생일</span><span>{lunarBirth.year}년 {lunarBirth.isLeap ? '윤' : ''}{lunarBirth.month}월 {lunarBirth.day}일</span></div>
+              )}
+              <details className="adv-more"><summary>전문 정보 더 보기 (십이운성 · 공망)</summary>
               <div className="adv-row"><span className="adv-k">십이운성</span>
                 <span>시 {result.advanced.unseong.hour ?? '—'} · 일 {result.advanced.unseong.day} · 월 {result.advanced.unseong.month} · 년 {result.advanced.unseong.year}
                   <em className="adv-plain">{GLOSSARY.십이운성}</em></span>
               </div>
               <div className="adv-row"><span className="adv-k">공망(空亡)</span><span>{result.advanced.gongmang.branches.join(' · ')}
                 <em className="adv-plain">{GLOSSARY.공망}</em></span></div>
-              {lunarBirth && (
-                <div className="adv-row"><span className="adv-k">음력 생일</span><span>{lunarBirth.year}년 {lunarBirth.isLeap ? '윤' : ''}{lunarBirth.month}월 {lunarBirth.day}일</span></div>
-              )}
+              </details>
             </div>
             {result.advanced.sinsal.length > 0 && (<>
               <div className="sinsal-chips">
