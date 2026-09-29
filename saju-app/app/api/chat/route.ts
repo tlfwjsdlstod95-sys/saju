@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
   // 상담 챗은 맛보기 3턴까지 무료(유입 장치). 그 이상은 그 명식의 리포트를 구매해야 한다.
   // 클라이언트 카운트는 우회 가능하므로 서버에서도 턴 수를 센다.
-  const FREE_TURNS = 3;
+  const FREE_TURNS = 1; // 2026-09-30 3→1 (ChatPanel.tsx 와 같은 값)
   const userTurns = raw.filter((m: any) => m?.role === 'user').length;
   if (userTurns > FREE_TURNS) {
     const { entitled } = await checkEntitled(chartId(input));
