@@ -39,6 +39,22 @@ function load() {
   return { c, gy, strength, quote };
 }
 
+// 용어 한 줄 풀이 — 본문은 그대로 두고 옆에만 붙인다(사전처럼 쌓지 않는다).
+const GYEOK_PLAIN: Record<string, string> = {
+  정관격: '규칙과 책임감이 중심인 그릇',
+  편관격: '압박을 견디며 밀고 나가는 힘이 중심인 그릇',
+  칠살격: '압박을 견디며 밀고 나가는 힘이 중심인 그릇',
+  정재격: '차곡차곡 모으고 지키는 힘이 중심인 그릇',
+  편재격: '기회를 넓게 잡는 힘이 중심인 그릇',
+  식신격: '꾸준히 만들어 내는 재주가 중심인 그릇',
+  상관격: '재주를 드러내고 틀을 깨는 힘이 중심인 그릇',
+  정인격: '배우고 도움받는 힘이 중심인 그릇',
+  편인격: '남다른 감각과 직관이 중심인 그릇',
+  건록격: '스스로 서는 힘이 중심인 그릇',
+  양인격: '밀어붙이는 힘이 아주 센 그릇',
+};
+const MIDAL_PLAIN = '자격 미달 — 필요한 기운이긴 하지만, 명식 안에 받쳐 줄 뿌리가 없어 실제로는 쓸 수 없다는 뜻이에요.';
+
 const PILLAR_ORDER = [['hour', '시'], ['day', '일'], ['month', '월'], ['year', '년']] as const;
 
 export default function SamplePage() {
@@ -62,6 +78,11 @@ export default function SamplePage() {
         생년월일은 전해지지 않고 네 기둥만 남아 있어, 네 기둥에서 바로 계산했어요.
       </div>
 
+      <dl className="sp-terms">
+        <div><dt>명식</dt><dd>태어난 해·달·날·시를 네 기둥, 여덟 글자로 적은 표예요.</dd></div>
+        <div><dt>용신</dt><dd>이 명식에 가장 필요한 기운이에요. 약처럼 채워 쓰는 오행이라고 보시면 돼요.</dd></div>
+      </dl>
+
       {/* ── 1. 명식 ── */}
       <section className="sp-sec">
         <h2><em>1</em> 명식</h2>
@@ -81,6 +102,7 @@ export default function SamplePage() {
           <div className="on"><span>용신</span><b>{y.primary}</b></div>
           <div><span>채택한 법</span><b>{y.method}</b></div>
         </div>
+        <p className="sp-term-line"><b>{gy.gyeokguk.name}</b> — {GYEOK_PLAIN[gy.gyeokguk.name] ?? '태어난 달이 정해 주는 이 명식의 기본 그릇'}이에요.</p>
 
         <h3 className="sp-h3">기준마다 답이 달랐어요</h3>
         <div className="sp-bases">
@@ -91,6 +113,7 @@ export default function SamplePage() {
                 <i>{b.adopted ? '채택' : '기각'}</i>
               </div>
               <p>{b.note}</p>
+              {b.note?.includes('자격 미달') && <p className="sp-term-line">{MIDAL_PLAIN}</p>}
             </div>
           ))}
         </div>
