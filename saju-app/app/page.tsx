@@ -7,7 +7,7 @@ import type { Pillar, LuckPillar } from '@/lib/saju/types';
 // 클라이언트가 받는 건 **판정이 빠진** 결과다(무료 응답). 타입으로 그 사실을 못 박아 둔다 —
 // 그래야 화면 코드가 실수로 `yongsin.primary` 를 참조하는 순간 컴파일이 막는다.
 import type { FreeSajuResult } from '@/lib/saju/gate';
-import { SIPSIN_PLAIN } from '@/lib/glossary';
+import { SIPSIN_PLAIN, GLOSSARY } from '@/lib/glossary';
 import { parseReadingStream, fixReadingHanja, isCompleteReading } from '@/lib/saju/readingMeta';
 import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
@@ -716,6 +716,19 @@ export default function Home() {
                   <p className="bd-note">※ 출생 시각을 모르면 시주와 자시는 비교 대상이 아니에요. 시간을 알면 이 진단이 훨씬 정확해집니다.</p>
                 )}
 
+                {/* 옛 「정밀 보정 내역」 카드(2026-09-30 합침) — 경계 진단과 내용이 겹쳐 접어 둔다 */}
+                <details className="bd-raw">
+                  <summary>계산에 쓴 값 전부 보기</summary>
+                  <div className="meta">
+                    <b>표준자오선</b> {result.corrected.standardMeridian}°E ·
+                    <b> 경도 보정</b> {result.corrected.longitudeCorrectionMin}분 ·
+                    <b> 균시차</b> {result.corrected.equationOfTimeMin}분<br />
+                    <b>서머타임</b> {result.corrected.summerTimeApplied ? '적용(-1시간)' : '없음'} ·
+                    <b> 자시 구분</b> {result.corrected.jasiType ?? '—'}<br />
+                    <b>진태양시</b> {result.corrected.apparentSolarDateTime}
+                  </div>
+                </details>
+
                 <p className="bd-close">
                   어느 쪽이 맞는지는 저희가 정하지 않았습니다. 『적천수천미』 원전에 실린 명식
                   {stats.cases > 0 ? <> <b>{stats.cases}건</b>으로</> : '으로'} 저희 판정을 채점하고, <b>틀린 것까지</b> 그대로 공개합니다.
@@ -753,9 +766,11 @@ export default function Home() {
             {result.warnings.map((w, i) => <div className="warn" key={i}>⚠️ {w}</div>)}
             <div className="adv">
               <div className="adv-row"><span className="adv-k">십이운성</span>
-                <span>시 {result.advanced.unseong.hour ?? '—'} · 일 {result.advanced.unseong.day} · 월 {result.advanced.unseong.month} · 년 {result.advanced.unseong.year}</span>
+                <span>시 {result.advanced.unseong.hour ?? '—'} · 일 {result.advanced.unseong.day} · 월 {result.advanced.unseong.month} · 년 {result.advanced.unseong.year}
+                  <em className="adv-plain">{GLOSSARY.십이운성}</em></span>
               </div>
-              <div className="adv-row"><span className="adv-k">공망(空亡)</span><span>{result.advanced.gongmang.branches.join(' · ')}</span></div>
+              <div className="adv-row"><span className="adv-k">공망(空亡)</span><span>{result.advanced.gongmang.branches.join(' · ')}
+                <em className="adv-plain">{GLOSSARY.공망}</em></span></div>
               {lunarBirth && (
                 <div className="adv-row"><span className="adv-k">음력 생일</span><span>{lunarBirth.year}년 {lunarBirth.isLeap ? '윤' : ''}{lunarBirth.month}월 {lunarBirth.day}일</span></div>
               )}
@@ -848,22 +863,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="card">
-            <h2>정밀 보정 내역</h2>
-            <div className="meta">
-              <b>표준자오선</b> {result.corrected.standardMeridian}°E ·
-              <b> 경도보정</b> {result.corrected.longitudeCorrectionMin}분 ·
-              <b> 균시차</b> {result.corrected.equationOfTimeMin}분<br />
-              <b>서머타임</b> {result.corrected.summerTimeApplied ? '적용(-1h)' : '없음'} ·
-              <b> 자시구분</b> {result.corrected.jasiType ?? '—'}<br />
-              <b>진태양시</b> {result.corrected.apparentSolarDateTime}
-            </div>
-          </div>
 
           <span id="sec-judge" className="sec-anchor" />
           <div className="card">
             <h2>오행 분포 (五行)</h2>
-            <div className="meta" style={{ marginBottom: 10 }}>천간·지지 8자 기준 — 지지 속에 숨은 지장간(支藏干)의 기운은 격국·풀이에 별도로 반영됩니다.</div>
+            <div className="meta" style={{ marginBottom: 10 }}>여덟 글자에 나무·불·흙·쇠·물(목·화·토·금·수)이 몇 개씩 있는지예요. 글자 속에 숨은 기운은 판정·풀이에서 따로 반영합니다.</div>
             {(['목','화','토','금','수'] as const).map((o) => {
               const c = (result.ohaeng as any)[o] as number;
               const st = (result.ohaeng.status as any)[o];
@@ -992,29 +996,25 @@ export default function Home() {
                     <>당신 명식은 <b>다섯 가지 법이 한 답으로 모이는</b> 자리입니다</>
                   )}
                 </div>
+                {/* 2026-09-30 쉬운 말 — 무료는 후보까지, 확정은 리포트 한 줄 */}
                 <p>
-                  용신은 <b>어느 법을 먼저 쓰느냐</b>에서 갈려요. 5용신 정법(억부·조후·병약·통관·전왕) 중
-                  {' '}당신 명식에서 값이 나온 건 <b>{yongLock.methodsCount}개</b>입니다.
+                  용신은 이 사주의 균형을 맞추는 데 <b>가장 필요한 기운</b>이에요.
                   {yongLock.candidateCount > 1
-                    ? ' 다른 곳과 용신이 다르게 나온다면 대개 계산이 틀린 게 아니라, 여기서 갈린 겁니다.'
-                    : ' 법이 갈려도 답이 같은, 흔들림 없는 자리예요. 그게 무엇이고 왜 그런지는 근거와 함께 리포트에서 열립니다.'}
+                    ? ' 무엇을 기준으로 먼저 보느냐에 따라 답이 갈릴 수 있어서, 무료에서는 후보까지만 보여드려요. 다른 곳과 용신이 다르게 나왔다면 대개 여기서 갈린 거예요.'
+                    : ' 이 명식은 어느 기준으로 봐도 답이 하나로 모여요. 그 답과 이유는 리포트에서 열려요.'}
                 </p>
                 <p className="flip-gate-what">
-                  정밀 리포트에서 열리는 것 — <b>우리 엔진이 채택한 용신 하나와 그 근거</b>
-                  (기준별 결론·채택과 기각 사유·무엇이 1·2위를 갈랐는지), <b>격국 확정</b>과 그릇 풀이
-                  {yongLock.hasLacking && (
-                    <>, 그리고 <b>결손 진단(淸枯)</b> — 쓸 기운은 있는데 그걸 <b>받쳐 줄 원천이 원국에 없는</b> 구조라 어느 기운이 올 때 풀리는지</>
-                  )}.
-                </p>
-                <p className="flip-gate-what">
-                  그리고 그 판정은 <b>채점받은 판정</b>입니다. 『적천수천미』 원전 명식으로 채점해 맞힌 것도 틀린 것도 전부 공개해 뒀어요 —{' '}
-                  <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 보기 →</a>
+                  정밀 리포트에서 열리는 것 — <b>확정된 용신과 그 근거</b>, <b>격국(그릇) 확정</b>
+                  {yongLock.hasLacking && <>, 그리고 <b>부족한 기운이 언제 채워지는지</b></>}.
+                  {' '}이 판정은 고전 원전 명식으로 채점해 틀린 것까지 공개합니다 — <a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 보기 →</a>
                 </p>
                 <button className="btn" onClick={() => setPayOpen(true)}>내 용신이 무엇인지 보기 →</button>
               </div>
             ) : null}
 
-            <p style={{ marginTop: 12, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
+            <details className="method-note">
+            <summary>판정 방법 자세히 보기</summary>
+            <p style={{ marginTop: 8, fontSize: 12.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
               ※ 신강·신약은 <b>득령(월지)·득지(일지)·득세</b>를 가중 합산해 판정하며, 득세는 일간 자신을 뺀 나머지 글자로 셉니다.
               용신은 서낙오 『자평수언』의 <b>5용신 정법 — 억부·조후·병약·통관·전왕(종격)</b>을 모두 계산해
               그중 <b>종격 → 조후 시급 → 병약 → 억부</b> 순으로 채택합니다.
@@ -1024,9 +1024,12 @@ export default function Home() {
               어떤 법을 우선하느냐는 학파에 따라 견해가 갈릴 수 있어요.
               {' '}격국은 자평진전 「用神專尋月令」에 따라 <b>월지 정기(본기)</b>를 기본으로 잡습니다 — 투출한 여기·중기를 격으로 잡는 곳도 있어, 그래서 곳마다 격이 갈립니다.
             </p>
+            </details>
           </div>
 
           <div className="card">
+            <h2>글자 관계(십신) 개수</h2>
+            <div className="meta" style={{ marginBottom: 10 }}>여덟 글자가 ‘나(태어난 날)’와 어떤 관계인지 세어 본 거예요. 뜻은 명식표 아래 풀이를 보세요.</div>
             <div className="chips">
               {Object.entries(result.sipsinSummary).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
                 <div className="chip" key={k}>{k} <b>×{v}</b></div>
