@@ -475,7 +475,8 @@ export const ENGINE_VERSION = 14;
  *     + (2026-09-23) 문장 규칙 B안 — 모든 AI 프롬프트에 금지 사전·예언/규정 금지·출력 점검(STYLE_GUARD),
  *       리포트 첫 줄 「이 명식은 ~가 겉에 있습니다」(직설은 호칭 없음), 무료 규칙 풀이 첫 줄도 같은 형식.
  */
-export const TEXT_VERSION = 4;
+/* 5 = 2026-09-30 리포트·무료 첫 줄을 「OO님은 '{일주 비유}' 같은 사람입니다. {장면}」으로(십신 용어 빼기). 캐시 풀이 버림. */
+export const TEXT_VERSION = 5;
 
 /** 캐시 키·저장 메타에 쓰는 짧은 표기 */
 export const ENGINE_TAG = `e${ENGINE_VERSION}`;
