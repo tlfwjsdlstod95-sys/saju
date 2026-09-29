@@ -122,6 +122,10 @@ export default function SinsalPage({ params }: { params: { slug: string } }) {
           야자시·서머타임·출생지 보정을 반영한 정밀 만세력 기준입니다.
         </p>
         <Link href="/" className="btn share-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>내 12신살 무료로 확인하기 →</Link>
+        <p className="meta" style={{ marginTop: 12 }}>
+          같은 {c.name}이라도 좋게 작용할지 부담이 될지는 용신이 정해져야 가릴 수 있어요.{' '}
+          <Link href="/sample" style={{ color: 'var(--gold)' }}>리포트에서 어떻게 보이는지 샘플 보기 →</Link>
+        </p>
       </div>
 
       <div className="card">
