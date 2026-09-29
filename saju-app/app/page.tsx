@@ -7,6 +7,7 @@ import type { Pillar, LuckPillar } from '@/lib/saju/types';
 // 클라이언트가 받는 건 **판정이 빠진** 결과다(무료 응답). 타입으로 그 사실을 못 박아 둔다 —
 // 그래야 화면 코드가 실수로 `yongsin.primary` 를 참조하는 순간 컴파일이 막는다.
 import type { FreeSajuResult } from '@/lib/saju/gate';
+import { SIPSIN_PLAIN } from '@/lib/glossary';
 import { parseReadingStream, fixReadingHanja, isCompleteReading } from '@/lib/saju/readingMeta';
 import { ENGINE_VERSION, READING_TAG } from '@/lib/saju/version';
 import { cloudGetReport } from '@/lib/cloud';
@@ -144,14 +145,33 @@ function GzCell({ pos, p }: { pos: string; p: Pillar | null }) {
   return (
     <div className="gz-cell">
       <div className="pos">{pos}</div>
-      <div className="char" style={{ color: OHAENG_COLOR[p.ganOhaeng] }}>{p.ganHanja}</div>
-      <div className="sub">{p.ganKor} · {p.ganSipsin ?? '일간(나)'}</div>
-      <div className="char" style={{ color: OHAENG_COLOR[p.jiOhaeng], marginTop: 6 }}>{p.jiHanja}</div>
-      <div className="sub">{p.jiKor} · {p.jiSipsin}</div>
+      {/* 2026-09-30: 한글을 크게, 한자는 작게 — 첫 방문자는 한자부터 막힌다 */}
+      <div className="char" style={{ color: OHAENG_COLOR[p.ganOhaeng] }}>{p.ganKor}<small className="gz-han">{p.ganHanja}</small></div>
+      <div className="sub">{p.ganSipsin ?? '나'} · {p.ganOhaeng}</div>
+      <div className="char" style={{ color: OHAENG_COLOR[p.jiOhaeng], marginTop: 6 }}>{p.jiKor}<small className="gz-han">{p.jiHanja}</small></div>
+      <div className="sub">{p.jiSipsin} · {p.jiOhaeng}</div>
     </div>
   );
 }
 
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+/** 'YYYY-MM-DD HH:MM' → 'HH:MM' */
+const hhmm = (s: string) => (s.split(' ')[1] ?? s);
+/** −32.1 → '−32.1분', 12.3 → '+12.3분' */
+const fmtMin = (m: number) => `${m > 0 ? '+' : m < 0 ? '−' : ''}${Math.abs(m)}분`;
+const plainGz = (s: string) => s.replace(/\([^)]*\)/g, '');
+/** 경계 진단 한 줄 결론 — 무엇이 갈리는지, 아니면 갈리지 않는다는 사실 */
+function boundaryLead(b: NonNullable<FreeSajuResult['boundary']>): string {
+  if (b.unknownTime && !b.anyChange) return '시각을 모르면 시주는 비교할 수 없어요. 년·월·일 세 기둥 기준으로 보여드립니다.';
+  if (!b.anyChange) return '어느 기준으로 계산해도 네 기둥이 같습니다. 어디서 보든 같은 명식이에요.';
+  const v = b.variants.find((x) => x.key === 'clock_only') ?? b.variants.find((x) => x.kind === '생략') ?? b.variants[0];
+  const ch = v.changed.join('·');
+  if (v.key === 'clock_only') return `시계 시각 그대로 계산하면 ${ch}가 ${plainGz(v.theirs)}, 태어난 곳의 해 시각으로 계산하면 ${plainGz(v.ours)}입니다.`;
+  if (v.key === 'jieqi_date') return `절기를 날짜로만 보면 ${ch}가 ${plainGz(v.theirs)}, 절기가 든 시각까지 보면 ${plainGz(v.ours)}입니다.`;
+  if (v.key === 'no_dst') return `서머타임을 되돌리지 않으면 ${ch}가 ${plainGz(v.theirs)}, 되돌리면 ${plainGz(v.ours)}입니다.`;
+  return `자시 학파에 따라 ${ch}가 ${plainGz(v.ours)} 또는 ${plainGz(v.theirs)}가 됩니다. 어느 쪽이 맞다고 정하지 않습니다.`;
+}
 
 /** 분 → 사람이 읽는 시간차 ('3일 4시간' · '2시간 12분' · '18분') */
 function fmtDelta(min: number): string {
@@ -608,17 +628,127 @@ export default function Home() {
           {/* 시각 미상 분기 (§E-4 ③) — 시각을 모르는 사람에게만. 확정된 것 / 시각을 알아야 정해지는 것 */}
           {result.timeScan && <TimeUnknownCard scan={result.timeScan} onEnterTime={enterTime} />}
 
+          {/* ── 경계 진단 — 무료 구간의 '상품'. 자랑이 아니라 **당신 명식의 갈림길**을 보여준다 ── */}
+          {result.boundary && (() => {
+            const b = result.boundary!;
+            const omit = b.variants.filter((v) => v.kind === '생략');
+            const school = b.variants.filter((v) => v.kind === '학파');
+            return (
+              <div className="card bd-card" id="boundary">
+                <h2>경계 진단 — 당신 명식이 갈릴 수 있는 지점</h2>
+                {/* 한 줄 결론 (2026-09-30) — 첫 방문자가 이해해야 하는 건 「시계대로면 X, 해 시각으로면 Y」 그 한 줄이다 */}
+                <p className="bd-lead">{boundaryLead(b)}</p>
+                <div className="meta" style={{ marginBottom: 14 }}>
+                  같은 생년월일시인데 앱마다 사주가 다른 이유는 대개 아래 세 칸에서 갈립니다.
+                </div>
+
+                <div className="bd-facts">
+                  <div><span>진태양시 · 해 시각</span><b>{b.unknownTime ? '시간 모름' : hhmm(b.trueSolar.apparentSolarDateTime)}</b>
+                    <em>{b.unknownTime
+                      ? '시각을 알면 태어난 곳의 해 시각으로 바꿔 계산해요.'
+                      : <>시계가 아니라 태어난 곳의 해 시각이에요. 입력 {pad2(result.input.hour ?? 0)}:{pad2(result.input.minute ?? 0)} → {hhmm(b.trueSolar.apparentSolarDateTime)}으로 계산합니다
+                        {' '}(경도 {fmtMin(b.trueSolar.longitudeCorrectionMin)} · 균시차 {fmtMin(b.trueSolar.eotMin)}).</>}</em></div>
+                  <div><span>달이 바뀌는 절기</span><b>{b.jeolgi.name}</b>
+                    <em>월주(月) 글자가 바뀌는 기준이에요.{' '}
+                      {b.jeolgi.deltaMin >= 0 ? `${b.jeolgi.name}${josaIGa(b.jeolgi.name)} 지나고 ${fmtDelta(b.jeolgi.deltaMin)} 뒤 출생` : `${b.jeolgi.name}까지 ${fmtDelta(b.jeolgi.deltaMin)} 남기고 출생`}
+                      {b.jeolgi.near
+                        ? (b.variants.some((v) => v.key === 'jieqi_date') ? ' — 경계에 가까워 아래에 비교해 두었어요.' : ' — 가깝지만 월주는 그대로예요.')
+                        : ' — 월주는 그대로예요.'}</em></div>
+                  <div><span>자시 · 서머타임</span><b>{b.unknownTime ? '시간 모름' : (b.jasiType === '야자시' || b.jasiType === '조자시') ? b.jasiType : b.dstApplied ? '서머타임' : '해당 없음'}</b>
+                    <em>밤 11시~새벽 1시 출생(자시)과 1948~1960년·1987~1988년 여름 출생(서머타임)만 해당돼요.
+                      {' '}{b.dstApplied ? '이 명식은 서머타임 기간이라 1시간 되돌려 계산했어요.' : (b.jasiType === '야자시' || b.jasiType === '조자시') ? `이 명식은 ${b.jasiType}예요.` : '이 명식은 해당 없음.'}</em></div>
+                </div>
+
+                {omit.length > 0 && (
+                  <div className="bd-block">
+                    <h3 className="bd-h">▸ 이 계산을 생략하면</h3>
+                    {omit.map((v) => (
+                      <div className="bd-row" key={v.key}>
+                        <div className="bd-row-h"><b>{v.label}</b><span>{v.changed.join(' · ')}가 달라집니다</span></div>
+                        <p className="bd-what">{v.what}</p>
+                        <div className="bd-cmp">
+                          <span className="bd-ours">헤아림 <b>{v.ours}</b></span>
+                          <span className="bd-arrow">→</span>
+                          <span className="bd-theirs">그 방식 <b>{v.theirs}</b></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {school.map((v) => (
+                  <div className="bd-block bd-school" key={v.key}>
+                    <h3 className="bd-h">▸ 학파를 바꾸면 (정답이 둘)</h3>
+                    <p className="bd-what">
+                      자시는 <b>학파가 갈립니다.</b> 헤아림 기본값은 <b>야자시</b>(23시대도 그날 일주 유지)이고,
+                      {' '}입력 화면에서 바꿀 수 있어요. {v.what}으로 보면 {v.changed.join(' · ')}가
+                      {' '}<b>{v.ours}</b> 대신 <b>{v.theirs}</b>가 됩니다.
+                    </p>
+                    <p className="bd-neutral">여기서는 <b>어느 쪽이 맞다고 말하지 않습니다.</b> 계산이 아니라 관점의 문제예요.</p>
+                  </div>
+                )) }
+
+                {/* 안심 카드 — 68%가 여기 해당한다. 겁을 주지 않는다는 증거라 반드시 띄운다.
+                    ⚠️ 단 **시간을 모르면 시주·자시는 애초에 판단 대상이 아니다.** 그때 「어디서 보든 같다」고 말하면
+                       사실보다 센 말이 된다(시각을 넣으면 갈릴 수 있다). 그래서 문구를 나눈다. */}
+                {!b.anyChange && (b.unknownTime ? (
+                  <div className="bd-safe">
+                    <b>시각을 모르면 시주와 자시는 판단 대상이 아니에요.</b>
+                    {/* ⚠️ 2026-09-23: 「년·월·일은 어디서 보든 같다」는 절입일·자정 직후 출생에게 거짓이 된다
+                        (시각에 따라 월주·일주가 갈린다). 시각 미상 카드(timeScan)가 갈린다고 판정하면 그 말을 하지 않는다. */}
+                    {result.timeScan?.pillars.some((p) => p.status === 'split') ? (
+                      <> 다만 <b>{result.timeScan.pillars.filter((p) => p.status === 'split').map((p) => p.pillar).join('·')}는 태어난 시각에 따라</b> 달라져요 —
+                        {' '}<a href="#time-unknown" style={{ color: 'var(--gold)' }}>「시각 없이 알 수 있는 것」</a>에 나눠 두었어요.</>
+                    ) : (
+                      <> 나머지 세 기둥(년·월·일)은 절기·경도 어느 쪽으로 계산해도
+                        {' '}그대로라, <b>여기까지는 어디서 보든 같습니다.</b></>
+                    )}
+                    {' '}<b>태어난 시각을 알면</b> 시주가 붙고, 그때 갈릴 수 있는지도 이 자리에서 같이 알려드릴 수 있어요.
+                  </div>
+                ) : (
+                  <div className="bd-safe">
+                    <b>당신 명식은 경계에서 멀어요.</b> 진태양시·절기·자시 어느 쪽으로 계산해도 네 기둥이 그대로입니다 —
+                    {' '}<b>어디서 보든 같은 명식</b>이 나온다는 뜻이에요. 겁줄 일이 아니라 그냥 사실이라, 있는 그대로 알려드립니다.
+                  </div>
+                ))}
+
+                {b.unknownTime && b.anyChange && (
+                  <p className="bd-note">※ 출생 시각을 모르면 시주와 자시는 비교 대상이 아니에요. 시간을 알면 이 진단이 훨씬 정확해집니다.</p>
+                )}
+
+                <p className="bd-close">
+                  어느 쪽이 맞는지는 저희가 정하지 않았습니다. 『적천수천미』 원전에 실린 명식
+                  {stats.cases > 0 ? <> <b>{stats.cases}건</b>으로</> : '으로'} 저희 판정을 채점하고, <b>틀린 것까지</b> 그대로 공개합니다.
+                  {' '}<a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 보기 →</a>
+                </p>
+              </div>
+            );
+          })()}
+
           <div className="card">
-            <h2>사주 명식 (四柱)</h2>
+            <h2>사주 명식 — 태어난 해·달·날·시의 네 기둥</h2>
             {/* 경계 배지는 2026-09-23 결과 상단 「이 명식 한눈에」 카드(SummaryCard)로 옮겼다 — 규칙·문구는 lib/saju/summary.ts */}
             <div className="saju-table">
               <div className="h">구분</div><div className="h">시주</div><div className="h">일주</div><div className="h">월주</div><div className="h">년주</div>
               <div className="h">천간<br/>지지</div>
-              <GzCell pos="時" p={result.pillars.hour} />
-              <GzCell pos="日 (나)" p={result.pillars.day} />
-              <GzCell pos="月" p={result.pillars.month} />
-              <GzCell pos="年" p={result.pillars.year} />
+              <GzCell pos="태어난 시" p={result.pillars.hour} />
+              <GzCell pos="태어난 날 · 나" p={result.pillars.day} />
+              <GzCell pos="태어난 달" p={result.pillars.month} />
+              <GzCell pos="태어난 해" p={result.pillars.year} />
             </div>
+            {/* 십신 한 줄 풀이 — 이 명식에 실제로 나온 것만 */}
+            {(() => {
+              const ps = [result.pillars.hour, result.pillars.day, result.pillars.month, result.pillars.year].filter(Boolean) as Pillar[];
+              const names = [...new Set(ps.flatMap((p) => [p.ganSipsin, p.jiSipsin]).filter(Boolean) as string[])]
+                .filter((n) => SIPSIN_PLAIN[n]);
+              if (!names.length) return null;
+              return (
+                <p className="sipsin-legend">
+                  <b>글자 아래 이름은 ‘나(태어난 날)’와의 관계예요.</b>{' '}
+                  {names.map((n, i) => <span key={n}>{i ? ' · ' : ''}<b>{n}</b> {SIPSIN_PLAIN[n]}</span>)}
+                </p>
+              );
+            })()}
             {/* 엔진 버전 띠도 요약 카드로 옮겼다(2026-09-23) */}
             {result.warnings.map((w, i) => <div className="warn" key={i}>⚠️ {w}</div>)}
             <div className="adv">
@@ -729,94 +859,6 @@ export default function Home() {
               <b>진태양시</b> {result.corrected.apparentSolarDateTime}
             </div>
           </div>
-
-          {/* ── 경계 진단 — 무료 구간의 '상품'. 자랑이 아니라 **당신 명식의 갈림길**을 보여준다 ── */}
-          {result.boundary && (() => {
-            const b = result.boundary!;
-            const omit = b.variants.filter((v) => v.kind === '생략');
-            const school = b.variants.filter((v) => v.kind === '학파');
-            return (
-              <div className="card bd-card" id="boundary">
-                <h2>경계 진단 — 당신 명식이 갈릴 수 있는 지점</h2>
-                <div className="meta" style={{ marginBottom: 14 }}>
-                  같은 생년월일시인데 앱마다 사주가 다른 이유는 대개 아래 네 가지에서 갈립니다.
-                  {' '}당신 명식이 그 경계의 어디에 서 있는지 그대로 보여드려요.
-                </div>
-
-                <div className="bd-facts">
-                  <div><span>진태양시</span><b>{b.trueSolar.apparentSolarDateTime}</b>
-                    <em>경도 보정 {b.trueSolar.longitudeCorrectionMin}분 · 균시차 {b.trueSolar.eotMin}분</em></div>
-                  <div><span>가장 가까운 절입</span><b>{b.jeolgi.name}({b.jeolgi.hanja})</b>
-                    <em>{b.jeolgi.whenKST} · {b.jeolgi.deltaMin >= 0 ? `${fmtDelta(b.jeolgi.deltaMin)} 지나서 출생` : `${fmtDelta(b.jeolgi.deltaMin)} 전에 출생`}</em></div>
-                  <div><span>자시 · 서머타임</span><b>{b.jasiType ?? '시간 모름'}</b>
-                    <em>{b.dstApplied ? '서머타임 기간 출생 — 1시간 되돌려 계산' : '서머타임 해당 없음'}</em></div>
-                </div>
-
-                {omit.length > 0 && (
-                  <div className="bd-block">
-                    <h3 className="bd-h">▸ 이 계산을 생략하면</h3>
-                    {omit.map((v) => (
-                      <div className="bd-row" key={v.key}>
-                        <div className="bd-row-h"><b>{v.label}</b><span>{v.changed.join(' · ')}가 달라집니다</span></div>
-                        <p className="bd-what">{v.what}</p>
-                        <div className="bd-cmp">
-                          <span className="bd-ours">헤아림 <b>{v.ours}</b></span>
-                          <span className="bd-arrow">→</span>
-                          <span className="bd-theirs">그 방식 <b>{v.theirs}</b></span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {school.map((v) => (
-                  <div className="bd-block bd-school" key={v.key}>
-                    <h3 className="bd-h">▸ 학파를 바꾸면 (정답이 둘)</h3>
-                    <p className="bd-what">
-                      자시는 <b>학파가 갈립니다.</b> 헤아림 기본값은 <b>야자시</b>(23시대도 그날 일주 유지)이고,
-                      {' '}입력 화면에서 바꿀 수 있어요. {v.what}으로 보면 {v.changed.join(' · ')}가
-                      {' '}<b>{v.ours}</b> 대신 <b>{v.theirs}</b>가 됩니다.
-                    </p>
-                    <p className="bd-neutral">여기서는 <b>어느 쪽이 맞다고 말하지 않습니다.</b> 계산이 아니라 관점의 문제예요.</p>
-                  </div>
-                )) }
-
-                {/* 안심 카드 — 68%가 여기 해당한다. 겁을 주지 않는다는 증거라 반드시 띄운다.
-                    ⚠️ 단 **시간을 모르면 시주·자시는 애초에 판단 대상이 아니다.** 그때 「어디서 보든 같다」고 말하면
-                       사실보다 센 말이 된다(시각을 넣으면 갈릴 수 있다). 그래서 문구를 나눈다. */}
-                {!b.anyChange && (b.unknownTime ? (
-                  <div className="bd-safe">
-                    <b>시각을 모르면 시주와 자시는 판단 대상이 아니에요.</b>
-                    {/* ⚠️ 2026-09-23: 「년·월·일은 어디서 보든 같다」는 절입일·자정 직후 출생에게 거짓이 된다
-                        (시각에 따라 월주·일주가 갈린다). 시각 미상 카드(timeScan)가 갈린다고 판정하면 그 말을 하지 않는다. */}
-                    {result.timeScan?.pillars.some((p) => p.status === 'split') ? (
-                      <> 다만 <b>{result.timeScan.pillars.filter((p) => p.status === 'split').map((p) => p.pillar).join('·')}는 태어난 시각에 따라</b> 달라져요 —
-                        {' '}<a href="#time-unknown" style={{ color: 'var(--gold)' }}>「시각 없이 알 수 있는 것」</a>에 나눠 두었어요.</>
-                    ) : (
-                      <> 나머지 세 기둥(년·월·일)은 절기·경도 어느 쪽으로 계산해도
-                        {' '}그대로라, <b>여기까지는 어디서 보든 같습니다.</b></>
-                    )}
-                    {' '}<b>태어난 시각을 알면</b> 시주가 붙고, 그때 갈릴 수 있는지도 이 자리에서 같이 알려드릴 수 있어요.
-                  </div>
-                ) : (
-                  <div className="bd-safe">
-                    <b>당신 명식은 경계에서 멀어요.</b> 진태양시·절기·자시 어느 쪽으로 계산해도 네 기둥이 그대로입니다 —
-                    {' '}<b>어디서 보든 같은 명식</b>이 나온다는 뜻이에요. 겁줄 일이 아니라 그냥 사실이라, 있는 그대로 알려드립니다.
-                  </div>
-                ))}
-
-                {b.unknownTime && b.anyChange && (
-                  <p className="bd-note">※ 출생 시각을 모르면 시주와 자시는 비교 대상이 아니에요. 시간을 알면 이 진단이 훨씬 정확해집니다.</p>
-                )}
-
-                <p className="bd-close">
-                  어느 쪽이 맞는지는 저희가 정하지 않았습니다. 『적천수천미』 원전에 실린 명식
-                  {stats.cases > 0 ? <> <b>{stats.cases}건</b>으로</> : '으로'} 저희 판정을 채점하고, <b>틀린 것까지</b> 그대로 공개합니다.
-                  {' '}<a href="/accuracy" style={{ color: 'var(--gold)' }}>정확도·검증 보기 →</a>
-                </p>
-              </div>
-            );
-          })()}
 
           <span id="sec-judge" className="sec-anchor" />
           <div className="card">
