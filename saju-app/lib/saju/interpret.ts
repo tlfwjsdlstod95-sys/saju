@@ -110,9 +110,9 @@ export function interpret(p: IParams): Reading {
   };
   const shown = [p.pillars.month, p.pillars.hour, p.pillars.year].map((x) => x?.ganSipsin).find((x) => !!x && !!LEAD_SCENE[x]) as string | undefined;
   const jo = (w: string) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 ? '이' : '가'; };
-  const lead = `${p.name ? `${p.name}님, ` : ''}` + (shown
-    ? `이 명식은 ${shown}${jo(shown)} 겉에 있습니다. ${LEAD_SCENE[shown]}`
-    : `이 명식은 천간이 일간과 같은 기운으로 차 있습니다. ${LEAD_SCENE['비견']}`);
+  // 2026-09-30 승혁: 「이 명식은 편재가 겉에 있습니다」는 전문 용어라 첫 줄에서 막힌다 → 예전 형식(「~ 같은 사람」)으로.
+  //   비유는 일주 한 줄(iju.tag), 뒤 문장은 겉에 드러난 십신의 생활 장면 그대로(십신 이름은 쓰지 않는다).
+  const lead = `${p.name ? `${p.name}님은` : '당신은'} '${iju.tag}' 같은 사람입니다. ` + (shown ? LEAD_SCENE[shown] : LEAD_SCENE['비견']);
 
   // ① 당신이라는 사람
   sections.push({
