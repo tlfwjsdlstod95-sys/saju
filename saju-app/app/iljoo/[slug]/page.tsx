@@ -66,10 +66,15 @@ export default function IljuPage({ params }: { params: { slug: string } }) {
       <div className="card" style={{ textAlign: 'center' }}>
         <h2>내가 정말 {c.name}일까?</h2>
         <p className="meta" style={{ marginBottom: 14 }}>
-          야자시(23시 출생)·서머타임·출생지 보정을 안 하면 일주 자체가 달라질 수 있어요.
-          헤아림은 천문 데이터로 계산하고, 독립 만세력과 1,000건 교차 검증(1000/1000 일치)을 거쳤습니다.
+          이 글은 {c.name} 일반론입니다. 같은 {c.name}라도 월주·시주가 갈리면 읽기가 달라지고,
+          야자시(밤 11시대 출생)·서머타임·출생지 보정을 안 하면 일주 자체가 달라질 수 있어요.
         </p>
-        <Link href="/" className="btn share-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>내 명식 무료로 확인하기 →</Link>
+        <Link href="/" className="btn share-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>내 네 기둥 확인하기 →</Link>
+        <p className="meta" style={{ marginTop: 12 }}>
+          <Link href="/dict/야자시" style={{ color: 'var(--gold)' }}>야자시·조자시</Link>{' · '}
+          <Link href="/dict/진태양시" style={{ color: 'var(--gold)' }}>진태양시</Link>{' · '}
+          <Link href="/dict/시주" style={{ color: 'var(--gold)' }}>시주가 다른 이유</Link>
+        </p>
       </div>
 
       <div className="card">
