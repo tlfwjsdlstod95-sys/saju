@@ -507,17 +507,15 @@ export default function Home() {
                 </optgroup>
               ))}
             </select>
-            <div className="field-hint">목록에 없으면 가장 가까운 도시</div>
+            <div className="field-hint">목록에 없으면 가장 가까운 도시<br />해 시각 계산에 씁니다.</div>
           </div>
         </div>
         <div className="row">
-          <label className="chk"><input type="checkbox" checked={form.unknownTime} onChange={(e) => set('unknownTime', e.target.checked)} /> 태어난 시간 모름</label>
-          {form.unknownTime && (
-            <span style={{ fontSize: 12.5, color: 'var(--text-mute)' }}>→ 년·월·일 3개 기둥으로 풀이하고, 시주 관련 항목은 빼고 보여드려요. 아는 만큼만 정직하게.</span>
-          )}
+          <label className="chk"><input type="checkbox" checked={form.unknownTime} onChange={(e) => set('unknownTime', e.target.checked)} /> 태어난 시간을 모르겠어요</label>
           <label className="chk"><input type="radio" name="sex" checked={form.sex === 'M'} onChange={() => set('sex', 'M')} /> 남</label>
           <label className="chk"><input type="radio" name="sex" checked={form.sex === 'F'} onChange={() => set('sex', 'F')} /> 여</label>
         </div>
+        <div className="field-hint" style={{ marginTop: 2 }}>시간을 모르면 고정되는 기둥과 갈릴 수 있는 기둥을 나눠 보여 줘요.</div>
         {!form.unknownTime && form.hour === '23' && (
           <div className="row" style={{ marginTop: 10, alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>자시(子時) 학파</span>

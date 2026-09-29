@@ -1236,3 +1236,11 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .adv-more > summary { cursor: pointer; font-size: 13px; color: var(--text-mute); margin: 6px 0; }
 .bd-plain { font-size: 13.5px; line-height: 1.7; color: var(--text-dim); margin: 0 0 10px; word-break: keep-all; }
 @media (max-width: 640px) { .sum-plain li span { display: block; min-width: 0; } }
+
+/* /sample 용어 풀이 — 작게, 본문을 가리지 않게 */
+.sp-terms { margin: -8px 0 22px; padding: 10px 14px; border-radius: 10px; background: var(--bg-card-2); display: grid; gap: 6px; }
+.sp-terms > div { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.55; word-break: keep-all; }
+.sp-terms dt { flex: 0 0 34px; color: var(--gold); font-weight: 700; }
+.sp-terms dd { margin: 0; color: var(--text-dim); }
+.sp-term-line { margin: 8px 0 0 !important; font-size: 12.5px !important; color: var(--text-mute) !important; line-height: 1.55; word-break: keep-all; }
+.sp-term-line b { color: var(--text-dim); }
