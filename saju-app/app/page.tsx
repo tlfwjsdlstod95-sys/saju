@@ -507,7 +507,7 @@ export default function Home() {
                 </optgroup>
               ))}
             </select>
-            <div className="field-hint">목록에 없으면 가장 가까운 도시<br />해 시각 계산에 씁니다.</div>
+            <div className="field-hint">목록에 없으면 가장 가까운 도시</div>
           </div>
         </div>
         <div className="row">
