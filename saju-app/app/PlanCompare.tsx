@@ -33,7 +33,7 @@ export const COMPARE: CompareGroup[] = [
   {
     title: '풀이',
     rows: [
-      { label: '사주 풀이', free: '기본 풀이', paid: 'AI 심층 10주제' },
+      { label: '사주 풀이', free: '핵심 한 단락 + 주제별 첫 문장', paid: 'AI 심층 10주제' },
       { label: '1:1 질문', free: '3번', paid: '이어서 계속' },
     ],
   },

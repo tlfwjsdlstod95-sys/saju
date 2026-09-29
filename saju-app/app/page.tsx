@@ -233,7 +233,7 @@ export default function Home() {
   // ⚠️ 응답 모양이 바뀌면 **반드시 버전을 올린다.**
   //   v2 (2026-09-09): 세로 자르기로 `gyeokYong` 모양이 바뀌고 `boundary` 가 생겼다.
   //   옛 스냅샷(v1)을 복원하면 없는 필드를 읽어 결과 화면이 통째로 깨진다 — 배포 직후 재방문자가 정확히 그 경우다.
-  const SESSION_KEY = 'saju_session_v2';
+  const SESSION_KEY = 'saju_session_v3'; // v3(9-30): 무료 풀이가 핵심 단락 + teaser 로 바뀜
   const [restored, setRestored] = useState(false);
   useEffect(() => { try { const raw = sessionStorage.getItem(SESSION_KEY); if (raw) { const s = JSON.parse(raw); if (s?.form) setForm((f) => ({ ...f, ...s.form })); if (s?.result) setResult(s.result); if (s?.ai && isCompleteReading(s.ai)) setAi(fixReadingHanja(s.ai)); if (s?.tone) setTone(s.tone); if (s?.analyzed) setAnalyzed(s.analyzed); } } catch {} setRestored(true); }, []);
   useEffect(() => { if (!restored) return; try { if (result) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ form, result, ai, tone, analyzed })); else sessionStorage.removeItem(SESSION_KEY); } catch {} }, [restored, result, ai, tone, form, analyzed]);
@@ -1032,7 +1032,7 @@ export default function Home() {
             )}
 
             {(() => {
-              const secs = ai ? ai.sections : result.interpretations;
+              const secs = ai ? ai.sections : result.interpretations.filter((s: any) => !s.teaser);
               if (ai && secs.length === 0) return <div className="read-wait">✍️ 명식을 깊이 읽고 있어요…<span className="caret" /></div>;
               return secs.map((it: any, i: number) => {
                 const isLast = !!aiStreaming && !!ai && i === secs.length - 1;
@@ -1054,6 +1054,40 @@ export default function Home() {
                   </section>
                 );
               });
+            })()}
+
+            {/* 리포트 목차 (2026-09-30) — 무료는 핵심 한 단락까지. 나머지 주제는 첫 문장만 보여 주고 잠근다.
+                「사주가 기니까 돈 내세요」가 아니라 「이 명식으로 이어서 끝까지 읽는다」로 넘긴다. */}
+            {!ai && (() => {
+              const teasers = result.interpretations.filter((s: any) => s.teaser);
+              if (!teasers.length) return null;
+              const who = result.input.name ? `${result.input.name}님` : '이 명식';
+              const split = !!result.boundary?.anyChange;
+              return (
+                <div className="rd-toc">
+                  <div className="rd-toc-h">{who} 정밀 리포트에서 이어지는 {teasers.length}가지</div>
+                  <p className="meta rd-toc-lead">
+                    {split
+                      ? '위 경계 진단에서 갈릴 수 있는 글자까지 확인한 명식으로, 아래 주제를 끝까지 읽어 드립니다.'
+                      : '어느 기준으로 계산해도 같은 명식입니다. 이 명식으로 아래 주제를 끝까지 읽어 드립니다.'}
+                  </p>
+                  <ol className="rd-toc-list">
+                    {teasers.map((s: any, i: number) => (
+                      <li key={s.key}>
+                        <span className="rd-toc-n">{i + 2}</span>
+                        <div className="rd-toc-b">
+                          <div className="rd-toc-t">{s.label}</div>
+                          <div className="rd-toc-s">{s.body}<span className="rd-toc-more"> …</span></div>
+                        </div>
+                        <span className="rd-toc-lock" aria-hidden>🔒</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <button className="btn" onClick={premium ? onAiClick : () => setPayOpen(true)} disabled={aiLoading}>
+                    {premium ? '이어서 AI 심층 풀이 받기 →' : `정밀 리포트로 이어 읽기 · ₩${PRICE.toLocaleString()}`}
+                  </button>
+                </div>
+              );
             })()}
           </div>
 

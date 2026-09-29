@@ -1186,3 +1186,16 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 @media (min-width: 561px) {
   #birth-form .form-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.35fr); gap: 12px; }
 }
+
+/* 리포트 목차 (2026-09-30) — 무료 풀이 다음, 잠긴 주제 */
+.rd-toc { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); }
+.rd-toc-h { font-family: var(--serif); font-size: 19px; font-weight: 800; color: #fff; }
+.rd-toc-lead { margin: 6px 0 14px; }
+.rd-toc-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+.rd-toc-list li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+.rd-toc-n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid rgba(230,200,120,0.4); }
+.rd-toc-b { flex: 1; min-width: 0; }
+.rd-toc-t { font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+.rd-toc-s { font-size: 14.5px; line-height: 1.7; color: var(--text-dim); word-break: keep-all; }
+.rd-toc-more { color: var(--text-mute); }
+.rd-toc-lock { flex: none; font-size: 14px; opacity: 0.55; margin-top: 2px; }
