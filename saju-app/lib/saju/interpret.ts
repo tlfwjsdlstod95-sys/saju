@@ -17,6 +17,11 @@ export interface Interpretation {
    * 문자열을 잘라내는 방식이면 다음 리팩터링 때 반드시 새어 나간다(신살 `flip` 과 같은 설계).
    */
   paid?: string;
+  /**
+   * 무료 응답에서 **첫 문장만 남긴 예고편**인가 (2026-09-30, `gate.ts` trimReadingForFree).
+   * 무료는 핵심 한 단락(essence)만 온전히 주고, 나머지 주제는 첫 문장 + 잠금 목차로 보여 준다.
+   */
+  teaser?: boolean;
 }
 
 export interface Reading {

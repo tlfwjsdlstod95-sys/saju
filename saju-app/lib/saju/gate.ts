@@ -102,6 +102,29 @@ export function stripGyeokYong(gy: GyeokYong, gCands: string[], seed: string): F
   };
 }
 
+// ── 규칙 풀이 줄이기 (2026-09-30) ─────────────────────────────────
+// 무료 풀이가 리포트와 같은 10주제·약 2,900자였다 — 「이미 다 봤네」가 되면 결제할 이유가 없다.
+// 그래서 무료는 **핵심 한 단락(essence, 최대 5문장)** 만 온전히 주고, 나머지 주제는 **첫 문장만**
+// 실어 「리포트에서 이어지는 목차」로 보여 준다. 화면에서 자르는 게 아니라 응답에서 자른다.
+// ⚠️ 경계 진단·명식·게이지는 여기서 건드리지 않는다 — 그건 무료 구간의 상품이다.
+export const FREE_CORE_KEY = 'essence';
+export const FREE_CORE_MAX_SENTENCES = 5;
+
+/** 한국어 문장 나누기 — 마침표·물음표·느낌표(+닫는 따옴표) 뒤 공백에서 자른다 */
+export function splitSentences(text: string): string[] {
+  return text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?。…][)'"’”」』]?)\s+/).filter(Boolean);
+}
+
+export function trimReadingForFree<T extends { key: string; body: string; teaser?: boolean }>(secs: T[]): T[] {
+  return secs.map((s) => {
+    if (s.key === FREE_CORE_KEY) {
+      const firstPara = String(s.body).split('\n\n')[0] ?? '';
+      return { ...s, body: splitSentences(firstPara).slice(0, FREE_CORE_MAX_SENTENCES).join(' ') };
+    }
+    return { ...s, body: splitSentences(String(s.body))[0] ?? '', teaser: true };
+  });
+}
+
 /**
  * 무료 응답 한 벌. `/api/saju` · `/api/gunghap` 이 **둘 다 이걸 통과시킨다.**
  *   ⚠️ 궁합 라우트가 예전엔 명식 전체를 그대로 돌려주고 있었다 —
@@ -117,7 +140,7 @@ export function stripForFree(result: SajuResult, seed: string): FreeSajuResult {
     gyeokYong: stripGyeokYong(result.gyeokYong, gCands, seed),
     // 규칙 풀이 안에도 판정 문장이 섞여 있었다(격국 이름·용신 설명).
     // 문장을 잘라내는 게 아니라 **애초에 `paid` 칸에 따로 담아** 여기서 통째로 뺀다.
-    interpretations: result.interpretations.map(({ paid, ...s }) => s),
+    interpretations: trimReadingForFree(result.interpretations.map(({ paid, ...s }) => s)),
     advanced: {
       ...result.advanced,
       sinsal: sn.list,
