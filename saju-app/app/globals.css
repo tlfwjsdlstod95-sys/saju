@@ -1215,3 +1215,13 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .bd-raw, .method-note { margin: 12px 0 4px; }
 .bd-raw summary, .method-note summary { cursor: pointer; font-size: 13px; color: var(--text-mute); }
 .bd-raw .meta { margin-top: 8px; }
+
+/* 2026-09-30 3차 — 요약 세 줄 · 경계 자세히 접기 · 신살 칩 */
+.sum-verify { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--gold); text-decoration: none; }
+.bd-more { margin: 4px 0 14px; }
+.bd-more > summary { cursor: pointer; font-size: 13.5px; color: var(--text-mute); margin-bottom: 10px; }
+.sinsal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 8px; }
+.sinsal-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13.5px; font-weight: 700; color: var(--text); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); }
+.sinsal-chip small { font-weight: 400; font-size: 11.5px; color: var(--text-mute); }
+.sinsal-more { margin: 4px 0 10px; }
+.sinsal-more > summary { cursor: pointer; font-size: 13px; color: var(--text-mute); margin-bottom: 8px; }

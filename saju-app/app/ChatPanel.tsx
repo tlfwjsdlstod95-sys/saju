@@ -7,7 +7,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 
 const SUGGESTIONS = [
   '제 성격을 한마디로 정리하면요?',
-  '올해 조심해야 할 게 있을까요?',
+  '올해 이 명식에서 흐름이 바뀌는 달이 있나요?',
   '저는 어떤 사람을 만나야 잘 맞아요?',
   '돈은 어떻게 버는 게 저랑 맞을까요?',
   '지금 이직/도전해도 괜찮은 시기인가요?',
@@ -17,7 +17,7 @@ const SUGGESTIONS = [
 const freeKey = (b: any) =>
   `saju_chatfree_v1:${b.year}-${b.month}-${b.day}-${b.hour}-${b.minute}-${b.sex}-${Math.round((b.longitude || 126.978) * 100)}`;
 // 무료 상담 턴 수 — 3턴까지 무료(Haiku라 저비용), 이후 결제 유도. 상담이 비용이 아니라 전환 장치.
-const FREE_TURNS = 3;
+const FREE_TURNS = 1; // 2026-09-30 3→1 — 무료 상담이 리포트보다 싸게 느껴지지 않게
 
 export default function ChatPanel({
   reqBody, name, premium, onLocked,

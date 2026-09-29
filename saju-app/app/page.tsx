@@ -570,32 +570,6 @@ export default function Home() {
 
       <Reviews />
 
-      <div className="card shelf-card">
-        <h2>내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
-        {profiles.length > 0 ? (
-          <>
-            <div className="meta" style={{ marginBottom: 14 }}>저장한 사주를 눌러 바로 다시 보고, <a href="/gunghap" style={{ color: 'var(--gold)' }}>궁합</a>에도 쓸 수 있어요.</div>
-            <div className="shelf">
-              {profiles.map((p) => (
-                <div className="shelf-chip" key={p.id} onClick={() => loadProfile(p)}>
-                  <span className="shelf-emoji">{p.summary?.emoji ?? '🔮'}</span>
-                  <span className="shelf-info"><b>{p.name}</b><small>{p.year}.{p.month}.{p.day} · {p.summary?.ilju ?? ''}</small></span>
-                  <button className="shelf-x" onClick={(e) => { e.stopPropagation(); deleteProfile(p.id); }} aria-label="삭제">✕</button>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="shelf-empty">
-            <div className="shelf-empty-ic">🗂️</div>
-            <p className="shelf-empty-t">아직 저장된 사주가 없어요</p>
-            <p className="shelf-empty-s">위에서 사주를 분석한 뒤 <b>‘💾 이 사주 보관함에 저장’</b>을 누르면 여기에 모여요.<br/>로그인하면 다른 기기에서도 보관함이 그대로 유지돼요.</p>
-          </div>
-        )}
-      </div>
-
-      {/* 받아본 리포트 원문 보관소 — 없으면 아무것도 그리지 않는다 */}
-      <ReportShelf />
 
       {result && (
         <>
@@ -638,10 +612,9 @@ export default function Home() {
                 <h2>경계 진단 — 당신 명식이 갈릴 수 있는 지점</h2>
                 {/* 한 줄 결론 (2026-09-30) — 첫 방문자가 이해해야 하는 건 「시계대로면 X, 해 시각으로면 Y」 그 한 줄이다 */}
                 <p className="bd-lead">{boundaryLead(b)}</p>
-                <div className="meta" style={{ marginBottom: 14 }}>
-                  같은 생년월일시인데 앱마다 사주가 다른 이유는 대개 아래 세 칸에서 갈립니다.
-                </div>
 
+                <details className="bd-more">
+                <summary>진태양시 · 절기 · 자시 자세히 보기</summary>
                 <div className="bd-facts">
                   <div><span>진태양시 · 해 시각</span><b>{b.unknownTime ? '시간 모름' : hhmm(b.trueSolar.apparentSolarDateTime)}</b>
                     <em>{b.unknownTime
@@ -658,6 +631,18 @@ export default function Home() {
                     <em>밤 11시~새벽 1시 출생(자시)과 1948~1960년·1987~1988년 여름 출생(서머타임)만 해당돼요.
                       {' '}{b.dstApplied ? '이 명식은 서머타임 기간이라 1시간 되돌려 계산했어요.' : (b.jasiType === '야자시' || b.jasiType === '조자시') ? `이 명식은 ${b.jasiType}예요.` : '이 명식은 해당 없음.'}</em></div>
                 </div>
+                {/* 옛 「정밀 보정 내역」 카드(2026-09-30 합침) */}
+                <div className="bd-raw">
+                  <div className="meta">
+                    <b>표준자오선</b> {result.corrected.standardMeridian}°E ·
+                    <b> 경도 보정</b> {result.corrected.longitudeCorrectionMin}분 ·
+                    <b> 균시차</b> {result.corrected.equationOfTimeMin}분<br />
+                    <b>서머타임</b> {result.corrected.summerTimeApplied ? '적용(-1시간)' : '없음'} ·
+                    <b> 자시 구분</b> {result.corrected.jasiType ?? '—'}<br />
+                    <b>진태양시</b> {result.corrected.apparentSolarDateTime}
+                  </div>
+                </div>
+                </details>
 
                 {omit.length > 0 && (
                   <div className="bd-block">
@@ -716,18 +701,6 @@ export default function Home() {
                   <p className="bd-note">※ 출생 시각을 모르면 시주와 자시는 비교 대상이 아니에요. 시간을 알면 이 진단이 훨씬 정확해집니다.</p>
                 )}
 
-                {/* 옛 「정밀 보정 내역」 카드(2026-09-30 합침) — 경계 진단과 내용이 겹쳐 접어 둔다 */}
-                <details className="bd-raw">
-                  <summary>계산에 쓴 값 전부 보기</summary>
-                  <div className="meta">
-                    <b>표준자오선</b> {result.corrected.standardMeridian}°E ·
-                    <b> 경도 보정</b> {result.corrected.longitudeCorrectionMin}분 ·
-                    <b> 균시차</b> {result.corrected.equationOfTimeMin}분<br />
-                    <b>서머타임</b> {result.corrected.summerTimeApplied ? '적용(-1시간)' : '없음'} ·
-                    <b> 자시 구분</b> {result.corrected.jasiType ?? '—'}<br />
-                    <b>진태양시</b> {result.corrected.apparentSolarDateTime}
-                  </div>
-                </details>
 
                 <p className="bd-close">
                   어느 쪽이 맞는지는 저희가 정하지 않았습니다. 『적천수천미』 원전에 실린 명식
@@ -775,7 +748,11 @@ export default function Home() {
                 <div className="adv-row"><span className="adv-k">음력 생일</span><span>{lunarBirth.year}년 {lunarBirth.isLeap ? '윤' : ''}{lunarBirth.month}월 {lunarBirth.day}일</span></div>
               )}
             </div>
-            {result.advanced.sinsal.length > 0 && (
+            {result.advanced.sinsal.length > 0 && (<>
+              <div className="sinsal-chips">
+                {result.advanced.sinsal.map((x) => <span className={`sinsal-chip ${x.tone}`} key={x.name}>{x.name}<small>{x.targets}</small></span>)}
+              </div>
+              <details className="sinsal-more"><summary>살 뜻 풀어 보기</summary>
               <div className="sinsal-wrap">
                 {result.advanced.sinsal.map((s, i) => {
                   const f = flipQ.data?.sinsal.find((x) => x.name === s.name)?.flip ?? null;
@@ -791,11 +768,18 @@ export default function Home() {
                   );
                 })}
               </div>
-            )}
+              </details>
+            </>)}
             {/* 12신살 — 삼합 기준 12개 체계 (도화=연살, 역마, 화개 포함) */}
             <div className="hapchung-wrap">
               <h3 className="hapchung-title">12신살(十二神殺)</h3>
               <div className="meta" style={{ marginBottom: 10 }}>띠(년지)를 기준으로 본 열두 가지 살. 명식에 실제로 걸린 것만 표시합니다.</div>
+              <div className="sinsal-chips">
+                {result.advanced.sin12.byYear.map((x) => (
+                  <span className={`sinsal-chip ${x.tone}`} key={x.name}>{x.name}<small>{x.at.join('·')}</small>{!flipOf(x.name) && flipLock?.names.includes(x.name) ? ' 🔒' : ''}</span>
+                ))}
+              </div>
+              <details className="sinsal-more"><summary>살 뜻 풀어 보기</summary>
               <div className="sinsal-wrap">
                 {result.advanced.sin12.byYear.map((x) => {
                   const f = flipOf(x.name);
@@ -817,6 +801,7 @@ export default function Home() {
                   );
                 })}
               </div>
+              </details>
               {(result.advanced.sin12.byYear.some((x) => flipOf(x.name)) || (!premium && flipLock && flipLock.flips > 0)) && (
                 <TermNote terms={['용신', '희신', '기신']} />
               )}
@@ -1145,12 +1130,6 @@ export default function Home() {
             />
           )}
 
-          <ChatPanel
-            reqBody={reqBody}
-            name={result.input.name}
-            premium={premium}
-            onLocked={() => setPayOpen(true)}
-          />
 
           <span id="sec-report" className="sec-anchor" />
           <div className="card premium">
@@ -1184,6 +1163,14 @@ export default function Home() {
           </div>
 
           <Receipts />
+
+          {/* AI 상담은 풀이·목차·결제 다음 (2026-09-30) — 무료 턴이 리포트보다 싸게 보이지 않게 */}
+          <ChatPanel
+            reqBody={reqBody}
+            name={result.input.name}
+            premium={premium}
+            onLocked={() => setPayOpen(true)}
+          />
 
           <span id="sec-luck" className="sec-anchor" />
           <div className="card">
@@ -1255,6 +1242,34 @@ export default function Home() {
           <ReviewPrompt chart={chart} premium={premium} />
         </>
       )}
+
+      {/* 보관함은 맨 아래로 (2026-09-30 승혁 요청) — 첫 화면은 입력과 결과에 집중 */}
+      <div className="card shelf-card">
+        <h2>내 사주 보관함{profiles.length > 0 && <span className="shelf-count">{profiles.length}</span>}</h2>
+        {profiles.length > 0 ? (
+          <>
+            <div className="meta" style={{ marginBottom: 14 }}>저장한 사주를 눌러 바로 다시 보고, <a href="/gunghap" style={{ color: 'var(--gold)' }}>궁합</a>에도 쓸 수 있어요.</div>
+            <div className="shelf">
+              {profiles.map((p) => (
+                <div className="shelf-chip" key={p.id} onClick={() => loadProfile(p)}>
+                  <span className="shelf-emoji">{p.summary?.emoji ?? '🔮'}</span>
+                  <span className="shelf-info"><b>{p.name}</b><small>{p.year}.{p.month}.{p.day} · {p.summary?.ilju ?? ''}</small></span>
+                  <button className="shelf-x" onClick={(e) => { e.stopPropagation(); deleteProfile(p.id); }} aria-label="삭제">✕</button>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="shelf-empty">
+            <div className="shelf-empty-ic">🗂️</div>
+            <p className="shelf-empty-t">아직 저장된 사주가 없어요</p>
+            <p className="shelf-empty-s">위에서 사주를 분석한 뒤 <b>‘💾 이 사주 보관함에 저장’</b>을 누르면 여기에 모여요.<br/>로그인하면 다른 기기에서도 보관함이 그대로 유지돼요.</p>
+          </div>
+        )}
+      </div>
+
+      {/* 받아본 리포트 원문 보관소 — 없으면 아무것도 그리지 않는다 */}
+      <ReportShelf />
 
       <div className="account-inline">
         <AccountButton />
