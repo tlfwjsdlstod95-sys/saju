@@ -115,13 +115,27 @@ export function splitSentences(text: string): string[] {
   return text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?。…][)'"’”」』]?)\s+/).filter(Boolean);
 }
 
+/** 잠긴 주제의 한 줄 — 무엇을 읽는지만 말하고 답은 말하지 않는다 */
+export const TEASER_TOPIC: Record<string, string> = {
+  weapon: '이 명식이 가장 잘 쓰는 힘이 어디서 나오는지',
+  weakness: '같은 자리에서 반복되는 패턴과 푸는 법',
+  thisyear: '올해 이 명식에 들어오는 글자와 달별 흐름',
+  love: '이 명식에서 주도권이 어디로 기우는지',
+  money: '수입이 붙는 자리와 돈을 지키는 방식',
+  health: '에너지가 새는 곳과 회복하는 방식',
+  people: '곁에 두면 힘이 되는 사람의 결',
+  bigpicture: '지금 대운이 인생에서 어떤 구간인지',
+  last: '이 명식에게 남기는 한마디',
+};
+
 export function trimReadingForFree<T extends { key: string; body: string; teaser?: boolean }>(secs: T[]): T[] {
   return secs.map((s) => {
     if (s.key === FREE_CORE_KEY) {
       const firstPara = String(s.body).split('\n\n')[0] ?? '';
       return { ...s, body: splitSentences(firstPara).slice(0, FREE_CORE_MAX_SENTENCES).join(' ') };
     }
-    return { ...s, body: splitSentences(String(s.body))[0] ?? '', teaser: true };
+    // 2026-09-30: 첫 문장을 보여주면 그게 곧 결론이다(「올해는 승진의 기운」). 답을 가린 **주제**만 싣는다.
+    return { ...s, body: TEASER_TOPIC[s.key] ?? '이 명식으로 이어서 읽습니다', teaser: true };
   });
 }
 
