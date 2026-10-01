@@ -476,7 +476,6 @@ export default function Home() {
         )}
         <p className="trust-sub">
           같은 생년월일인데 앱마다 사주가 다른 이유, 당신 명식에서 직접 보여드립니다.
-          {stats.cases > 0 && <> 저희 판정은 고전 원전 {stats.transcribed > stats.cases ? <>{stats.transcribed}건 중 채점 기준이 있는 </> : null}<b>{stats.cases}건</b>으로 채점해 <b>틀린 것까지</b> 공개하고 있어요.</>}
           {' '}<a href="/accuracy" style={{ color: 'var(--gold)' }}>검증 방법과 숫자 전부 보기 →</a>
         </p>
       </div>
@@ -538,7 +537,9 @@ export default function Home() {
               ① 9,900 은 판매한 기간이 없어 종전거래가격이 아니다 → 허위 종전가격.
               ② 구매자 수 카운터가 없어 500명을 셀 수도, 끝낼 수도 없다 → 종료되지 않는 수량 한정.
               둘 다 표시광고법 리스크이고 토스 「정찰제」와 부딪힌다. 근거: 카드사심사후_수정대기목록.md §D */}
-          명식·기본 풀이·오늘의 운세는 <b>무료</b> · 정밀 리포트 <b style={{ color: 'var(--gold)' }}>₩{PRICE.toLocaleString()}</b> · 단건 결제
+          {/* 2026-10-01: 무료/유료 차이를 한 문장으로. 얻는 것(연애·돈·올해)을 앞에, 근거(용신·대운)를 뒤에.
+              「후보/확정」 같은 안쪽 말은 /pricing·/sample 에서 설명한다. 163/192 채점 문장은 /accuracy 로만. */}
+          무료는 내 명식과 기본 풀이. <b style={{ color: 'var(--gold)' }}>₩{PRICE.toLocaleString()}</b>은 연애·돈·올해 흐름까지 깊게, 용신·대운 판정 근거와 함께.
           {' '}<Link href="/pricing" style={{ color: 'var(--gold)' }}>이용권 안내 →</Link>
         </p>
         {error && <div className="warn error">{error}</div>}
